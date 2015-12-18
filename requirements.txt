@@ -1,0 +1,3 @@
+numpy==1.10.2
+scipy==0.15.1
+-e git+https://github.com/mogui/pyorient.git@994f044bd842c907f37c82efee74f7a871030056#egg=pyorient-master
