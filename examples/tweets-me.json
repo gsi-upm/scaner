@@ -1,0 +1,1701 @@
+{
+  "metadata": {
+    "count": 13,
+    "url": "http://scaner.demos.gsi.dit.upm.es/api/v1/tweets/",
+    "parameters": {
+    },
+    "timestamp": "Mon Feb 08 09:19:43 +0000 2016"
+  },
+  "statuses": [
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.1,
+        "relevance": 0.23,
+        "last_updated": "Mon Feb 09 09:15:17 +0000 2016",
+        "retweet_count": 14,
+        "favorite_count": 10
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 695617598336196608,
+      "coordinates": null,
+      "text": "Cheerful or negative? Get your mail checked by Tone Analyzer https://t.co/D614Lrl4GH #Emotions #linguistics https://t.co/6stTNQUOy1",
+      "place": null,
+      "user_id": 3175670489,
+      "extended_entities": {
+        "media": [
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 185,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 910,
+                "h": 497,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 327,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CadUhNVWwAEyV3-.png",
+            "id": 695617596943679489,
+            "expanded_url": "http://twitter.com/mixed_eu/status/695617598336196608/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CadUhNVWwAEyV3-.png",
+            "display_url": "pic.twitter.com/6stTNQUOy1",
+            "url": "https://t.co/6stTNQUOy1",
+            "indices": [
+              108,
+              131
+            ]
+          }
+        ]
+      },
+      "in_reply_to_user_id": null,
+      "created_at": "Fri Feb 05 14:38:54 +0000 2016",
+      "geo": null,
+      "source": "<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "media": [
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 185,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 910,
+                "h": 497,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 327,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CadUhNVWwAEyV3-.png",
+            "id": 695617596943679489,
+            "expanded_url": "http://twitter.com/mixed_eu/status/695617598336196608/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CadUhNVWwAEyV3-.png",
+            "display_url": "pic.twitter.com/6stTNQUOy1",
+            "url": "https://t.co/6stTNQUOy1",
+            "indices": [
+              108,
+              131
+            ]
+          }
+        ],
+        "symbols": [],
+        "user_mentions": [],
+        "urls": [
+          {
+            "indices": [
+              61,
+              84
+            ],
+            "expanded_url": "http://bit.ly/1Ldof7i",
+            "url": "https://t.co/D614Lrl4GH",
+            "display_url": "bit.ly/1Ldof7i"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "Emotions",
+            "indices": [
+              85,
+              94
+            ]
+          },
+          {
+            "text": "linguistics",
+            "indices": [
+              95,
+              107
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.01,
+        "relevance": 0.01,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 0,
+        "favorite_count": 1
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 694153417879613440,
+      "coordinates": null,
+      "text": "About Emotions! Neat explainer video about the @DisneyPixar 'Inside Out' by @TheeNerdwriter https://t.co/XLtIpOauq4 https://t.co/Fy3LDsRopU",
+      "place": null,
+      "user_id": 3175670489,
+      "extended_entities": {
+        "media": [
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 221,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 634,
+                "h": 413,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 390,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CaIgJ0hW0AARmEm.png",
+            "id": 694152645657939968,
+            "expanded_url": "http://twitter.com/mixed_eu/status/694153417879613440/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CaIgJ0hW0AARmEm.png",
+            "display_url": "pic.twitter.com/Fy3LDsRopU",
+            "url": "https://t.co/Fy3LDsRopU",
+            "indices": [
+              116,
+              139
+            ]
+          }
+        ]
+      },
+      "in_reply_to_user_id": null,
+      "created_at": "Mon Feb 01 13:40:46 +0000 2016",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "media": [
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 221,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 634,
+                "h": 413,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 390,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CaIgJ0hW0AARmEm.png",
+            "id": 694152645657939968,
+            "expanded_url": "http://twitter.com/mixed_eu/status/694153417879613440/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CaIgJ0hW0AARmEm.png",
+            "display_url": "pic.twitter.com/Fy3LDsRopU",
+            "url": "https://t.co/Fy3LDsRopU",
+            "indices": [
+              116,
+              139
+            ]
+          }
+        ],
+        "symbols": [],
+        "user_mentions": [
+          {
+            "screen_name": "DisneyPixar",
+            "name": "Disney\u2022Pixar",
+            "id": 43192807,
+            "indices": [
+              47,
+              59
+            ]
+          },
+          {
+            "screen_name": "TheeNerdwriter",
+            "name": "Evan Puschak",
+            "id": 87576856,
+            "indices": [
+              76,
+              91
+            ]
+          }
+        ],
+        "urls": [
+          {
+            "indices": [
+              92,
+              115
+            ],
+            "expanded_url": "http://bit.ly/1lgmTi1",
+            "url": "https://t.co/XLtIpOauq4",
+            "display_url": "bit.ly/1lgmTi1"
+          }
+        ],
+        "hashtags": []
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.02,
+        "relevance": 0.03,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 2,
+        "favorite_count": 1
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 691612884464472064,
+      "coordinates": null,
+      "text": "Emotion Recognition at a glance! Neat list of 20+ tools to interpret mood https://t.co/VWeboLEfeo #emotionsmatter https://t.co/EXq7g8oLoe",
+      "place": null,
+      "user_id": 3175670489,
+      "extended_entities": {
+        "media": [
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 269,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 760,
+                "h": 602,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 475,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CZkaJeIWkAAjAkg.png",
+            "id": 691612767787323392,
+            "expanded_url": "http://twitter.com/mixed_eu/status/691612884464472064/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CZkaJeIWkAAjAkg.png",
+            "display_url": "pic.twitter.com/EXq7g8oLoe",
+            "url": "https://t.co/EXq7g8oLoe",
+            "indices": [
+              114,
+              137
+            ]
+          }
+        ]
+      },
+      "in_reply_to_user_id": null,
+      "created_at": "Mon Jan 25 13:25:35 +0000 2016",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "media": [
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 269,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 760,
+                "h": 602,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 475,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CZkaJeIWkAAjAkg.png",
+            "id": 691612767787323392,
+            "expanded_url": "http://twitter.com/mixed_eu/status/691612884464472064/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CZkaJeIWkAAjAkg.png",
+            "display_url": "pic.twitter.com/EXq7g8oLoe",
+            "url": "https://t.co/EXq7g8oLoe",
+            "indices": [
+              114,
+              137
+            ]
+          }
+        ],
+        "symbols": [],
+        "user_mentions": [],
+        "urls": [
+          {
+            "indices": [
+              74,
+              97
+            ],
+            "expanded_url": "http://bit.ly/1QrvZ7E",
+            "url": "https://t.co/VWeboLEfeo",
+            "display_url": "bit.ly/1QrvZ7E"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "emotionsmatter",
+            "indices": [
+              98,
+              113
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.02,
+        "relevance": 0.04,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 2,
+        "favorite_count": 3
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 690081093295435776,
+      "coordinates": null,
+      "text": "Yes! 2016 brings 5E's in news includ. Emotional Journalism says @Hermida https://t.co/Vot1mZE39m #SentimentAnalysis https://t.co/LjiDkX4oLy",
+      "place": null,
+      "user_id": 3175670489,
+      "extended_entities": {
+        "media": [
+          {
+            "sizes": {
+              "large": {
+                "w": 1024,
+                "h": 518,
+                "resize": "fit"
+              },
+              "small": {
+                "w": 340,
+                "h": 172,
+                "resize": "fit"
+              },
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "medium": {
+                "w": 600,
+                "h": 303,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CZOoRVYXEAMC6K0.png",
+            "id": 690080183668379651,
+            "expanded_url": "http://twitter.com/mixed_eu/status/690081093295435776/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CZOoRVYXEAMC6K0.png",
+            "display_url": "pic.twitter.com/LjiDkX4oLy",
+            "url": "https://t.co/LjiDkX4oLy",
+            "indices": [
+              116,
+              139
+            ]
+          }
+        ]
+      },
+      "in_reply_to_user_id": null,
+      "created_at": "Thu Jan 21 07:58:48 +0000 2016",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "media": [
+          {
+            "sizes": {
+              "large": {
+                "w": 1024,
+                "h": 518,
+                "resize": "fit"
+              },
+              "small": {
+                "w": 340,
+                "h": 172,
+                "resize": "fit"
+              },
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "medium": {
+                "w": 600,
+                "h": 303,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CZOoRVYXEAMC6K0.png",
+            "id": 690080183668379651,
+            "expanded_url": "http://twitter.com/mixed_eu/status/690081093295435776/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CZOoRVYXEAMC6K0.png",
+            "display_url": "pic.twitter.com/LjiDkX4oLy",
+            "url": "https://t.co/LjiDkX4oLy",
+            "indices": [
+              116,
+              139
+            ]
+          }
+        ],
+        "symbols": [],
+        "user_mentions": [
+          {
+            "screen_name": "Hermida",
+            "name": "Alfred Hermida",
+            "id": 5165901,
+            "indices": [
+              64,
+              72
+            ]
+          }
+        ],
+        "urls": [
+          {
+            "indices": [
+              73,
+              96
+            ],
+            "expanded_url": "http://bit.ly/1WwAU7N",
+            "url": "https://t.co/Vot1mZE39m",
+            "display_url": "bit.ly/1WwAU7N"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "SentimentAnalysis",
+            "indices": [
+              97,
+              115
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.02,
+        "relevance": 0.03,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 1,
+        "favorite_count": 2
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 689508998224175104,
+      "coordinates": null,
+      "text": "Watch out! Web analytics about to track your emotions soon. https://t.co/w01f315VqN #sentimentanalysis #innovation #userbehaviour",
+      "place": null,
+      "user_id": 3175670489,
+      "in_reply_to_user_id": null,
+      "created_at": "Tue Jan 19 18:05:30 +0000 2016",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "symbols": [],
+        "user_mentions": [],
+        "urls": [
+          {
+            "indices": [
+              60,
+              83
+            ],
+            "expanded_url": "http://bit.ly/1lJpFMP",
+            "url": "https://t.co/w01f315VqN",
+            "display_url": "bit.ly/1lJpFMP"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "sentimentanalysis",
+            "indices": [
+              84,
+              102
+            ]
+          },
+          {
+            "text": "innovation",
+            "indices": [
+              103,
+              114
+            ]
+          },
+          {
+            "text": "userbehaviour",
+            "indices": [
+              115,
+              129
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.01,
+        "relevance": 0.01,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 0,
+        "favorite_count": 0
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 678848291807727616,
+      "coordinates": null,
+      "text": "Enjoy fabulous overview of emoji use on twitter! https://t.co/EtAXb3RSoK #emoticons #EmotionalAnalytics #RealTime https://t.co/AoDs4Hs6qb",
+      "place": null,
+      "user_id": 3175670489,
+      "extended_entities": {
+        "media": [
+          {
+            "sizes": {
+              "large": {
+                "w": 629,
+                "h": 412,
+                "resize": "fit"
+              },
+              "small": {
+                "w": 340,
+                "h": 222,
+                "resize": "fit"
+              },
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "medium": {
+                "w": 600,
+                "h": 393,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CWvA2CaXAAAfaZY.png",
+            "id": 678848203442290688,
+            "expanded_url": "http://twitter.com/mixed_eu/status/678848291807727616/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CWvA2CaXAAAfaZY.png",
+            "display_url": "pic.twitter.com/AoDs4Hs6qb",
+            "url": "https://t.co/AoDs4Hs6qb",
+            "indices": [
+              114,
+              137
+            ]
+          }
+        ]
+      },
+      "in_reply_to_user_id": null,
+      "created_at": "Mon Dec 21 08:03:39 +0000 2015",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "media": [
+          {
+            "sizes": {
+              "large": {
+                "w": 629,
+                "h": 412,
+                "resize": "fit"
+              },
+              "small": {
+                "w": 340,
+                "h": 222,
+                "resize": "fit"
+              },
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "medium": {
+                "w": 600,
+                "h": 393,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CWvA2CaXAAAfaZY.png",
+            "id": 678848203442290688,
+            "expanded_url": "http://twitter.com/mixed_eu/status/678848291807727616/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CWvA2CaXAAAfaZY.png",
+            "display_url": "pic.twitter.com/AoDs4Hs6qb",
+            "url": "https://t.co/AoDs4Hs6qb",
+            "indices": [
+              114,
+              137
+            ]
+          }
+        ],
+        "symbols": [],
+        "user_mentions": [],
+        "urls": [
+          {
+            "indices": [
+              49,
+              72
+            ],
+            "expanded_url": "http://emojitracker.com/",
+            "url": "https://t.co/EtAXb3RSoK",
+            "display_url": "emojitracker.com"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "emoticons",
+            "indices": [
+              73,
+              83
+            ]
+          },
+          {
+            "text": "EmotionalAnalytics",
+            "indices": [
+              84,
+              103
+            ]
+          },
+          {
+            "text": "RealTime",
+            "indices": [
+              104,
+              113
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.00,
+        "relevance": 0.00,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 0,
+        "favorite_count": 0
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 676783084340137984,
+      "coordinates": null,
+      "text": "Navigate the World of Emotions! A great meet. around #emotionrecognition for #socialtv #brandreputation #callcenter https://t.co/iQhDEQWBrt",
+      "place": null,
+      "user_id": 3175670489,
+      "extended_entities": {
+        "media": [
+          {
+            "sizes": {
+              "large": {
+                "w": 1024,
+                "h": 768,
+                "resize": "fit"
+              },
+              "small": {
+                "w": 340,
+                "h": 255,
+                "resize": "fit"
+              },
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "medium": {
+                "w": 600,
+                "h": 450,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CWRpIQ_XAAQjjR0.jpg",
+            "id": 676781434733002756,
+            "expanded_url": "http://twitter.com/mixed_eu/status/676783084340137984/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CWRpIQ_XAAQjjR0.jpg",
+            "display_url": "pic.twitter.com/iQhDEQWBrt",
+            "url": "https://t.co/iQhDEQWBrt",
+            "indices": [
+              116,
+              139
+            ]
+          },
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 255,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 1024,
+                "h": 768,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 450,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CWRpIPbWIAAbFyX.jpg",
+            "id": 676781434313515008,
+            "expanded_url": "http://twitter.com/mixed_eu/status/676783084340137984/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CWRpIPbWIAAbFyX.jpg",
+            "display_url": "pic.twitter.com/iQhDEQWBrt",
+            "url": "https://t.co/iQhDEQWBrt",
+            "indices": [
+              116,
+              139
+            ]
+          },
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 255,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 1024,
+                "h": 768,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 450,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CWRpIJ6WEAIcD9j.jpg",
+            "id": 676781432832921602,
+            "expanded_url": "http://twitter.com/mixed_eu/status/676783084340137984/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CWRpIJ6WEAIcD9j.jpg",
+            "display_url": "pic.twitter.com/iQhDEQWBrt",
+            "url": "https://t.co/iQhDEQWBrt",
+            "indices": [
+              116,
+              139
+            ]
+          }
+        ]
+      },
+      "in_reply_to_user_id": null,
+      "created_at": "Tue Dec 15 15:17:15 +0000 2015",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "media": [
+          {
+            "sizes": {
+              "large": {
+                "w": 1024,
+                "h": 768,
+                "resize": "fit"
+              },
+              "small": {
+                "w": 340,
+                "h": 255,
+                "resize": "fit"
+              },
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "medium": {
+                "w": 600,
+                "h": 450,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CWRpIQ_XAAQjjR0.jpg",
+            "id": 676781434733002756,
+            "expanded_url": "http://twitter.com/mixed_eu/status/676783084340137984/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CWRpIQ_XAAQjjR0.jpg",
+            "display_url": "pic.twitter.com/iQhDEQWBrt",
+            "url": "https://t.co/iQhDEQWBrt",
+            "indices": [
+              116,
+              139
+            ]
+          }
+        ],
+        "symbols": [],
+        "user_mentions": [],
+        "urls": [],
+        "hashtags": [
+          {
+            "text": "emotionrecognition",
+            "indices": [
+              53,
+              72
+            ]
+          },
+          {
+            "text": "socialtv",
+            "indices": [
+              77,
+              86
+            ]
+          },
+          {
+            "text": "brandreputation",
+            "indices": [
+              87,
+              103
+            ]
+          },
+          {
+            "text": "callcenter",
+            "indices": [
+              104,
+              115
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0,
+        "relevance": 0,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 0,
+        "favorite_count": 0
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 676781131543535617,
+      "coordinates": null,
+      "text": "Meet us at our booth @ICAART 2016 in Rome on February 25th, more https://t.co/v2v5FYliGc #emotionrecognition #socialtv",
+      "place": null,
+      "user_id": 3175670489,
+      "in_reply_to_user_id": null,
+      "created_at": "Tue Dec 15 15:09:30 +0000 2015",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "symbols": [],
+        "user_mentions": [
+          {
+            "screen_name": "IcaArt",
+            "name": "Jessica Artizuela.",
+            "id": 551763693,
+            "indices": [
+              21,
+              28
+            ]
+          }
+        ],
+        "urls": [
+          {
+            "indices": [
+              65,
+              88
+            ],
+            "expanded_url": "http://bit.ly/1P4Wnn8",
+            "url": "https://t.co/v2v5FYliGc",
+            "display_url": "bit.ly/1P4Wnn8"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "emotionrecognition",
+            "indices": [
+              89,
+              108
+            ]
+          },
+          {
+            "text": "socialtv",
+            "indices": [
+              109,
+              118
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.01,
+        "relevance": 0.03,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 0,
+        "favorite_count": 0
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 674933504619249665,
+      "coordinates": null,
+      "text": "How do you feel today? @mixed_eu identifies emotions in text, image &amp; video based on various models. Find out more https://t.co/F6g5sFnP3j",
+      "place": null,
+      "user_id": 3175670489,
+      "in_reply_to_user_id": null,
+      "created_at": "Thu Dec 10 12:47:41 +0000 2015",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "symbols": [],
+        "user_mentions": [
+          {
+            "screen_name": "mixed_eu",
+            "name": "MixedEmotions EU",
+            "id": 3175670489,
+            "indices": [
+              23,
+              32
+            ]
+          }
+        ],
+        "urls": [
+          {
+            "indices": [
+              119,
+              142
+            ],
+            "expanded_url": "http://bit.ly/1lwWSuQ",
+            "url": "https://t.co/F6g5sFnP3j",
+            "display_url": "bit.ly/1lwWSuQ"
+          }
+        ],
+        "hashtags": []
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.03,
+        "relevance": 0.05,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 2,
+        "favorite_count": 1
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 674880052866195457,
+      "coordinates": null,
+      "text": "Upcoming @mixed_eu Meeting @DeutscheWelle premises in Bonn. Excited! #socialtv #recsys more https://t.co/8BrqhSUrU4 https://t.co/NNM9jMI8Us",
+      "place": null,
+      "user_id": 3175670489,
+      "extended_entities": {
+        "media": [
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 185,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 799,
+                "h": 436,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 327,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CV2m4WsWUAAe87T.jpg",
+            "id": 674879006269919232,
+            "expanded_url": "http://twitter.com/mixed_eu/status/674880052866195457/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CV2m4WsWUAAe87T.jpg",
+            "display_url": "pic.twitter.com/NNM9jMI8Us",
+            "url": "https://t.co/NNM9jMI8Us",
+            "indices": [
+              116,
+              139
+            ]
+          }
+        ]
+      },
+      "in_reply_to_user_id": null,
+      "created_at": "Thu Dec 10 09:15:17 +0000 2015",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "media": [
+          {
+            "sizes": {
+              "thumb": {
+                "w": 150,
+                "h": 150,
+                "resize": "crop"
+              },
+              "small": {
+                "w": 340,
+                "h": 185,
+                "resize": "fit"
+              },
+              "large": {
+                "w": 799,
+                "h": 436,
+                "resize": "fit"
+              },
+              "medium": {
+                "w": 600,
+                "h": 327,
+                "resize": "fit"
+              }
+            },
+            "media_url_https": "https://pbs.twimg.com/media/CV2m4WsWUAAe87T.jpg",
+            "id": 674879006269919232,
+            "expanded_url": "http://twitter.com/mixed_eu/status/674880052866195457/photo/1",
+            "type": "photo",
+            "media_url": "http://pbs.twimg.com/media/CV2m4WsWUAAe87T.jpg",
+            "display_url": "pic.twitter.com/NNM9jMI8Us",
+            "url": "https://t.co/NNM9jMI8Us",
+            "indices": [
+              116,
+              139
+            ]
+          }
+        ],
+        "symbols": [],
+        "user_mentions": [
+          {
+            "screen_name": "mixed_eu",
+            "name": "MixedEmotions EU",
+            "id": 3175670489,
+            "indices": [
+              9,
+              18
+            ]
+          },
+          {
+            "screen_name": "DeutscheWelle",
+            "name": "DW Deutsche Welle",
+            "id": 16449615,
+            "indices": [
+              27,
+              41
+            ]
+          }
+        ],
+        "urls": [
+          {
+            "indices": [
+              92,
+              115
+            ],
+            "expanded_url": "http://bit.ly/21QZlkv",
+            "url": "https://t.co/8BrqhSUrU4",
+            "display_url": "bit.ly/21QZlkv"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "socialtv",
+            "indices": [
+              69,
+              78
+            ]
+          },
+          {
+            "text": "recsys",
+            "indices": [
+              79,
+              86
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.08,
+        "relevance": 0.1,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 8,
+        "favorite_count": 2
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+
+      "id": 658571291998425088,
+      "coordinates": null,
+      "text": "Meet us @LTaccelerate in Brussels, Nov 24th at 16h20. Carlos A. Iglesias from @La_UPM presents MixedEmotions. #LTA15 https://t.co/Q90nOQKN5r",
+      "place": null,
+      "user_id": 3175670489,
+      "in_reply_to_user_id": null,
+      "created_at": "Mon Oct 26 09:10:06 +0000 2015",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "symbols": [],
+        "user_mentions": [
+          {
+            "screen_name": "LTaccelerate",
+            "name": "Language Tech",
+            "id": 105786101,
+            "indices": [
+              8,
+              21
+            ]
+          },
+          {
+            "screen_name": "La_UPM",
+            "name": "Politecnica Madrid",
+            "id": 395174441,
+            "indices": [
+              78,
+              85
+            ]
+          }
+        ],
+        "urls": [
+          {
+            "indices": [
+              117,
+              140
+            ],
+            "expanded_url": "http://mixedemotions-project.eu/meet-us-lt-accelerate/",
+            "url": "https://t.co/Q90nOQKN5r",
+            "display_url": "mixedemotions-project.eu/meet-us-lt-acc\u2026"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "LTA15",
+            "indices": [
+              110,
+              116
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test"],
+      "metrics": {
+        "popularity": 0.01,
+        "relevance": 0.02,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 1,
+        "favorite_count": 0
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 616551353943523328,
+      "coordinates": null,
+      "text": "Meet us @icml15 in Lille, France in 9 days (11.7) and visit our workshop. More http://t.co/13FkS5SRyJ #machinelearning #bigdata",
+      "place": null,
+      "user_id": 3175670489,
+      "in_reply_to_user_id": null,
+      "created_at": "Thu Jul 02 10:17:52 +0000 2015",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"http://twitter.com\" rel=\"nofollow\">Twitter Web Client</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "symbols": [],
+        "user_mentions": [
+          {
+            "screen_name": "icml15",
+            "name": "ICML 2015",
+            "id": 3096586910,
+            "indices": [
+              8,
+              15
+            ]
+          }
+        ],
+        "urls": [
+          {
+            "indices": [
+              79,
+              101
+            ],
+            "expanded_url": "http://icml.cc/2015/",
+            "url": "http://t.co/13FkS5SRyJ",
+            "display_url": "icml.cc/2015/"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "machinelearning",
+            "indices": [
+              102,
+              118
+            ]
+          },
+          {
+            "text": "bigdata",
+            "indices": [
+              119,
+              127
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    },
+    {
+      "topics": ["test1"],
+      "metrics": {
+        "popularity": 0.01,
+        "relevance": 0.03,
+        "last_updated": "Mon Feb 08 09:15:17 +0000 2015",
+        "retweet_count": 1,
+        "favorite_count": 1
+      },
+      "sentiments": [
+        {
+          "hasPolarity": "Positive",
+          "polarityValue": 1.0,
+          "describesObject": "http://dbpedia.org/page/Europe"
+        }
+      ],
+      "emotions": [
+        {
+          "describesObject": "http://dbpedia.org/page/Europe",
+          "hasEmotion": [
+            {
+              "category": "wna:Liking",
+              "valence": 0.5
+            }
+          ]
+          
+        }
+      ],
+      "id": 606760629282709504,
+      "coordinates": null,
+      "text": "Meet us @BDVA_PPP summit in Madrid (17-19.6.2015), more http://t.co/pFKiBy1Y0j #bigdata #event #innovation",
+      "place": null,
+      "user_id": 3175670489,
+      "in_reply_to_user_id": null,
+      "created_at": "Fri Jun 05 09:53:01 +0000 2015",
+      "geo": null,
+      "in_reply_to_screen_name": null,
+      "source": "<a href=\"https://about.twitter.com/products/tweetdeck\" rel=\"nofollow\">TweetDeck</a>",
+      "possibly_sensitive": false,
+      "is_quote_status": false,
+      "truncated": false,
+      "in_reply_to_status_id": null,
+      "entities": {
+        "symbols": [],
+        "user_mentions": [
+          {
+            "screen_name": "BDVA_PPP",
+            "name": "Big Data Value Assoc",
+            "id": 2842558252,
+            "indices": [
+              8,
+              17
+            ]
+          }
+        ],
+        "urls": [
+          {
+            "indices": [
+              56,
+              78
+            ],
+            "expanded_url": "http://mixedemotions-project.eu/meet-us-bdv-2015/",
+            "url": "http://t.co/pFKiBy1Y0j",
+            "display_url": "mixedemotions-project.eu/meet-us-bdv-20\u2026"
+          }
+        ],
+        "hashtags": [
+          {
+            "text": "bigdata",
+            "indices": [
+              79,
+              87
+            ]
+          },
+          {
+            "text": "event",
+            "indices": [
+              88,
+              94
+            ]
+          },
+          {
+            "text": "innovation",
+            "indices": [
+              95,
+              106
+            ]
+          }
+        ]
+      },
+      "contributors": null,
+      "lang": "en"
+    }
+  ]
+}

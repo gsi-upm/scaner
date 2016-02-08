@@ -1,0 +1,891 @@
+---
+swagger: "2.0"
+info:
+  version: 1.0.0
+  title: SCANER API
+  license:
+    name: MIT
+    url: http://github.com/gruntjs/grunt/blob/master/LICENSE-MIT
+basePath: /api/v1
+securityDefinitions: {}
+consumes:
+- application/json
+produces:
+- application/json
+paths:
+  /users/{userId}:
+    get:
+      tags:
+      - users
+      produces:
+      - application/json
+      parameters:
+      - name: fields
+        in: query
+        required: false
+        x-is-map: false
+        type: string
+        description: Comma-separated list of fields to include in the response.
+      - name: userId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: User found and returned
+          schema:
+            $ref: "#/definitions/Users"
+        404:
+          description: User not found
+  /users:
+    get:
+      tags:
+      - users
+      produces:
+      - application/json
+      parameters:
+      - name: fields
+        in: query
+        required: false
+        x-is-map: false
+        type: string
+        description: Comma-separated list of fields to retrieve
+      - name: limit
+        in: query
+        required: false
+        x-is-map: false
+        type: integer
+        format: int64
+        description: Get only this many users per request
+      - name: topic
+        in: query
+        required: false
+        x-is-map: false
+        type: string
+        description: Only retrieve users related to a certain topic
+      - name: sort_by
+        in: query
+        required: false
+        x-is-map: false
+        type: string
+        description: Sort users using this criterion. Prepending a minus sign reverses the order. e.g. '-tweet_count'.
+      responses:
+        200:
+          description: Users found and returned
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Users_search"
+  /tweets/{tweetId}:
+    get:
+      tags:
+      - tweets
+      produces:
+      - application/json
+      parameters:
+      - name: fields
+        in: query
+        required: false
+        x-is-map: false
+        type: string
+        description: Comma-separated list of fields to include in the response.
+      - name: tweetId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: Tweet found and returned
+          schema:
+            $ref: '#/definitions/Tweets_search'
+        404:
+          description: Tweet not found
+
+    delete:
+      description: Delete a Tweet
+      tags:
+      - tweets
+      produces:
+      - application/json
+      parameters:
+      - name: tweetId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: "Tweet deleted"
+        404:
+          description: Tweet not found
+  /tweets/{tweetId}/history:
+    get:
+        operationId: scaner.controllers.tweets.get_history
+        description: Delete a Tweet
+        tags:
+            - tweets
+        produces:
+            - application/json
+        parameters:
+          - name: tweetId
+            in: path
+            required: true
+            x-is-map: false
+            type: integer
+            format: int64
+          - name: since
+            type: integer
+            in: query
+            description: Time in seconds since EPOCH
+            required: false
+          - name: until
+            in: query
+            type: integer
+            description: Time in seconds since EPOCH
+            required: false
+        responses:
+            200:
+                description: "History"
+                schema:
+                    $ref: '#/definitions/Tweet_history'
+            404:
+                description: Tweet not found
+
+      
+  /tweets:
+    get:
+      tags:
+      - tweets
+      produces:
+      - application/json
+      parameters:
+      - name: fields
+        in: query
+        required: false
+        x-is-map: false
+        type: string
+        description: Comma-separated list of fields to retrieve
+      - name: limit
+        in: query
+        required: false
+        x-is-map: false
+        type: integer
+        format: int64
+        description: Get only this many tweets per request
+      - name: topic
+        in: query
+        required: false
+        x-is-map: false
+        type: string
+        description: Only retrieve tweets related to a certain topic
+      - name: sort_by
+        in: query
+        required: false
+        x-is-map: false
+        type: string
+        description: Sort tweets using this criterion. Prepending a minus sign reverses the order. e.g. 'retweet_count'.
+      responses:
+        200:
+          description: Tweets found and returned
+          schema:
+            $ref: '#/definitions/Tweets'
+        404:
+          description: No Tweets found matching that query
+    post:
+      description: Upload a tweet
+      tags:
+         - tweets
+      produces:
+           - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          x-is-map: false
+          schema:
+              $ref: '#/definitions/Tweets_Raw'
+      responses:
+        200:
+          description: "Uploaded"
+          
+
+  /users/{userId}/network:
+    get:
+      operationId: scaner.controllers.users.get_network
+      tags:
+        - users
+      description: returns detailed info about relationships of a user
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        description: user id of subject user
+        type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Network'
+          
+  /topics:
+    get:
+      tags:
+        - topics
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Topics'
+
+  /topics/{topicId}:
+    get:
+      tags:
+        - topics
+      description: returns detailed info about relationships of a user
+      parameters:
+      - name: topicId
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Topics'
+    
+  /topics/{topicId}/network:
+    get:
+      operationId: scaner.controllers.topics.get_network
+      tags:
+        - topics
+      description: returns detailed info about the users related to a topic
+      parameters:
+      - name: topicId
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Network'
+
+
+definitions:
+
+  Tweets_search:
+    type: object
+    properties:
+      statuses:
+        type: array
+        items:
+          $ref: '#/definitions/Tweets'
+      metadata:
+        $ref: '#/definitions/Metadata'
+
+  Users_search:
+    type: object
+    properties:
+      users:
+        type: array
+        items:
+          $ref: '#/definitions/Users'
+      metadata:
+        $ref: '#/definitions/Metadata'
+
+  Metadata:
+    type: object
+    properties:
+      url:
+        type: string
+        description: URL queried
+      parameters:
+        type: object
+        description: Parameters used in the query
+      timestamp:
+        type: string
+        description: Time when the query was performed
+      count:
+        type: integer
+        description: Number of results returned
+
+  Tweets:
+    allOf: 
+       -
+         $ref: "#/definitions/Tweets_Raw"
+       -
+         type: object
+         properties:
+           metrics:
+             $ref: '#/definitions/Tweet_metrics'
+           sentiments:
+             $ref: '#/definitions/Sentiments'
+           emotions:
+             $ref: '#/definitions/Emotions'
+
+  Tweets_Raw:
+    type: object
+    properties:
+      topics:
+        type: array
+        items:
+          type: string
+      contributors:
+        type: array
+        items:
+          $ref: '#/definitions/Contributors'
+      coordinates:
+        $ref: '#/definitions/Coordinates'
+      created_at:
+        type: string
+      current_user_retweet:
+        $ref: '#/definitions/Tweets'
+      entities:
+        $ref: '#/definitions/Entities'
+      favorite_count:
+        type: integer
+      favorited:
+        type: boolean
+      filter_level:
+        type: string
+      id:
+        type: integer
+      id_str:
+        type: string
+      in_reply_to_screen_name:
+        type: string
+      in_reply_to_status_id:
+        type: integer
+      in_reply_to_status_id_str:
+        type: string
+      in_reply_to_user_id:
+        type: integer
+      in_reply_to_user_id_str:
+        type: string
+      lang:
+        type: string
+      place:
+        $ref: '#/definitions/Places'
+      possibly_sensitive:
+        type: boolean
+      quoted_status_id:
+        type: integer
+      quoted_status_id_str:
+        type: string
+      quoted_status:
+        $ref: '#/definitions/Tweets'
+      scopes:
+        type: object
+        additionalProperties: {}
+      retweet_count:
+        type: integer
+      retweeted_status:
+        $ref: '#/definitions/Tweets'
+      source:
+        type: string
+      text:
+        type: string
+      truncated:
+        type: string
+      user_id:
+        type: number
+        description: "User ID"
+      withheld_copyright:
+        type: boolean
+      withheld_countries:
+        type: array
+        items:
+          type: string
+      withheld_scope:
+        type: string
+    required:
+      - id
+      - text
+
+  Tweet_history:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Tweet ID
+      retweet_count:
+        $ref: '#/definitions/History'
+      favourite_count:
+        $ref: '#/definitions/History'
+
+  History:
+    type: array
+    items:
+        type: object
+        properties:
+          time:
+            type: number
+          value:
+            type: number
+        required:
+          - time
+          - value
+      
+
+  Contributors:
+    type: object
+    properties:
+      id:
+        type: integer
+      id_str:
+        type: string
+      screen_name:
+        type: string
+
+  Coordinates:
+    type: object
+    properties:
+      coordinates:
+        type: array
+        items:
+          type: number
+      type:
+        type: string
+  Users:
+    allOf: 
+       -
+         $ref: "#/definitions/Raw_Users"
+       -
+         type: object
+         properties:
+           metrics:
+              $ref: '#/definitions/User_metrics'
+  Raw_Users:
+    type: object
+    properties:
+      contributors_enabled:
+        type: boolean
+      created_at:
+        type: string
+      default_profile:
+        type: boolean
+      default_profile_image:
+        type: boolean
+      description:
+        type: string
+      entities:
+        $ref: '#/definitions/Entities'
+      favorites_count:
+        type: integer
+      follow_request_sent:
+        type: boolean
+      geo_enabled:
+        type: boolean
+      id:
+        type: integer
+      id_str:
+        type: string
+      is_translator:
+        type: boolean
+      lang:
+        type: string
+      listed_count:
+        type: integer
+      location:
+        type: string
+      name:
+        type: string
+      notifications:
+        type: boolean
+      profile_background_color:
+        type: string
+      profile_background_image_url:
+        type: string
+      profile_background_image_url_https:
+        type: string
+      profile_background_tile:
+        type: string
+      profile_banner_url:
+        type: string
+      profile_image_url:
+        type: string
+      profile_image_url_https:
+        type: string
+      profile_link_color:
+        type: string
+      profile_sidebar_border_color:
+        type: string
+      profile_sidebar_fill_color:
+        type: string
+      profile_text_color:
+        type: string
+      profile_use_background_image:
+        type: boolean
+      protected:
+        type: boolean
+      screen_name:
+        type: string
+      show_all_inline_media:
+        type: boolean
+      status:
+        $ref: '#/definitions/Tweets'
+      statuses_count:
+        type: integer
+      time_zone:
+        type: string
+      url:
+        type: string
+      utc_offset:
+        type: integer
+      verified:
+        type: boolean
+      withheld_in_countries:
+        type: string
+      withheld_scope:
+        type: string
+
+    
+  Hashtags:
+    type: object
+    properties:
+      indices:
+        type: array
+        items:
+          type: integer
+      text:
+        type: string
+
+  Media:
+    type: object
+    properties:
+      display_url:
+        type: string
+      expanded_url:
+        type: string
+      id:
+        type: integer
+      id_str:
+        type: string
+      indices:
+        type: array
+        items:
+          type: integer
+      media_url:
+        type: string
+      media_url_https:
+        type: string
+      sizes:
+        $ref: '#/definitions/Sizes'
+      source_status_id:
+        type: integer
+      source_status_id_str:
+        type: integer
+      type:
+        type: string
+      url:
+        type: string
+
+  Size:
+    type: object
+    properties:
+      h:
+        type: integer
+      resize:
+        type: string
+      w:
+        type: integer
+
+
+  Sizes:
+    type: object
+    properties:
+      thumb:
+        $ref: '#/definitions/Size'
+      large:
+        $ref: '#/definitions/Size'
+      medium:
+        $ref: '#/definitions/Size'
+      small:
+        $ref: '#/definitions/Size'
+
+  URL:
+    type: object
+    properties:
+      display_url:
+        type: string
+      expanded_url:
+        type: string
+      indices:
+        type: string
+      url:
+        type: string
+
+  User_Mention:
+    type: object
+    properties:
+      id:
+        type: integer
+      id_str:
+        type: string
+      indices:
+        type: array
+        items:
+          type: integer
+      name:
+        type: string
+      screen_name:
+        type: string
+
+  Places:
+    type: object
+    properties:
+      attributes:
+        type: object
+        additionalProperties: {}
+      bounding_box:
+        $ref: '#/definitions/Bounding_box'
+      country:
+        type: string
+      country_code:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      place_type:
+        type: string
+      url:
+        type: string
+
+  Bounding_box:
+    type: object
+    properties:
+      coordinates:
+        type: array
+        items:
+          type: array
+          items:
+            type: number
+      type:
+        type: string
+
+  Network:
+    type: object
+    properties:
+      links:
+        type: array
+        items:
+          $ref: '#/definitions/Friendship'
+
+  Friendship:
+    type: object
+    properties:
+      source_id:
+        type: integer
+      source_screen_name:
+        type: string
+      following:
+        type: boolean
+      followed_by:
+        type: boolean
+      target_id:
+        type: integer
+      target_screen_name:
+        type: string
+      
+  Entities:
+    type: object
+    properties:
+      hashtags:
+        type: array
+        items:
+          $ref: '#/definitions/Hashtags'
+      media:
+        type: array
+        items:
+          $ref: '#/definitions/Media'
+      urls:
+        type: array
+        items:
+          $ref: '#/definitions/URL'
+      user_mentions:
+        type: array
+        items:
+          $ref: '#/definitions/User_Mention'
+
+  Tweet_metrics:
+    type: object
+    properties:
+      popularity:
+        type: number
+      relevance:
+        type: number
+      retweet_count:
+        type: integer
+      favourite_count:
+        type: integer
+      last_updated:
+        type: string
+        description: "Timestamp of last metrics collection"
+
+  User_metrics:
+    type: object
+    properties:
+      followers:
+        type: integer
+        description: "Number of users this user is following"
+      following:
+        type: integer
+        description: "Number of users following this user"
+      follow_ratio:
+        type: number
+        description: "Ratio followers/following"
+      hIndexFav:
+        type: number
+        description: "Favorite h-index - Last 100 Tweets"
+      hIndexRt:
+        type: number
+        description: "Retweet h-index - Last 100 Tweets"
+      replyRatio:
+        type: number
+        description: "Ratio of user's tweets that are a reply to other users"
+      repliedRatio:
+        type: number
+        description: "Ratio of user's tweets that receive a reply"
+      popularity:
+        type: number
+      influence:
+        description: "User influence score"
+        type: number
+      openinfluence:
+        description: "User influence calculated using the OpenInfluence algorithm: https://en.paradigmadigital.com/dev/openinfluence/"
+        type: number
+      relevance:
+        type: number
+        description: ""
+      voice:
+        type: number
+        description: "User voice. #TODO explain"
+      impact:
+        type: number
+        description: "User impact. #TODO explain"
+      last_updated:
+        type: string
+        description: "Timestamp of last metrics collection"
+      
+  User_history:
+    type: object
+    description: 'Work in progress. Not implemented yet'
+    properties:
+      id:
+        type: integer
+        description: 'User ID'
+      followers:
+        $ref: '#/definitions/History'
+      following:
+        $ref: '#/definitions/History'
+
+  Sentiments:
+    type: array
+    description: 'Sentiments using the Marl Ontology'
+    items:
+      title: Sentiment
+      type: object
+      properties:
+        hasPolarity:
+          type: string
+        polarityValue:
+          type: number
+        extractedFrom:
+          type: string
+        describesObject:
+          type: string
+        describesObjectPart:
+          type: string
+        describesObjectFeature:
+          type: string
+        opinionCount:
+          description: Used for AggregatedOpinion/Sentiment
+          type: integer
+        aggregatesOpinion:
+          type: array
+          items:
+            type: [object, string]
+        algorithmConfidence:
+          type: number
+        wasGeneratedBy:
+          description: ID of the analysis that generated this sentiment
+          type: string
+      required:
+        - polarityValue
+        - hasPolarity
+      
+  Emotions:
+    type: array
+    description: 'Emotions using the Onyx Ontology'
+    items:
+      title: Emotion
+      type: object
+      properties:
+        extractedFrom:
+          type: string
+        describesObject:
+          type: string
+        describesObjectPart:
+          type: string
+        describesObjectFeature:
+          type: string
+        opinionCount:
+          type: integer
+        aggregatesOpinion:
+          type: array
+          items:
+            type: [object, string]
+        hasEmotion:
+          type: array
+          items:
+            type: object
+            description: "See VADEmotion and CategoryEmotion"
+        wasGeneratedBy:
+          description: ID of the analysis that generated this emotion
+          type: string
+
+  VADEmotion:
+    type: object
+    properties:
+        valence:
+            type: number
+        arousal:
+            type: number
+        dominance:
+            type: number
+  CategoryEmotion:
+    type: object
+    properties:
+      category:
+        type: string
+      valence:
+        type: number
+
+  Topic:
+    type: object
+    description: A topic
+    properties:
+      id:
+        type: string
+      last_tweet:
+        type: string
+      tweet_count:
+        type: integer
+      user_count:
+        type: integer
+
+
+  Topics:
+    type: array
+    description: List of topics
+    items:
+        $ref: '#/definitions/Topic'
+ 
