@@ -225,7 +225,7 @@ paths:
         in: path
         required: true
         description: user id of subject user
-        type: string
+        type: integer
       responses:
         200:
           description: OK

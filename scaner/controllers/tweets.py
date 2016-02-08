@@ -5,7 +5,7 @@ tweets = {}
 with open('examples/tweets-me.json') as f:
     tweets = json.load(f)
 
-@add_metadata
+@add_metadata()
 def get(tweetId, *args, **kwargs):
     for i in tweets['statuses']:
         if i['id'] == tweetId:
@@ -13,7 +13,7 @@ def get(tweetId, *args, **kwargs):
     return {'result': "Tweet not found"}, 404
     
 
-@add_metadata
+@add_metadata('statuses')
 def search(topic=None, *args, **kwargs):
     with open('examples/tweets-me.json') as f:
         example = json.load(f)
@@ -26,23 +26,22 @@ def search(topic=None, *args, **kwargs):
                 continue
             toshow.append(i)
         example['statuses'] = toshow
-    example['metadata']['count'] = len(example['statuses'])
     return example
 
-@add_metadata
+@add_metadata()
 def post(body, *args, **kwargs):
     print(body)
     pass
 
-@add_metadata
+@add_metadata()
 def delete(*args, **kwargs):
     pass
 
-@add_metadata
+@add_metadata()
 def put(*args, **kwargs):
     pass
 
-@add_metadata
+@add_metadata()
 def get_history(tweetId, *args, **kwargs):
     with open('examples/history.json') as f:
         example = json.load(f)

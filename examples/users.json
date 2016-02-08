@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "count": 1
+  },
+  "users": [{
+    "metrics": {
+      "favourites_count": 28,
+      "listed_count": 0,
+      "friends_count": 163,
+      "followers_count": 58,
+      "statuses_count": 29
+    },
+    "sentiments": [
+      {
+        "hasPolarity": "Positive",
+        "polarityValue": 1.0,
+        "describesObject": "http://dbpedia.org/page/Europe"
+      }
+    ],
+    "emotions": [
+      {
+        "describesObject": "http://dbpedia.org/page/Europe",
+        "hasEmotion": [
+          {
+            "category": "wna:Liking",
+            "valence": 0.5
+          }
+        ]
+        
+      }
+    ],
+    "topics": ["test"],
+    "name": "MixedEmotions EU",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/3175670489/1435842383",
+    "contributors_enabled": false,
+    "location": "Europe",
+    "id_str": "3175670489",
+    "is_translator": false,
+    "default_profile": true,
+    "profile_background_tile": false,
+    "profile_link_color": "0084B4",
+    "profile_sidebar_border_color": "C0DEED",
+    "profile_image_url_https": "https://pbs.twimg.com/profile_images/595215578102640640/CbJCmAQz_normal.png",
+    "id": 3175670489,
+    "profile_sidebar_fill_color": "DDEEF6",
+    "profile_image_url": "http://pbs.twimg.com/profile_images/595215578102640640/CbJCmAQz_normal.png",
+    "profile_text_color": "333333",
+    "profile_background_image_url": "http://abs.twimg.com/images/themes/theme1/bg.png",
+    "profile_use_background_image": true,
+    "default_profile_image": false,
+    "url": "http://t.co/NZMkrFKXUb",
+    "description": "Navigate The World Of Emotions!\nEU Project (April 2015 - March 2017)",
+    "has_extended_profile": false,
+    "geo_enabled": false,
+    "verified": false,
+    "time_zone": "Belgrade",
+    "created_at_stamp": "1429251583",
+    "entities": {
+      "description": {
+        "urls": []
+      },
+      "url": {
+        "urls": [
+          {
+            "expanded_url": "http://www.mixedemotions-project.eu",
+            "url": "http://t.co/NZMkrFKXUb",
+            "indices": [
+              0,
+              22
+            ],
+            "display_url": "mixedemotions-project.eu"
+          }
+        ]
+      }
+    },
+    "profile_background_color": "C0DEED",
+    "protected": false,
+    "profile_background_image_url_https": "https://abs.twimg.com/images/themes/theme1/bg.png",
+    "is_translation_enabled": false,
+    "notifications": false,
+    "utc_offset": 3600,
+    "screen_name": "mixed_eu",
+    "lang": "de"
+  }
+           ]
+}
