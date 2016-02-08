@@ -1,7 +1,4 @@
 import json
-from faker import Factory
-fake = Factory.create()
-
 from scaner.utils import add_metadata
 
 tweets = {}
