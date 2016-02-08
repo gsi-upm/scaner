@@ -4,13 +4,39 @@
       "id": "test",
       "last_tweet": 695617598336196608,
       "tweet_count": 13,
-      "user_count": 5
+      "user_count": 6,
+      "sentiments": {
+          "opinionCount": 13,
+          "positiveOpinionCount": 7,
+          "negativeOpinionCount": 5,
+          "neutralOpinionCount": 1
+          
+      },
+      "emotions": {
+        "aggregateCount": 13,
+        "hasEmotion": [
+          {
+            "hasEmotionCategory": "wna:Liking",
+            "hasEmotionIntensity": 0.7
+          },
+          {
+            "hasEmotionCategory": "wna:Hate",
+            "hasEmotionIntensity": 0.1
+            
+          }
+
+        ]
+          
+      }
+      
     },
     {
-      "id": "test1",
+      "ID": "test1",
       "last_tweet": 606760629282709504,
       "tweet_count": 1,
-      "user_count": 0
+      "user_count": 0,
+      "emotions": {},
+      "sentiments": {}
     }
   ]
 }
