@@ -1,41 +1,30 @@
 import json
 from scaner.utils import add_metadata
+from flask import current_app
 
-tweets = {}
-with open('examples/tweets-me.json') as f:
-    tweets = json.load(f)
+# tweets = {}
+# with open('examples/tweets-me.json') as f:
+#     tweets = json.load(f)
 
 @add_metadata()
-def get(tweetId, *args, **kwargs):
-    for i in tweets['statuses']:
-        if i['id'] == tweetId:
-            return {'statuses': i}
-    return {'result': "Tweet not found"}, 404
-    
+def get(tweetId, fields=None, *args, **kwargs):
+    if fields:
+        return {'result': current_app.tasks.tweet_attributes(tweetId, fields)}, 200
+    else:
+        return {'result': current_app.tasks.tweet(tweetId)}, 200 
 
-@add_metadata('statuses')
-def search(topic=None, *args, **kwargs):
-    with open('examples/tweets-me.json') as f:
-        example = json.load(f)
-    print('Topic: %s' % topic)
-    if 'statuses' in example:
-        toshow = []
-        for i in example['statuses']:
-            if topic and topic not in i['topics']:
-                print("Removing status")
-                continue
-            toshow.append(i)
-        example['statuses'] = toshow
-    return example
+@add_metadata() #'statuses'
+def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
+    return {'result': current_app.tasks.tweet_search(fields, limit, topic, sort_by)}, 200
+
 
 @add_metadata()
 def post(body, *args, **kwargs):
-    print(body)
-    pass
+    return {'result': current_app.tasks.add_tweet(body)}, 200
 
 @add_metadata()
-def delete(*args, **kwargs):
-    pass
+def delete(tweetId, *args, **kwargs):
+    return {'result': current_app.tasks.delete_tweet(tweetId)}, 200
 
 @add_metadata()
 def put(*args, **kwargs):
@@ -43,9 +32,5 @@ def put(*args, **kwargs):
 
 @add_metadata()
 def get_history(tweetId, *args, **kwargs):
-    with open('examples/history.json') as f:
-        example = json.load(f)
-    if example['id'] == tweetId:
-        return example
-    else:
-        return {"id": tweetId}
+    #return current_app.tasks.tweet_history()
+    pass
