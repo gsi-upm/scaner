@@ -32,5 +32,5 @@ def put(*args, **kwargs):
 
 @add_metadata()
 def get_history(tweetId, *args, **kwargs):
-    #return current_app.tasks.tweet_history()
+    #return {'result': current_app.tasks.tweet_history(tweetId)}, 200
     pass

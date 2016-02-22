@@ -16,42 +16,36 @@ client.db_open("mixedemotions", "admin", "admin")
 
 @celery.task
 def user(user_id):
-    userRecord = client.query("select userid,followers,impact,voice_t,user_relevance,UI_score,TR_score,UI_unnormalized,FR_score,voice_r from User where userid = '" + str(user_id) + "'")
-    userDict = {}
-    for attributeIn in userRecord[0].oRecordData:
-        userDict[attributeIn] = userRecord[0].oRecordData[attributeIn]
+    userRecord = client.query("select from User where id = '{user_id}'".format(user_id=user_id))
+    return userRecord[0].oRecordData
 
-    # En caso de que quiera sacar las relaciones
-    # del userDict['in_Follows']
-    # del userDict['out_Follows']
-    # del userDict['in_Retweeted_by']
-    # del userDict['in_Created_by']
-
-    return json.dumps(userDict)
-
+#TODO
 @celery.task
 def user_network(user_id):
-    userRecord = client.query("select from User where userid='{userid}'".format(userid=user_id))
+    userRecord = client.query("select from User where id='{userid}'".format(userid=user_id))
 
 @celery.task
 def user_attributes(user_id, attributes):
-    userRecord = client.query("select " + str(attribute) + " from User where userid = '" + str(user_id) + "'")
-    userDict = {}
-    for attributeIn in userRecord[0].oRecordData:
-        userDict[attributeIn] = userRecord[0].oRecordData[attributeIn]
-    return json.dumps(userDict)
+    userRecord = client.query("select {attributes} from User where id = '{user_id}'".format(attributes=attributes, user_id=user_id))
+    return userRecord[0].oRecordData
 
 
 @celery.task
-def user_search(user_id, attributes_search):
-    if attributes_search:
-        attributes_search = attributes_search[:-2]
-    userRecord = client.query("select userid, {attributes_search} from User where userid = '{userid}'".format(attributes_search=attributes_search,userid=user_id))
-    userDict = {}
-    for attributeIn in userRecord[0].oRecordData:
-        userDict[attributeIn] = userRecord[0].oRecordData[attributeIn]
-    return json.dumps(userDict)
-
+def user_search(attributes, limit, topic, sort_by):
+    if topic:
+        if sort_by:
+            user_search = client.query("select {attributes} from User where topics containsValue {topic} order by {sort_by} limit {limit}".format(attributes=attributes, topic=topic, sort_by=sort_by, limit=limit))
+        else:
+            user_search = client.query("select {attributes} from User where topics containsValue {topic} limit {limit}".format(attributes=attributes, topic=topic, limit=limit))
+    elif sort_by:
+        user_search = client.query("select {attributes} from User order by {sort_by} limit {limit}".format(attributes=attributes, sort_by=sort_by, limit=limit))
+    else:
+        user_search = client.query("select {attributes} from User limit {limit}".format(attributes=attributes, limit=limit))
+    # Procesar los usuarios y eliminar los atributos de OrientDB y las metricas viejas
+    user_list=[]
+    for user in user_search:
+        user_list.append(user.oRecordData)
+    return user_list
 
 @celery.task
 def prueba():
@@ -75,7 +69,7 @@ def ranking_tweets():
 
 @celery.task
 def tweet(tweet_id):
-    tweetRecord = client.query("select from Tweet where id = '" + str(tweet_id) + "'")
+    tweetRecord = client.query("select from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))
     # Procesar el tweet y eliminar los atributos de OrientDB y las metricas viejas
     return tweetRecord[0].oRecordData
 
@@ -87,7 +81,7 @@ def tweet_attributes(tweet_id, attributes):
 
 @celery.task
 def tweet_history(tweet_id):
-    tweetRecord = client.query("select from Tweet where id = '" + str(tweet_id) + "'")
+    tweetRecord = client.query("select from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))
     return tweetRecord[0].oRecordData
 
 @celery.task
