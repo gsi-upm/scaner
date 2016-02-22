@@ -343,8 +343,6 @@ definitions:
         $ref: '#/definitions/Coordinates'
       created_at:
         type: string
-      current_user_retweet:
-        $ref: '#/definitions/Tweets'
       entities:
         $ref: '#/definitions/Entities'
       favorite_count:
@@ -378,14 +376,14 @@ definitions:
       quoted_status_id_str:
         type: string
       quoted_status:
-        $ref: '#/definitions/Tweets'
+        $ref: '#/definitions/Tweets_Raw'
       scopes:
         type: object
         additionalProperties: {}
       retweet_count:
         type: integer
       retweeted_status:
-        $ref: '#/definitions/Tweets'
+        $ref: '#/definitions/Tweets_Raw'
       source:
         type: string
       text:
