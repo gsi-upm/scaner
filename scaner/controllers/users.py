@@ -1,3 +1,4 @@
+from flask import current_app
 from scaner.utils import add_metadata
 import json
 
@@ -12,7 +13,7 @@ import json
 @add_metadata()
 def get(userId, fields=None, *args, **kwargs):
     if fields:
-        return {'result': current_app.tasks.user_attributes(usertId, fields)}, 200
+        return {'result': current_app.tasks.user_attributes(userId, fields)}, 200
     else:
         return {'result': current_app.tasks.user(userId)}, 200 
 
