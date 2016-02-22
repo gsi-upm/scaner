@@ -1,47 +1,38 @@
+from flask import current_app
 from scaner.utils import add_metadata
 import json
 
-theusers = {"users": []}
-with open('examples/users.json') as f:
-    theusers = json.load(f)
+# theusers = {"users": []}
+# with open('examples/users.json') as f:
+#     theusers = json.load(f)
 
-
-thenet = {"links": []}
-with open('examples/user_network.json') as f:
-    thenet = json.load(f)
+# thenet = {"links": []}
+# with open('examples/user_network.json') as f:
+#     thenet = json.load(f)
 
 @add_metadata()
-def get(userId, *args, **kwargs):
-    for i in theusers['users']:
-        if i['id'] == userId:
-            return i
+def get(userId, fields=None, *args, **kwargs):
+    if fields:
+        return {'result': current_app.tasks.user_attributes(userId, fields)}, 200
+    else:
+        return {'result': current_app.tasks.user(userId)}, 200 
 
 @add_metadata('links')
 def get_network(userId, *args, **kwargs):
-    result = thenet.copy()
-    result['links'] = []
-    print(thenet)
-    for i in thenet['links']:
-        print(i.values())
-        if userId in list(i.values()):
-            result['links'].append(i)
-    return result
+    return {'result': current_app.tasks.user_network(userId)}, 200
 
 @add_metadata('users')
-def search(topic=None, *args, **kwargs):
-    result = theusers.copy()
-    result['users'] = []
-    for i in theusers['users']:
-        if not topic or topic in i['topics']:
-            result['users'].append(i)
-    return result
+def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
+    return {'result': current_app.tasks.user_search(fields, limit, topic, sort_by)}, 200
 
 @add_metadata()
-def post(*args, **kwargs):
+def post(body, *args, **kwargs):
     pass
+    #return {'result': current_app.tasks.add_user(body)}, 200
 
 @add_metadata()
 def delete(*args, **kwargs):
+    return {'result': current_app.tasks.delete_user(userId)}, 200
     pass
 
 @add_metadata()

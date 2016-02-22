@@ -15,4 +15,8 @@ if __name__ == '__main__':
     app = connexion.App(__name__)
     app.app.add_url_rule('/', 'index', go_to_ui)
     app.add_api('scaner_api.yaml', arguments={'title': 'Scaner\'s API'}, resolver=RestyResolver('scaner.controllers'))
+
+    from scaner import tasks
+    app.app.tasks = tasks
+
     app.run(port=port)
