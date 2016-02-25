@@ -1,15 +1,20 @@
 from celery import Celery
 import pyorient
 import json
+import os
+
+REDIS_HOST = os.environ.get('REDIS_HOST')
+ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
+
 
 config = {}
 config['SECRET_KEY'] = 'password'
-config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-celery = Celery("prueba", broker='redis://localhost:6379/0')
+config['CELERY_BROKER_URL'] = 'redis://%s:6379/0' % REDIS_HOST
+config['CELERY_RESULT_BACKEND'] = 'redis://%s:6379/0' % REDIS_HOST
+celery = Celery("prueba", broker='redis://%s:6379/0' % REDIS_HOST)
 celery.conf.update(config)
 
-client = pyorient.OrientDB("localhost", 2424)
+client = pyorient.OrientDB(ORIENTDB_HOST, 2424)
 session_id = client.connect("root", "root")
 client.db_open("mixedemotions", "admin", "admin")
 
@@ -111,3 +116,21 @@ def tweet_search(attributes, limit, topic, sort_by):
     for tweet in tweet_search:
         tweet_list.append(tweet.oRecordData)
     return tweet_list
+
+@celery.task
+def topic_search():
+    topicList = client.query("select from Topic")
+    topic_list = []
+    for topic in topicList:
+        topic_list.append(topic.oRecordData)
+    return topic_list
+
+@celery.task
+def topic(topic_id):
+    topicRecord = client.query("select from Topic where id = '{topic_id}'".format(topic_id=topic_id))
+    # Procesar el topic y eliminar los atributos de OrientDB
+    return topicRecord[0].oRecordData
+
+@celery.task
+def topic_network(topic_id):
+    pass
