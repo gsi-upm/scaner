@@ -1,0 +1,52 @@
+version: '2'
+
+services:
+  web:
+    build: .
+    ports:
+     - "5000:5000"
+    networks:
+      - web-tier
+    depends_on:
+      - orientdb
+      - celery
+      - redis
+    environment:
+      - ORIENTDB_HOST=orientdb
+      - REDIS_HOST=redis
+
+  celery:
+    build: .
+    command: "/usr/local/bin/run-celery.sh"
+    networks:
+      - web-tier
+    depends_on:
+      - redis
+      - orientdb
+    environment:
+      - ORIENTDB_HOST=orientdb
+      - REDIS_HOST=redis
+
+
+  orientdb:
+    image: orientdb/orientdb
+    ports:
+      - "2424:2424"
+      - "2480:2480"
+    volumes:
+      - ./DB/databases:/orientdb/databases
+      - ./DB/config:/orientdb/config
+    environment:
+      - ORIENTDB_ROOT_PASSWORD=root
+    networks:
+      - web-tier
+
+  redis:
+    image: redis
+    networks:
+      - web-tier
+
+networks:
+  web-tier:
+    driver: bridge
+
