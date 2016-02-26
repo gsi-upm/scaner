@@ -34,8 +34,8 @@ services:
       - "2424:2424"
       - "2480:2480"
     volumes:
-      - /home/palvarez/releases/orientdb-community-2.1.4/databases:/orientdb/databases
-      - /home/palvarez/releases/orientdb-community-2.1.4/config:/orientdb/config
+      - ./DB/databases:/orientdb/databases
+      - ./DB/config:/orientdb/config
     environment:
       - ORIENTDB_ROOT_PASSWORD=root
     networks:

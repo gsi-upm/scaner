@@ -7,9 +7,10 @@ import gc
 
 # FALTA TENER EL NÚMERO TOTAL DE TWEETS DE UN USUARIO FUERA DE LA BUSQUEDA
 # Metodo para calcular la metrica TR SCORE de todos los usuarios
-def user_tweetrate_score(userlist):
+def user_tweetrate_score():
+    userlist = client.query("select from User limit -1")
     for user in userlist:
-        tweets_related_user = client.query("select from Tweet where userid = '" + str(user.oRecordData['userid']) + "'")
+        tweets_related_user = client.query("select from Tweet where user_id = '{userid}'".format(userid=user.oRecorData[id]) )
         tweets_related_user = len(tweets_related_user)
         tweets_total_user = int(user.oRecordData['total_tweets'])
         TR_score = tweets_related_user/tweets_total_user
@@ -26,17 +27,19 @@ def influence_score(number_of_users, number_of_tweets):
     index = 0
     # iterations = max([(number_of_users/limit), (number_of_tweets/limit)])
     iterations = math.ceil(number_of_tweets/limit)
-    print("numero de iteraciones: " + str(iterations))
+    print("numero de iteraciones: {iterations}".format(iterations=iterations)
 
     # Creamos las matrices At, Ar y As vacia
     At = lil_matrix((number_of_tweets,number_of_users))
     Ar = lil_matrix((number_of_users,number_of_tweets))
     As = lil_matrix((number_of_users,number_of_tweets))
 
-    userlist = client.query("select from User order by followers desc limit 500")
+    ### PLANTEAR METODO PARA SELECCIONAR MENOS USUARIOS EN CASO NECESARIO
+    #userlist = client.query("select from User order by followers desc limit 500")
+    userlist = client.query("select from User limit -1")
 
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select from Tweet where @rid > " + iterationRID + " limit "+ str(limit))
+        tweetlist = client.query("select from Tweet where @rid > {iterationRID} limit {limit}".format(iterationRID=iterationRID, limit=limit))
 
         # Iteramos los usuarios y los tweets para rellenar las matrices
         index_start = index
@@ -51,11 +54,20 @@ def influence_score(number_of_users, number_of_tweets):
 
 
             # PUEDO OPTIMIZAR METIENDO ESTAS QUERYS EN LOS IF DE DEBAJO
-            user_created = client.query("select expand(in('Created_by')) from (select from User where userid = '" + str(user.oRecordData['userid']) + "')")
-            user_retweeted = client.query("select expand(in('Retweeted_by')) from (select from User where userid = '" + str(user.oRecordData['userid']) + "')")
-            # user_replied = client.query("select expand(in('Replied_by')) from (select from User where userid = '" + user.oRecordData['userid'] + "')")
-            user_follows_created = client.query("select expand(out('Follows').in('Created_by')) from (select from User where userid = '" + str(user.oRecordData['userid']) + "')")
-            user_follows_retweeted = client.query("select expand(out('Follows').in('Retweeted_by')) from (select from User where userid = '" + str(user.oRecordData['userid']) + "')")        
+            #user_created = client.query("select expand(in('Created_by')) from (select from User where id = '" + str(user.oRecordData['id']) + "')")
+            user_created = client.query("select expand(in('Created_by')) from (select from User where id ={user_id})".format(user_id=user.oRecordData['id']))
+            
+            #user_retweeted = client.query("select expand(in('Retweeted_by')) from (select from User where id = '" + str(user.oRecordData['id']) + "')")
+            user_retweeted = client.query("select expand(in('Retweeted_by')) from (select from User where id ={user_id})".format(user_id=user.oRecordData['id']))
+
+            # user_replied = client.query("select expand(in('Replied_by')) from (select from User where id = '" + user.oRecordData['user_id'] + "')")
+            
+
+            #user_follows_created = client.query("select expand(out('Follows').in('Created_by')) from (select from User where id = '" + str(user.oRecordData['id']) + "')")
+            user_follows_created = client.query("select expand(out('Follows').in('Created_by')) from (select from User where id ={user_id})".format(user_id=user.oRecordData['id']))
+
+            #user_follows_retweeted = client.query("select expand(out('Follows').in('Retweeted_by')) from (select from User where id = '" + str(user.oRecordData['id']) + "')")
+            user_follows_retweeted = client.query("select expand(out('Follows').in('Retweeted_by')) from (select from User where id ={user_id})".format(user_id=user.oRecordData['id']))
 
             for tweet in tweetlist:
                 found_At = False
@@ -64,7 +76,7 @@ def influence_score(number_of_users, number_of_tweets):
 
                 # Calculamos el vector para At y para Ar
                 for retweeted in user_retweeted:
-                    if retweeted.oRecordData['tid'] == tweet.oRecordData['tid']:
+                    if retweeted.oRecordData['id'] == tweet.oRecordData['id']:
                         user_tweet_At = np.append(user_tweet_At, np.ones(1))
                         found_At = True
                         tweet_user_Ar = np.append(tweet_user_Ar, np.ones(1))
@@ -73,7 +85,7 @@ def influence_score(number_of_users, number_of_tweets):
 
                 if not found_At:        
                     for created in user_created:
-                        if created.oRecordData['tid'] == tweet.oRecordData['tid']:
+                        if created.oRecordData['id'] == tweet.oRecordData['id']:
                             user_tweet_At = np.append(user_tweet_At, np.ones(1))
                             found_At = True
                             break
@@ -87,13 +99,13 @@ def influence_score(number_of_users, number_of_tweets):
 
                 # Calculamos el vector para As
                 for tweet_follow in user_follows_created:
-                    if tweet_follow.oRecordData['tid'] == tweet.oRecordData['tid']:
+                    if tweet_follow.oRecordData['id'] == tweet.oRecordData['id']:
                         user_user_As = np.append(user_user_As, np.ones(1))
                         found_As = True
                         break
                 if not found_As:
                     for retweet_follow in user_follows_retweeted:
-                        if tweet_follow.oRecordData['tid'] == tweet.oRecordData['tid']:
+                        if tweet_follow.oRecordData['id'] == tweet.oRecordData['id']:
                             user_user_As = np.append(user_user_As, np.ones(1))
                             found_As = True
                             break
@@ -229,13 +241,14 @@ def influence_score(number_of_users, number_of_tweets):
 
     # ALMACENAMOS EN LA DB LAS PUNTUACIONES
     for n,user in enumerate(userlist):
-        command = "update (select from User where userid = '" + str(user.oRecordData['userid']) + "') set UI_score = '" + str(UI_vector[n]) + "', UI_unnormalized = '" + str(users_vector[n]) + "'"
+        #command = "update (select from User where userid = '" + str(user.oRecordData['userid']) + "') set UI_score = '" + str(UI_vector[n]) + "', UI_unnormalized = '" + str(users_vector[n]) + "'"
+        command = "update (select from User where id={user_id}) set metrics.UI_score={UI_score}, metrics.UI_unnormalized={UI_unnormalized}".format(user_id=user.oRecordData['id'], UI_score=UI_vector[n], UI_unnormalized=users_vector[n]))
         client.command(command)
 
     newindex = 0
     iterationRID = "#-1:-1"
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select from Tweet where @rid > " + iterationRID + " limit "+ str(limit))
+        tweetlist = client.query("select from Tweet where @rid > "+  iterationRID + " limit "+ str(limit))
 
         for n,tweet in enumerate(tweetlist):
             command = "update (select from Tweet where tid = '" + str(tweet.oRecordData['tid']) + "') set TI_score = '" + str(tweets_vector[n+newindex]) + "'"
@@ -437,7 +450,6 @@ def tweet_relevance(number_of_tweets):
 
 
 
-
 # METODO PARA REALIZAR LA FASE DE PREPARACION
 def preparation_phase():
     # Calculamos el numero de usuarios y tweets que tenemos en la DB
@@ -445,8 +457,11 @@ def preparation_phase():
     # number_of_users = number_of_users[0].oRecordData['count']
     number_of_tweets = client.query("select count(*) as count from Tweet")
     number_of_tweets = number_of_tweets[0].oRecordData['count']
-    number_of_users = 500
-    user_tweetrate_score(userlist)
+    number_of_users = client.query("select count(*) as count from User")
+    number_of_users = number_of_users[0].oRecordData['count']
+
+    #user_tweetrate_score()
+
     influence_score(number_of_users, number_of_tweets)
     follow_relation_factor_user(number_of_users)
     impact_user(number_of_tweets)
@@ -462,7 +477,7 @@ if __name__ == '__main__':
 
     client = pyorient.OrientDB("localhost", 2424)
     session_id = client.connect("root", "root")
-    client.db_open("datosJ", "admin", "admin")
+    client.db_open("mixedemotions", "admin", "admin")
 
     preparation_phase()
 
