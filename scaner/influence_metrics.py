@@ -1,8 +1,8 @@
 import pyorient
 import math
 import numpy as np
-# from scipy.sparse import csr_matrix
-# from scipy.sparse import lil_matrix
+from scipy.sparse import csr_matrix
+from scipy.sparse import lil_matrix
 import gc
 
 # FALTA TENER EL NÚMERO TOTAL DE TWEETS DE UN USUARIO FUERA DE LA BUSQUEDA
@@ -27,14 +27,13 @@ def influence_score(number_of_users, number_of_tweets):
     index = 0
     # iterations = max([(number_of_users/limit), (number_of_tweets/limit)])
     iterations = math.ceil(number_of_tweets/limit)
-    print("numero de iteraciones: {iterations}".format(iterations=iterations)
+    print("numero de iteraciones: {iterations}".format(iterations=iterations))
 
     # Creamos las matrices At, Ar y As vacia
     At = lil_matrix((number_of_tweets,number_of_users))
     Ar = lil_matrix((number_of_users,number_of_tweets))
     As = lil_matrix((number_of_users,number_of_tweets))
 
-    ### PLANTEAR METODO PARA SELECCIONAR MENOS USUARIOS EN CASO NECESARIO
     #userlist = client.query("select from User order by metrics.followers desc limit 500")
     userlist = client.query("select from User limit -1")
 
@@ -182,10 +181,10 @@ def influence_score(number_of_users, number_of_tweets):
 
     Bt = csr_matrix(Bt)
 
+
     # LIMPIAMOS MEMORIA
     At = 0
     gc.collect()
-
 
 
     # Creamos la matriz Ba
@@ -205,7 +204,8 @@ def influence_score(number_of_users, number_of_tweets):
                     Ba[i,j] = (Ar[i,j]/sumatorio_Ar)*(1-d) + (As[i,j]/sumatorio_As)*d
         else:
             Ba[i,j] = 0
-        
+    
+
     Ba = csr_matrix(Ba)
 
     # LIMPIAMOS MEMORIA
@@ -217,24 +217,25 @@ def influence_score(number_of_users, number_of_tweets):
     users_vector = np.ones((number_of_users))/number_of_users
     tweets_vector =  np.ones((number_of_tweets))/number_of_tweets
 
+
     Ba_transpose = Ba.transpose()
     Bt_transpose = Bt.transpose()
 
-    # LIMPIAMOS MEMORIA
+    # # LIMPIAMOS MEMORIA
     Ba = 0
     Bt = 0
     gc.collect()
 
-    for k in range(1, 10000):
+
+    for k in range(1, 10):
         tweets_vector = Ba_transpose.dot(users_vector)
         users_vector = Bt_transpose.dot(tweets_vector)
 
 
-    # LIMPIAMOS MEMORIA
+    # # LIMPIAMOS MEMORIA
     Ba_transpose = 0
     Bt_transpose = 0
     gc.collect()
-
 
     # Normalizamos UI
     UI_vector = users_vector/np.amax(users_vector)
@@ -242,7 +243,7 @@ def influence_score(number_of_users, number_of_tweets):
     # ALMACENAMOS EN LA DB LAS PUNTUACIONES
     for n,user in enumerate(userlist):
         #command = "update (select from User where userid = '" + str(user.oRecordData['userid']) + "') set UI_score = '" + str(UI_vector[n]) + "', UI_unnormalized = '" + str(users_vector[n]) + "'"
-        command = "update (select from User where id={user_id}) set metrics.UI_score={UI_score}, metrics.UI_unnormalized={UI_unnormalized}".format(user_id=user.oRecordData['id'], UI_score=UI_vector[n], UI_unnormalized=users_vector[n]))
+        command = "update (select from User where id={user_id}) set metrics.UI_score={UI_score}, metrics.UI_unnormalized={UI_unnormalized}".format(user_id=user.oRecordData['id'], UI_score=UI_vector[n], UI_unnormalized=users_vector[n])
         client.command(command)
 
     newindex = 0
@@ -360,7 +361,7 @@ def impact_user(number_of_tweets):
 
     for n, user in enumerate(userlist):
         # tweets_replied = client.query("select expand(in('Replied_by')) from (select from User where userid = '" + user.oRecordData['userid'] + "')")
-        tweets_retweeted = client.query("select expand(in('Retweeted_by')) from (select from User where id = {id}".format(id=user.oRecordData['id']))
+        tweets_retweeted = client.query("select expand(in('Retweeted_by')) from (select from User where id = {id})".format(id=user.oRecordData['id']))
         n_tweets_related = len(tweets_retweeted) # + len(tweets_replied)
         if n_tweets_related == 0:
             user_impact = float(user.oRecordData['metrics']['UI_unnormalized'])/number_of_tweets
@@ -378,8 +379,8 @@ def voice_user():
     sigma = 0.5
     # Calculamos VOICE para cada usuario
     for n, user in enumerate(userlist):
-        tweets_user = client.query("select expand(in('Created_by')) from (select from User where id = {id}".format(id=user.oRecordData['id']))
-        retweets_user = client.query("select expand(in('Retweeted_by')) from (select from User where id = {id}".format(id=user.oRecordData['id']))
+        tweets_user = client.query("select expand(in('Created_by')) from (select from User where id = {id})".format(id=user.oRecordData['id']))
+        retweets_user = client.query("select expand(in('Retweeted_by')) from (select from User where id = {id})".format(id=user.oRecordData['id']))
         sumatorio_tweet_TI = 0
         sumatorio_retweet_TI = 0
         for tweet in tweets_user:
@@ -393,7 +394,7 @@ def voice_user():
             except:
                 pass
 
-        retweets_user = client.query("select expand(in('Retweeted_by')) from (select from User where id = {id}".format(id=user.oRecordData['id']))
+        retweets_user = client.query("select expand(in('Retweeted_by')) from (select from User where id = {id})".format(id=user.oRecordData['id']))
         voice_t = (1/(len(tweets_user) + sigma)) * sumatorio_tweet_TI
         voice_r = (1/(len(retweets_user) + sigma)) * sumatorio_retweet_TI
 
@@ -428,7 +429,7 @@ def tweet_relevance(number_of_tweets):
                     VR_score = float(user_creator[0].oRecordData['metrics']['voice_r'])
                 except:
                     pass
-            users_retweeted = client.query("select expand(out('Retweeted_by')) from (select from Tweet where id = {id}".format(id=tweet.oRecordData['id']))
+            users_retweeted = client.query("select expand(out('Retweeted_by')) from (select from Tweet where id = {id})".format(id=tweet.oRecordData['id']))
             # users_replied = client.query("select expand(out('Replied_by')) from (select from Tweet where tid = '" + tweet.oRecordData['tid'] + "')")
             IR_score = 0
             for user in users_retweeted:

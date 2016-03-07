@@ -73,12 +73,10 @@ create index User.id                                        UNIQUE
 
 
 
-
 # Create Tweet vertex
 create class Tweet extends V
 
 # Create User property
-
 create property Tweet.contributors                  EMBEDDEDLIST
 create property Tweet.in_reply_to_status_id	        INTEGER
 create property Tweet.user_id                       INTEGER
@@ -122,7 +120,16 @@ create index Tweet.id                               UNIQUE
 
 create class Topic extends V
 
-create property Topic.id 							STRING
-create property Topic.last_tweet 					STRING
-create property Topic.tweet_count 					INTEGER
-create property Topic.user_count 					INTEGER
+create property Topic.id                            INTEGER
+create property Topic.name                          STRING
+create property Topic.last_tweet                    STRING
+create property Topic.tweet_count                   INTEGER
+create property Topic.user_count                    INTEGER
+
+# Create Edges classes
+create class Follows extends E
+create class Retweet extends E
+create class Created_by extends E
+create class Retweeted_by extends E
+create class Reply extends E
+create class Replied_by extends E

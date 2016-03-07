@@ -2,6 +2,7 @@ from celery import Celery
 import pyorient
 import json
 import os
+import ./bitter/bitter/utils
 
 REDIS_HOST = os.environ.get('REDIS_HOST')
 ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
@@ -133,4 +134,8 @@ def topic(topic_id):
 
 @celery.task
 def topic_network(topic_id):
+    pass
+
+@celery.task
+def get_user_from_twitter():
     pass
