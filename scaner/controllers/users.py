@@ -13,9 +13,9 @@ import json
 @add_metadata()
 def get(userId, fields=None, *args, **kwargs):
     if fields:
-        return {'result': current_app.tasks.user_attributes(userId, fields)}, 200
+        return {'users': current_app.tasks.user_attributes(userId, fields)}, 200
     else:
-        return {'result': current_app.tasks.user(userId)}, 200 
+        return {'users': current_app.tasks.user(userId)}, 200 
 
 @add_metadata('links')
 def get_network(userId, *args, **kwargs):
@@ -23,7 +23,7 @@ def get_network(userId, *args, **kwargs):
 
 @add_metadata('users')
 def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
-    return {'result': current_app.tasks.user_search(fields, limit, topic, sort_by)}, 200
+    return {'users': current_app.tasks.user_search(fields, limit, topic, sort_by)}, 200
 
 @add_metadata()
 def post(body, *args, **kwargs):

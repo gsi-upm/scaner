@@ -10,11 +10,11 @@ from flask import current_app
 
 @add_metadata('topics')
 def search(*args, **kwargs):
-    return {'result': current_app.tasks.topic_search()}, 200 
+    return {'topics': current_app.tasks.topic_search()}, 200 
 
 @add_metadata()
 def get(topicId, *args, **kwargs):
-    return {'result': current_app.tasks.topic(topicId)}, 200 
+    return {'topics': current_app.tasks.topic(topicId)}, 200 
 
 @add_metadata()
 def get_network(*args, **kwargs):

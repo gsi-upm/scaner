@@ -67,9 +67,11 @@ create property User.name                                   STRING
 create property User.geo_enabled                            STRING
 # Debajo podría ser BOOLEAN
 create property User.default_profile_image                  STRING
-create property User.metrics                                EMBEDDEDMAP
+#create property User.metrics                                EMBEDDEDMAP
+create property User.pending                                BOOLEAN
 
 create index User.id                                        UNIQUE
+create index User.pending                                   NOTUNIQUE
 
 
 
@@ -113,7 +115,7 @@ create property Tweet.topics                        EMBEDDEDLIST
 create property Tweet.text                          STRING
 create property Tweet.filter_level                  STRING
 create property Tweet.created_at                    STRING
-create property Tweet.metrics                       EMBEDDEDMAP
+#create property Tweet.metrics                       EMBEDDEDMAP
 
 create index Tweet.id                               UNIQUE
 # create index Tweet.topic                            NOTUNIQUE
@@ -126,6 +128,49 @@ create property Topic.last_tweet                    STRING
 create property Topic.tweet_count                   INTEGER
 create property Topic.user_count                    INTEGER
 
+
+create class User_metric extends V
+
+create property User_metric.id                      INTEGER
+# Debajo podría ser DATE
+create property User_metric.date                    STRING
+# create property User_metric.followers               INTEGER
+# create property User_metric.following               INTEGER
+# create property User_metric.influence               DOUBLE
+# create property User_metric.voice                   DOUBLE
+# create property User_metric.repliedRatio            DOUBLE
+# create property User_metric.hIndexFav               DOUBLE
+# create property User_metric.last_updated            STRING
+# create property User_metric.follow_ratio            DOUBLE
+# create property User_metric.relevance               DOUBLE
+# create property User_metric.popularity              DOUBLE
+
+# create property User_metric.replyRatio              DOUBLE
+# create property User_metric.hIndexRT                DOUBLE
+# create property User_metric.openinfluence           DOUBLE
+create property User_metric.impact                  DOUBLE
+create property User_metric.UI_score                DOUBLE
+create property User_metric.UI_unnormalized         DOUBLE
+create property User_metric.FR_score                DOUBLE
+create property User_metric.voice_r                 DOUBLE
+create property User_metric.TR_score                DOUBLE
+create property User_metric.user_relevance          DOUBLE
+
+
+create class Tweet_metric extends V
+
+create property Tweet_metric.id                     INTEGER
+# Debajo podría ser DATE
+# create property Tweet_metric.date                   STRING
+# create property Tweet_metric.popularity             DOUBLE
+# create property Tweet_metric.retweet_count          INTEGER
+# create property Tweet_metric.last_updated           STRING
+# create property Tweet_metric.relevance              DOUBLE
+# create property Tweet_metric.favourite_count        INTEGER
+create property Tweet_metric.TI_score               DOUBLE
+create property Tweet_metric.tweet_relevance        DOUBLE
+
+
 # Create Edges classes
 create class Follows extends E
 create class Retweet extends E
@@ -133,3 +178,5 @@ create class Created_by extends E
 create class Retweeted_by extends E
 create class Reply extends E
 create class Replied_by extends E
+create class Belongs_to_topic extends E
+create class Last_metrics extends E

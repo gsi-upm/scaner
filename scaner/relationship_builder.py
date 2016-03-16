@@ -65,8 +65,10 @@ def tweets_relationships_creation():
 
 
 
-def individual_user_relationships_creation():
-    pass
+def individual_user_relationships_creation(user_id):
+    client.command("create edge Created_by from (select from Tweet where user_id={user_id} to (select from User where id={user_id})".format(user_id=user_id))
+    client.command("create edge Retweeted_by from (select expand(out('Retweet')) from (select from Tweet where user_id={user_id})) to (select from User where id={user_id})".format(user_id=user_id))
+    #TODO RELACION FOLLOW
 
 def individual_tweet_relationships_creation():
     pass
