@@ -11,6 +11,8 @@ services:
       - orientdb
       - celery
       - redis
+    volumes:
+      - ./scaner:/usr/src/app/scaner
     environment:
       - ORIENTDB_HOST=orientdb
       - REDIS_HOST=redis

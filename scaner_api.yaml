@@ -275,6 +275,16 @@ paths:
           schema:
             $ref: '#/definitions/Network'
 
+  # /tasks:
+  #   get:
+  #     tags:
+  #       - tasks
+  #     responses:
+  #       200:
+  #         description: OK
+  #         schema:
+  #           $ref: '#/definitions/Tasks'
+
 
 definitions:
 

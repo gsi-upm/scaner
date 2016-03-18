@@ -7,33 +7,36 @@ import bitter.crawlers
 import bitter.utils
 from datetime import timedelta
 
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
+
 REDIS_HOST = os.environ.get('REDIS_HOST')
 ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
 
 # CONFIGURACION PARA DOCKER
-# config = {}
-# config['SECRET_KEY'] = 'password'
-# config['CELERY_BROKER_URL'] = 'redis://%s:6379/0' % REDIS_HOST
-# config['CELERY_RESULT_BACKEND'] = 'redis://%s:6379/0' % REDIS_HOST
-# celery = Celery("prueba", broker='redis://%s:6379/0' % REDIS_HOST)
-# celery.conf.update(config)
-
-# client = pyorient.OrientDB(ORIENTDB_HOST, 2424)
-# session_id = client.connect("root", "root")
-# client.db_open("mixedemotions", "admin", "admin")
-
-
 config = {}
 config['SECRET_KEY'] = 'password'
-config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-celery = Celery("prueba", broker='redis://localhost:6379/0')
+config['CELERY_BROKER_URL'] = 'redis://%s:6379/0' % REDIS_HOST
+config['CELERY_RESULT_BACKEND'] = 'redis://%s:6379/0' % REDIS_HOST
+celery = Celery("prueba", broker='redis://%s:6379/0' % REDIS_HOST)
 celery.conf.update(config)
 
-
-client = pyorient.OrientDB("localhost", 2424)
+client = pyorient.OrientDB(ORIENTDB_HOST, 2424)
 session_id = client.connect("root", "root")
 client.db_open("mixedemotions", "admin", "admin")
+
+# # CONFIGURACION PARA LOCAL
+# config = {}
+# config['SECRET_KEY'] = 'password'
+# config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+# config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+# celery = Celery("prueba", broker='redis://localhost:6379/0')
+# celery.conf.update(config)
+
+
+# client = pyorient.OrientDB("localhost", 2424)
+# session_id = client.connect("root", "root")
+# client.db_open("mixedemotions", "admin", "admin")
 
 
 @celery.task
@@ -130,18 +133,20 @@ def tweet_history(tweet_id):
 
 @celery.task
 def add_tweet(tweetJson):
-    client.command("insert into Tweet content {tweetJson}".format(tweetJson=tweetJson))
+    cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
+    logger.error(cmd)
+    client.command(cmd)
     # Si es un retweet, lo enlazamos con su original
-    user_id = tweetJson['user_id']
-    print("USER ID")
-    print(user_id)
-    user = client.query("select from User where id = {id}".format(id=user_id))
-    if not user:
-        client.command("insert into User set id = {id}, pending=True".format(id=user_id))
-    client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetJson['id'],user_id=user_id))
-    if tweetJson['retweeted_status']:
-        client.command("create edge Retweet from (select from Tweet where id = {retweet}) to (select from Tweet where id = {original})".format(retweet=tweetJson['id'], original=tweetJson['retweeted_status']['id']))
-        client.command("create edge Retweeted_by from (Tweet where id = {original}) to (select from User where id = {user_id})".format(original=tweetJson['retweeted_status']['id'], user_id=user_id))
+    # user_id = tweetJson['user_id']
+    # print("USER ID")
+    # print(user_id)
+    # user = client.query("select from User where id = {id}".format(id=user_id))
+    # if not user:
+    #     client.command("insert into User set id = {id}, pending=True".format(id=user_id))
+    # client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetJson['id'],user_id=user_id))
+    # if tweetJson['retweeted_status']:
+    #     client.command("create edge Retweet from (select from Tweet where id = {retweet}) to (select from Tweet where id = {original})".format(retweet=tweetJson['id'], original=tweetJson['retweeted_status']['id']))
+    #     client.command("create edge Retweeted_by from (Tweet where id = {original}) to (select from User where id = {user_id})".format(original=tweetJson['retweeted_status']['id'], user_id=user_id))
     return ("Tweet added to DB")
 
 @celery.task

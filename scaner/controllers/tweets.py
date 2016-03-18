@@ -19,7 +19,7 @@ def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
 
 @add_metadata()
 def post(body, *args, **kwargs):
-    return {'result': current_app.tasks.add_tweet(body)}, 200
+    return {'result': current_app.tasks.add_tweet(json.dumps(body))}, 200
 
 @add_metadata()
 def delete(tweetId, *args, **kwargs):
