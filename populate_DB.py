@@ -2,6 +2,7 @@ import requests
 import json
 import glob
 from itertools import islice
+from time import sleep
 
 limit = None
 
@@ -14,6 +15,7 @@ for brand in islice(list_of_brands, limit):
     for date in islice(list_of_dates, limit):
         with open(date) as f:
             for line in islice(f, limit):
+                sleep(1)
                 tweet_full = json.loads(line)
                 temp = tweet_full['raw']
                 tweet={}

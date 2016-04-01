@@ -33,8 +33,11 @@ def post(body, *args, **kwargs):
 @add_metadata()
 def delete(*args, **kwargs):
     return {'result': current_app.tasks.delete_user(userId)}, 200
-    pass
 
 @add_metadata()
 def put(*args, **kwargs):
     pass
+
+@add_metadata()
+def get_emotion(*args, **kwargs):
+    return {'result': current_app.tasks.delete_user(userId)}, 200

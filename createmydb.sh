@@ -27,7 +27,7 @@ create property User.profile_background_color               STRING
 create property User.contributors_enabled                   STRING
 create property User.profile_sidebar_fill_color             STRING
 create property User.profile_link_color                     STRING
-create property User.id                                     INTEGER
+create property User.id                                     LONG
 create property User.profile_image_url_https                STRING
 create property User.id_str                                 STRING
 create property User.withheld_in_countries                  STRING
@@ -81,7 +81,7 @@ create class Tweet extends V
 # Create User property
 create property Tweet.contributors                  EMBEDDEDLIST
 create property Tweet.in_reply_to_status_id	        INTEGER
-create property Tweet.user_id                       INTEGER
+create property Tweet.user_id                       LONG
 create property Tweet.withheld_scope                STRING
 create property Tweet.quoted_status_id              INTEGER
 create property Tweet.retweet_count                 INTEGER
@@ -90,7 +90,7 @@ create property Tweet.truncated                     STRING
 create property Tweet.lang                          STRING
 create property Tweet.withheld_countries            EMBEDDEDLIST
 create property Tweet.quoted_status_id_str          STRING
-create property Tweet.id                            INTEGER
+create property Tweet.id                            LONG
 create property Tweet.coordinates                   EMBEDDEDMAP
 # Debajo podria ser BOOLEAN
 create property Tweet.withheld_copyright            STRING
@@ -122,7 +122,7 @@ create index Tweet.id                               UNIQUE
 
 create class Topic extends V
 
-create property Topic.id                            INTEGER
+create property Topic.id                            LONG
 create property Topic.name                          STRING
 create property Topic.last_tweet                    STRING
 create property Topic.tweet_count                   INTEGER
@@ -131,7 +131,7 @@ create property Topic.user_count                    INTEGER
 
 create class User_metric extends V
 
-create property User_metric.id                      INTEGER
+create property User_metric.id                      LONG
 # Debajo podría ser DATE
 create property User_metric.date                    STRING
 # create property User_metric.followers               INTEGER
@@ -144,7 +144,6 @@ create property User_metric.date                    STRING
 # create property User_metric.follow_ratio            DOUBLE
 # create property User_metric.relevance               DOUBLE
 # create property User_metric.popularity              DOUBLE
-
 # create property User_metric.replyRatio              DOUBLE
 # create property User_metric.hIndexRT                DOUBLE
 # create property User_metric.openinfluence           DOUBLE
@@ -159,7 +158,7 @@ create property User_metric.user_relevance          DOUBLE
 
 create class Tweet_metric extends V
 
-create property Tweet_metric.id                     INTEGER
+create property Tweet_metric.id                     LONG
 # Debajo podría ser DATE
 # create property Tweet_metric.date                   STRING
 # create property Tweet_metric.popularity             DOUBLE
@@ -171,6 +170,9 @@ create property Tweet_metric.TI_score               DOUBLE
 create property Tweet_metric.tweet_relevance        DOUBLE
 
 
+create class EmotionSet extends V
+
+
 # Create Edges classes
 create class Follows extends E
 create class Retweet extends E
@@ -180,3 +182,4 @@ create class Reply extends E
 create class Replied_by extends E
 create class Belongs_to_topic extends E
 create class Last_metrics extends E
+create class hasEmotionSet extends E

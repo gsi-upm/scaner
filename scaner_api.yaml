@@ -39,6 +39,68 @@ paths:
             $ref: "#/definitions/Users"
         404:
           description: User not found
+          
+  # /users/{userId}/emotion:
+  #   operationId: scaner.controllers.users.get_emotion
+  #   get:
+  #     tags:
+  #     - users
+  #     produces:
+  #     - application/json
+  #     parameters:
+  #     - name: userId
+  #       in: path
+  #       required: true
+  #       x-is-map: false
+  #       type: integer
+  #       format: int64
+  #     responses:
+  #       200:
+  #         description: User found and returned
+  #         schema:
+  #           $ref: "#/definitions/Users"
+  #       404:
+  #         description: User not found
+  # /users/{userId}/sentiment:
+  #   get:
+  #     tags:
+  #     - users
+  #     produces:
+  #     - application/json
+  #     parameters:
+  #     - name: userId
+  #       in: path
+  #       required: true
+  #       x-is-map: false
+  #       type: integer
+  #       format: int64
+  #     responses:
+  #       200:
+  #         description: User found and returned
+  #         # schema:
+  #         #   $ref: "#/definitions/Users"
+  #       404:
+  #         description: User not found
+  # /users/{userId}/metrics:
+  #   get:
+  #     tags:
+  #     - users
+  #     produces:
+  #     - application/json
+  #     parameters:
+  #     - name: userId
+  #       in: path
+  #       required: true
+  #       x-is-map: false
+  #       type: integer
+  #       format: int64
+  #     responses:
+  #       200:
+  #         description: User found and returned
+  #         # schema:
+  #         #   $ref: "#/definitions/Users"
+  #       404:
+  #         description: User not found
   /users:
     get:
       tags:
@@ -78,6 +140,7 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Users_search"
+
   /tweets/{tweetId}:
     get:
       tags:
@@ -156,6 +219,68 @@ paths:
             404:
                 description: Tweet not found
 
+  # /tweets/{tweetId}/sentiment:
+  #   get:
+  #     tags:
+  #     - tweets
+  #     produces:
+  #     - application/json
+  #     parameters:
+  #     - name: tweetId
+  #       in: path
+  #       required: true
+  #       x-is-map: false
+  #       type: integer
+  #       format: int64
+  #     responses:
+  #       200:
+  #         description: Tweet found and returned
+  #         # schema:
+  #         #   $ref: '#/definitions/Tweets_search'
+  #       404:
+  #         description: Tweet not found
+
+  # /tweets/{tweetId}/emotion:
+  #   get:
+  #     tags:
+  #     - tweets
+  #     produces:
+  #     - application/json
+  #     parameters:
+  #     - name: tweetId
+  #       in: path
+  #       required: true
+  #       x-is-map: false
+  #       type: integer
+  #       format: int64
+  #     responses:
+  #       200:
+  #         description: Tweet found and returned
+  #         # schema:
+  #         #   $ref: '#/definitions/Tweets_search'
+  #       404:
+  #         description: Tweet not found
+
+  #   /tweets/{tweetId}/metrics:
+  #   get:
+  #     tags:
+  #     - tweets
+  #     produces:
+  #     - application/json
+  #     parameters:
+  #     - name: tweetId
+  #       in: path
+  #       required: true
+  #       x-is-map: false
+  #       type: integer
+  #       format: int64
+  #     responses:
+  #       200:
+  #         description: Tweet found and returned
+  #         # schema:
+  #         #   $ref: '#/definitions/Tweets_search'
+  #       404:
+  #         description: Tweet not found
       
   /tweets:
     get:
@@ -278,12 +403,31 @@ paths:
   # /tasks:
   #   get:
   #     tags:
-  #       - tasks
+  #     - tasks
+  #     produces:
+  #     - application/json
   #     responses:
   #       200:
-  #         description: OK
-  #         schema:
-  #           $ref: '#/definitions/Tasks'
+  #         description: Tasks found and returned
+  #         # schema:
+  #         #   $ref: '#/definitions/Tasks'
+
+  # /tasks/{taskId}:
+  #   get:
+  #     tags:
+  #     - tasks
+  #     produces:
+  #     - application/json
+  #     parameters:
+  #     - name: taskId
+  #       in: path
+  #       type: string
+  #       required: true
+  #     responses:
+  #       200:
+  #         description: Task found and returned
+  #         # schema:
+  #         #   $ref: '#/definitions/Tasks'      
 
 
 definitions:

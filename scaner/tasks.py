@@ -60,7 +60,6 @@ def user_attributes(user_id, attributes):
     userRecord = client.query("select {attributes} from User where id = '{user_id}'".format(attributes=attributes, user_id=user_id))
     return userRecord[0].oRecordData
 
-
 @celery.task
 def user_search(attributes, limit, topic, sort_by):
     if topic:
@@ -83,6 +82,21 @@ def user_search(attributes, limit, topic, sort_by):
         user.pop("pending", None)
         user_list.append(user)
     return user_list
+
+@celery.task
+def get_user_emotion(user_id):
+    emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
+    return emotionRecord[0].oRecordData
+
+@celery.task
+def get_user_sentiment(user_id):
+    emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
+    return emotionRecord[0].oRecordData
+
+@celery.task
+def get_user_metrics(user_id):
+    metricsRecord = client.query("select expand(out('Last_metrics')) from User where id = '{user_id}'".format(user_id=user_id))   
+    return metricsRecord[0].oRecordData
 
 @celery.task
 def prueba():
@@ -133,7 +147,11 @@ def tweet_history(tweet_id):
 
 @celery.task
 def add_tweet(tweetJson):
+   # tweetJson = tweetJson.decode('utf-8', errors='ignore')
+    tweetDict = json.loads(tweetJson)
+    tweetJson = json.dumps(tweetDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
     cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
+    #cmd = cmd.encode('utf-8', 'ignore')
     logger.error(cmd)
     client.command(cmd)
     # Si es un retweet, lo enlazamos con su original
@@ -177,6 +195,21 @@ def tweet_search(attributes, limit, topic, sort_by):
         tweet.pop("out_Belongs_to_topic", None)
         tweet_list.append(tweet)
     return tweet_list
+
+@celery.task
+def get_tweet_emotion(tweet_id):
+    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))   
+    return emotionRecord[0].oRecordData
+
+@celery.task
+def get_tweet_sentiment(tweet_id):
+    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))   
+    return emotionRecord[0].oRecordData
+
+@celery.task
+def get_tweet_metrics(tweet_id):
+    metricsRecord = client.query("select expand(out('Last_metrics')) from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))   
+    return metricsRecord[0].oRecordData
 
 @celery.task
 def topic_search():
