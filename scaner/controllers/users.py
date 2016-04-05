@@ -13,17 +13,20 @@ import json
 @add_metadata()
 def get(userId, fields=None, *args, **kwargs):
     if fields:
-        return {'users': current_app.tasks.user_attributes(userId, fields)}, 200
+        get_task = current_app.tasks.user_attributes.delay(userId, fields)
     else:
-        return {'users': current_app.tasks.user(userId)}, 200 
+        get_task = current_app.tasks.user.delay(userId)
+    return {'users': get_task.get(timeout=10)}, 200 
 
 @add_metadata('links')
 def get_network(userId, *args, **kwargs):
-    return {'result': current_app.tasks.user_network(userId)}, 200
+    get_network_task = current_app.tasks.user_network.delay(userId)
+    return {'result': get_network_task.get(timeout=10)}, 200
 
 @add_metadata('users')
 def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
-    return {'users': current_app.tasks.user_search(fields, limit, topic, sort_by)}, 200
+    search_task = current_app.tasks.user_search.delay(fields, limit, topic, sort_by)
+    return {'users': search_task.get(timeout=10)}, 200
 
 @add_metadata()
 def post(body, *args, **kwargs):
@@ -32,7 +35,8 @@ def post(body, *args, **kwargs):
 
 @add_metadata()
 def delete(*args, **kwargs):
-    return {'result': current_app.tasks.delete_user(userId)}, 200
+    delete_task = current_app.tasks.delete_user.delay(userId)
+    return {'result': delete_task.get(timeout=10)}, 200
 
 @add_metadata()
 def put(*args, **kwargs):
@@ -40,4 +44,12 @@ def put(*args, **kwargs):
 
 @add_metadata()
 def get_emotion(*args, **kwargs):
-    return {'result': current_app.tasks.delete_user(userId)}, 200
+    return {'result': current_app.tasks.get_user(userId)}, 200
+
+@add_metadata()
+def get_sentiment(*args, **kwargs):
+    return {'result': current_app.tasks.get_user(userId)}, 200
+
+@add_metadata()
+def get_metrics(*args, **kwargs):
+    return {'result': current_app.tasks.get_user(userId)}, 200

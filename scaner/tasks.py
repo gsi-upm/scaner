@@ -6,6 +6,7 @@ import os
 import bitter.crawlers
 import bitter.utils
 from datetime import timedelta
+from . import influence_metrics
 
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
@@ -256,6 +257,6 @@ def get_users_from_twitter(pending_users=None):
 
     
 
-@periodic_task(run_every=timedelta(days=1))
-def execute_metrics():
-    pass
+# @periodic_task(run_every=timedelta(days=1))
+# def execute_metrics():
+#     influence_metrics.execution()

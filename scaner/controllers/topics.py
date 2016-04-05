@@ -10,11 +10,13 @@ from flask import current_app
 
 @add_metadata('topics')
 def search(*args, **kwargs):
-    return {'topics': current_app.tasks.topic_search()}, 200 
+    search_task = current_app.tasks.topic_search.delay()
+    return {'topics': search_task.get(timeout = 10)}, 200 
 
 @add_metadata()
 def get(topicId, *args, **kwargs):
-    return {'topics': current_app.tasks.topic(topicId)}, 200 
+    get_task = current_app.tasks.topicdelay(topicId)
+    return {'topics': get_task.get(timeout = 10)}, 200 
 
 @add_metadata()
 def get_network(*args, **kwargs):
