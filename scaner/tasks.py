@@ -7,6 +7,9 @@ import bitter.crawlers
 import bitter.utils
 from datetime import timedelta
 from . import influence_metrics
+import time
+from celery.task.control import inspect
+from celery.result import AsyncResult
 
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
@@ -14,30 +17,31 @@ logger = get_task_logger(__name__)
 REDIS_HOST = os.environ.get('REDIS_HOST')
 ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
 
+
 # CONFIGURACION PARA DOCKER
-config = {}
-config['SECRET_KEY'] = 'password'
-config['CELERY_BROKER_URL'] = 'redis://%s:6379/0' % REDIS_HOST
-config['CELERY_RESULT_BACKEND'] = 'redis://%s:6379/0' % REDIS_HOST
-celery = Celery("prueba", broker='redis://%s:6379/0' % REDIS_HOST)
-celery.conf.update(config)
-
-client = pyorient.OrientDB(ORIENTDB_HOST, 2424)
-session_id = client.connect("root", "root")
-client.db_open("mixedemotions", "admin", "admin")
-
-# # CONFIGURACION PARA LOCAL
 # config = {}
 # config['SECRET_KEY'] = 'password'
-# config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-# config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-# celery = Celery("prueba", broker='redis://localhost:6379/0')
+# config['CELERY_BROKER_URL'] = 'redis://%s:6379/0' % REDIS_HOST
+# config['CELERY_RESULT_BACKEND'] = 'redis://%s:6379/0' % REDIS_HOST
+# celery = Celery("prueba", broker='redis://%s:6379/0' % REDIS_HOST)
 # celery.conf.update(config)
 
-
-# client = pyorient.OrientDB("localhost", 2424)
+# client = pyorient.OrientDB(ORIENTDB_HOST, 2424)
 # session_id = client.connect("root", "root")
 # client.db_open("mixedemotions", "admin", "admin")
+
+# # CONFIGURACION PARA LOCAL
+config = {}
+config['SECRET_KEY'] = 'password'
+config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+celery = Celery("prueba", broker='redis://localhost:6379/0')
+celery.conf.update(config)
+
+
+client = pyorient.OrientDB("localhost", 2424)
+session_id = client.connect("root", "root")
+client.db_open("mixedemotions", "admin", "admin")
 
 
 @celery.task
@@ -150,10 +154,11 @@ def tweet_history(tweet_id):
 def add_tweet(tweetJson):
    # tweetJson = tweetJson.decode('utf-8', errors='ignore')
     tweetDict = json.loads(tweetJson)
+    print (tweetDict['id'])
     tweetJson = json.dumps(tweetDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
     cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
     #cmd = cmd.encode('utf-8', 'ignore')
-    logger.error(cmd)
+    #logger.error(cmd)
     client.command(cmd)
     # Si es un retweet, lo enlazamos con su original
     # user_id = tweetJson['user_id']
@@ -255,7 +260,16 @@ def get_users_from_twitter(pending_users=None):
 
         #TODO RELACION FOLLOW
 
+@celery.task
+def get_task_list():
+    i = inspect()
+    return i.scheduled()
     
+@celery.task
+def get_task_status(taskId):
+    res = AsyncResult(taskId)
+    return str(res.ready())
+
 
 # @periodic_task(run_every=timedelta(days=1))
 # def execute_metrics():

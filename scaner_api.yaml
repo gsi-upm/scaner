@@ -605,8 +605,8 @@ definitions:
     properties:
       coordinates:
         type: array
-        items:
-          type: number
+        # items:
+        #   type: number
       type:
         type: string
   Users:
@@ -737,7 +737,7 @@ definitions:
       source_status_id:
         type: integer
       source_status_id_str:
-        type: integer
+        type: string
       type:
         type: string
       url:
@@ -774,7 +774,7 @@ definitions:
       expanded_url:
         type: string
       indices:
-        type: string
+        type: array
       url:
         type: string
 
@@ -824,8 +824,8 @@ definitions:
         type: array
         items:
           type: array
-          items:
-            type: number
+          # items:
+          #   type: number
       type:
         type: string
 
