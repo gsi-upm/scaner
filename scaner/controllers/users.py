@@ -2,13 +2,12 @@ from flask import current_app
 from scaner.utils import add_metadata
 import json
 
-# theusers = {"users": []}
-# with open('examples/users.json') as f:
-#     theusers = json.load(f)
+# PRUEBA EXTRACIION USUARIOS
+# @add_metadata()
+# def get(userId, fields=None, *args, **kwargs):
+#     get_task = current_app.tasks.get_user_of_tweet.delay(userId)
+#     return {'users': get_task.get(timeout=10)}, 200 
 
-# thenet = {"links": []}
-# with open('examples/user_network.json') as f:
-#     thenet = json.load(f)
 
 @add_metadata()
 def get(userId, fields=None, *args, **kwargs):

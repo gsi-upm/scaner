@@ -49,7 +49,7 @@ create property User.description                            STRING
 create property User.statuses_count                         INTEGER
 create property User.profile_background_tile                STRING
 create property User.favorite_count                         INTEGER
-create property User.entities                               EMBEDDEDMAP
+create property User.entities                               EMBEDDEDLIST
 # AQUI IRIA EL CONTENIDO
 create property User.status                                 EMBEDDEDMAP
 # AQUI IRIA EL CONTENIDO

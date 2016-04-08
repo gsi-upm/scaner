@@ -3,9 +3,6 @@ from scaner.utils import add_metadata
 import json
 from time import sleep
 
-# tweets = {}
-# with open('examples/tweets-me.json') as f:
-#     tweets = json.load(f)
 
 @add_metadata()
 def get(tweetId, fields=None, *args, **kwargs):
@@ -23,7 +20,6 @@ def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
 @add_metadata()
 def post(body, *args, **kwargs):
     post_task = current_app.tasks.add_tweet.delay(json.dumps(body))
-    #sleep(1)
     return {'result': post_task.get(timeout=10)}, 200
 
 @add_metadata()

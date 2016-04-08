@@ -38,7 +38,6 @@ config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 celery = Celery("prueba", broker='redis://localhost:6379/0')
 celery.conf.update(config)
 
-
 client = pyorient.OrientDB("localhost", 2424)
 session_id = client.connect("root", "root")
 client.db_open("mixedemotions", "admin", "admin")
@@ -157,8 +156,8 @@ def add_tweet(tweetJson):
     print (tweetDict['id'])
     tweetJson = json.dumps(tweetDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
     cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
-    #cmd = cmd.encode('utf-8', 'ignore')
-    #logger.error(cmd)
+    # cmd = cmd.encode('utf-8', 'ignore')
+    # logger.error(cmd)
     client.command(cmd)
     # Si es un retweet, lo enlazamos con su original
     # user_id = tweetJson['user_id']
@@ -270,7 +269,20 @@ def get_task_status(taskId):
     res = AsyncResult(taskId)
     return str(res.ready())
 
-
 # @periodic_task(run_every=timedelta(days=1))
 # def execute_metrics():
 #     influence_metrics.execution()
+
+@celery.task
+def get_user_of_tweet(tweetId):
+    wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
+    # pending_user = client.query("select user.id from Tweet where id = {tweetId}".format(tweetId=tweetId))
+    # logger.error(pending_user[0].oRecordData)
+    # pending_user_list = [pending_user[0].oRecordData['id']]
+    pending_user_list = ["88602264",]
+    users_retrieved = bitter.utils.get_users(wq,pending_user_list)
+    for user_extracted in users_retrieved:
+        user_final = json.dumps(user_extracted, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+        logger.error(user_final)
+        client.command("insert into User content {user}".format(user=user_final))
+    return "success"

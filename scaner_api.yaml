@@ -605,8 +605,9 @@ definitions:
     properties:
       coordinates:
         type: array
-        # items:
-        #   type: number
+        #AQUI
+        items:
+          type: number
       type:
         type: string
   Users:
@@ -775,6 +776,9 @@ definitions:
         type: string
       indices:
         type: array
+        #AQUI
+        items:
+          type: integer
       url:
         type: string
 
@@ -824,8 +828,11 @@ definitions:
         type: array
         items:
           type: array
-          # items:
-          #   type: number
+          #AQUI
+          items:
+            type: array
+            items:
+              type: number
       type:
         type: string
 

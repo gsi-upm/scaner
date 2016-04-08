@@ -17,21 +17,16 @@ for brand in islice(list_of_brands, limit):
         with open(date) as f:
             for line in islice(f, limit):
                 
-                #sleep(4)
+                #sleep(1)
                 tweet_full = json.loads(line)
                 temp = tweet_full['raw']
                 tweet={}
                 for k,v in temp.items():
                     if v:
                         tweet[k] = v
-                print(json.dumps(tweet))
+                # print(json.dumps(tweet))
                 r = requests.post(url, headers = headers, data=json.dumps(tweet))
                 print(r)
-                print("Tweet added")
+                # print("Tweet added")
                 counter += 1
                 print("Tweets in DB = " + str(counter))
-
-
-# with open('tweet.json') as json_data:
-#     r = requests.post(url, headers=headers, data=json_data)
-#     print(r)
