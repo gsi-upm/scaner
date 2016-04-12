@@ -17,7 +17,7 @@ for brand in islice(list_of_brands, limit):
         with open(date) as f:
             for line in islice(f, limit):
                 
-                #sleep(1)
+                sleep(1)
                 tweet_full = json.loads(line)
                 temp = tweet_full['raw']
                 tweet={}

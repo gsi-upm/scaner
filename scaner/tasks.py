@@ -7,7 +7,7 @@ import bitter.crawlers
 import bitter.utils
 from datetime import timedelta
 from . import influence_metrics
-import time
+from time import sleep
 from celery.task.control import inspect
 from celery.result import AsyncResult
 
@@ -16,7 +16,6 @@ logger = get_task_logger(__name__)
 
 REDIS_HOST = os.environ.get('REDIS_HOST')
 ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
-
 
 # CONFIGURACION PARA DOCKER
 # config = {}
@@ -30,7 +29,7 @@ ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
 # session_id = client.connect("root", "root")
 # client.db_open("mixedemotions", "admin", "admin")
 
-# # CONFIGURACION PARA LOCAL
+# CONFIGURACION PARA LOCAL
 config = {}
 config['SECRET_KEY'] = 'password'
 config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
@@ -151,25 +150,63 @@ def tweet_history(tweet_id):
 
 @celery.task
 def add_tweet(tweetJson):
-   # tweetJson = tweetJson.decode('utf-8', errors='ignore')
+    # Adaptamos el tweet para la DB
     tweetDict = json.loads(tweetJson)
-    print (tweetDict['id'])
     tweetJson = json.dumps(tweetDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
     cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
-    # cmd = cmd.encode('utf-8', 'ignore')
-    # logger.error(cmd)
+    # logger.warning(cmd)
     client.command(cmd)
-    # Si es un retweet, lo enlazamos con su original
-    # user_id = tweetJson['user_id']
-    # print("USER ID")
-    # print(user_id)
-    # user = client.query("select from User where id = {id}".format(id=user_id))
-    # if not user:
-    #     client.command("insert into User set id = {id}, pending=True".format(id=user_id))
-    # client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetJson['id'],user_id=user_id))
-    # if tweetJson['retweeted_status']:
-    #     client.command("create edge Retweet from (select from Tweet where id = {retweet}) to (select from Tweet where id = {original})".format(retweet=tweetJson['id'], original=tweetJson['retweeted_status']['id']))
-    #     client.command("create edge Retweeted_by from (Tweet where id = {original}) to (select from User where id = {user_id})".format(original=tweetJson['retweeted_status']['id'], user_id=user_id))
+
+    # Comprobamos que su usuario esta en la DB, y si no lo creamos, y lo enlazamos
+    user_id = tweetDict['user']['id']
+    print("USER ID: " + str(user_id))
+    print("TWEET ID: " + str(tweetDict['id']))
+    user = []
+    try:
+        user = client.query("select from User where id = {id}".format(id=user_id))
+    except:
+        pass
+    if not user:
+        #print ("No user")
+        cmd = "insert into User set id = {id}, pending = True".format(id=user_id)
+        # logger.warning(cmd)
+        client.command(cmd)
+        print("user added")
+    client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetDict['id'],user_id=user_id))
+    
+    # Comprobamos si el Tweet es un retweet, y lo enlazamos con el original
+    if 'retweeted_status' in tweetDict:
+        print("retweeted_status")
+        original_tweet = []
+        try:
+            original_tweet = client.query("select from Tweet where id = {id_original}".format(id_original=tweetDict['retweeted_status']['id']))
+        except:
+            pass
+        # Si el tweet original no está en la base de datos, lo creamos, junto con su usuario
+        if not original_tweet:
+            original_tweet_dict = tweetDict['retweeted_status']
+            original_tweet = json.dumps(original_tweet_dict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+            cmd = "insert into Tweet content {original_tweet}".format(original_tweet = original_tweet)
+            client.command(cmd)
+
+            user = []
+            try:
+                user = client.query("select from User where id = {id}".format(id=original_tweet_dict['user']['id']))
+            except:
+                pass
+            if not user:
+                # print ("No user")
+                cmd = "insert into User set id = {id}, pending = True".format(id=original_tweet_dict['user']['id'])
+                # logger.warning(cmd)
+                client.command(cmd)
+                print("user added")
+            client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=original_tweet_dict['id'],user_id=original_tweet_dict['user']['id']))
+        
+        # Enlazamos el retweet y el usuario con el original 
+        client.command("create edge Retweet from (select from Tweet where id = {retweet}) to (select from Tweet where id = {original})".format(retweet=tweetDict['id'], original=tweetDict['retweeted_status']['id']))
+        cmd = "create edge Retweeted_by from (select from Tweet where id = {original}) to (select from User where id = {user_id})".format(original=tweetDict['retweeted_status']['id'], user_id=tweetDict['user']['id'])
+        # logger.warning(cmd)
+        client.command(cmd)   
     return ("Tweet added to DB")
 
 @celery.task

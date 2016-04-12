@@ -71,7 +71,7 @@ create property User.default_profile_image                  STRING
 create property User.pending                                BOOLEAN
 
 create index User.id                                        UNIQUE
-create index User.pending                                   NOTUNIQUE
+create index User.pending                                   NOTUNIQUE_HASH_INDEX
 
 
 
