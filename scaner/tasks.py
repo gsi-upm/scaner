@@ -182,6 +182,7 @@ def add_tweet(tweetJson):
             original_tweet = client.query("select from Tweet where id = {id_original}".format(id_original=tweetDict['retweeted_status']['id']))
         except:
             pass
+
         # Si el tweet original no está en la base de datos, lo creamos, junto con su usuario
         if not original_tweet:
             original_tweet_dict = tweetDict['retweeted_status']
@@ -276,24 +277,36 @@ def topic_network(topic_id):
     pass
 
 #@periodic_task(run_every=timedelta(days=1))
-#@periodic_task(run_every=timedelta(seconds=30))
-@celery.task
+@periodic_task(run_every=timedelta(seconds=50))
+#@celery.task
 def get_users_from_twitter(pending_users=None):
     print("TAREA PERIODICA")
     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
     if not pending_users:
-        pending_users = client.query("select id from User limit -1")
+        pending_users = client.query("select id from User where pending = True limit -1")
     pending_user_list = []
     for user in pending_users:
-        pending_user_list.append(user)
+        pending_user_list.append(str(user.oRecordData['id']))
     for user in bitter.utils.get_users(wq,pending_user_list):
-        client.command("delete vertex User where id = {id}".format(id=user.id))
-        client.command("insert into User content {user}".format(user=user))
-        client.command("update User set pending = false where id = {id}".format(id=user.id))
+        user_final = json.dumps(user, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+        logger.warning(user['id'])
+        client.command("update User content {user} where id = {id}".format(user=user_final, id=user['id']))
+        client.command("update User set pending = False where id = {id}".format(id=user['id']))
+    return "SUCCESS"
 
-        client.command("create edge Created_by from (select from Tweet where user_id = {id} to (select from User where id = {id})".format(id=user.id))
-        client.command("create edge Retweeted_by from (select expand(out('Retweet')) from (select from Tweet where user_id = {id})) to (select from User where id={id})".format(id=user.id))
+    #     client.command("delete vertex User where id = {id}".format(id=user.id))
+    #     client.command("insert into User content {user}".format(user=user))
+    #     client.command("update User set pending = false where id = {id}".format(id=user.id))
 
+    #     client.command("create edge Created_by from (select from Tweet where user_id = {id} to (select from User where id = {id})".format(id=user.id))
+    #     client.command("create edge Retweeted_by from (select expand(out('Retweet')) from (select from Tweet where user_id = {id})) to (select from User where id={id})".format(id=user.id))
+
+    # users_retrieved = bitter.utils.get_users(wq,pending_user_list)
+    # for user_extracted in users_retrieved:
+    #     user_final = json.dumps(user_extracted, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+    #     logger.warning(user_final)
+    #     client.command("insert into User content {user}".format(user=user_final))
+    # return "SUCCESS"
         #TODO RELACION FOLLOW
 
 @celery.task
@@ -322,4 +335,4 @@ def get_user_of_tweet(tweetId):
         user_final = json.dumps(user_extracted, ensure_ascii=False).encode().decode('ascii', errors='ignore')
         logger.error(user_final)
         client.command("insert into User content {user}".format(user=user_final))
-    return "success"
+    return "SUCCESS"
