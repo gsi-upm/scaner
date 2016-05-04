@@ -10,7 +10,3 @@ def search(*args, **kwargs):
 @add_metadata('status')
 def get(taskId, *args, **kwargs):
     return {'status': current_app.tasks.get_task_status(taskId)}, 200 
-
-@add_metadata()
-def get_network(*args, **kwargs):
-    pass

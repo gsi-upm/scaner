@@ -1,15 +1,22 @@
 from celery import Celery
+from celery_once import QueueOnce
 from celery.decorators import periodic_task
+from celery.schedules import crontab
 import pyorient
 import json
 import os
 import bitter.crawlers
 import bitter.utils
+import math
+import time
 from datetime import timedelta
+import datetime
+import time
 from . import influence_metrics
-from time import sleep
+#from time import sleep
 from celery.task.control import inspect
 from celery.result import AsyncResult
+from twitter import TwitterHTTPError
 
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
@@ -34,6 +41,7 @@ config = {}
 config['SECRET_KEY'] = 'password'
 config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
 config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+config['ONCE_DEFAULT_TIMEOUT'] = 18000
 celery = Celery("prueba", broker='redis://localhost:6379/0')
 celery.conf.update(config)
 
@@ -151,11 +159,25 @@ def tweet_history(tweet_id):
 @celery.task
 def add_tweet(tweetJson):
     # Adaptamos el tweet para la DB
+    print("Tweet recibido")
+
     tweetDict = json.loads(tweetJson)
+
+    tweetInDB = client.query("Select id from Tweet where id = {id}".format(id=tweetDict['id']))
+    if tweetInDB:
+        client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
+        return ("Tweet already in DB")
+
     tweetJson = json.dumps(tweetDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
     cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
     # logger.warning(cmd)
     client.command(cmd)
+
+
+
+    # Creamos una metricas de tweet básicas TODO
+
+
 
     # Comprobamos que su usuario esta en la DB, y si no lo creamos, y lo enlazamos
     user_id = tweetDict['user']['id']
@@ -168,12 +190,34 @@ def add_tweet(tweetJson):
         pass
     if not user:
         #print ("No user")
-        cmd = "insert into User set id = {id}, pending = True".format(id=user_id)
-        # logger.warning(cmd)
+        user_content = tweetDict['user']
+        if user_content['following'] == None:
+            user_content['following'] = 0
+        if user_content['followers_count'] == None:
+            user_content['followers_count'] = 0        
+        for key, value in user_content.items():
+            if value==None:
+                user_content[key]=""
+        cmd = "insert into User content {content}".format(content=user_content)
+        #logger.warning(cmd)
+        client.command(cmd)
+        cmd = "update User set pending = True, depth = 0 where id = {id}".format(id= user_id)
+        #logger.warning(cmd)
         client.command(cmd)
         print("user added")
     client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetDict['id'],user_id=user_id))
     
+
+    # Creamos una metricas de usuario básicas
+    
+    ts = tweetDict['created_at']
+    date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+    cmd = "insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', tweetRatio = 0.5, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user_id,followers=tweetDict['user']['followers_count'],following=tweetDict['user']['friends_count'], date = date_ts)
+    #logger.warning(cmd)
+    client.command(cmd)    
+    # Planteamos crear el link de last metrics
+
+
     # Comprobamos si el Tweet es un retweet, y lo enlazamos con el original
     if 'retweeted_status' in tweetDict:
         print("retweeted_status")
@@ -196,18 +240,67 @@ def add_tweet(tweetJson):
             except:
                 pass
             if not user:
-                # print ("No user")
-                cmd = "insert into User set id = {id}, pending = True".format(id=original_tweet_dict['user']['id'])
-                # logger.warning(cmd)
+                original_user_content = original_tweet_dict['user']
+                if original_user_content['following'] == None:
+                    original_user_content['following'] = 0
+                if original_user_content['followers_count'] == None:
+                    original_user_content['followers_count'] = 0
+                for key, value in original_user_content.items():
+                    if value==None:
+                        original_user_content[key]=""
+                cmd = "insert into User content {content}".format(content=original_user_content)
+                client.command(cmd)
+                cmd = "update User set pending = True, depth = 0 where id = {id}".format(id = original_tweet_dict['user']['id'])
                 client.command(cmd)
                 print("user added")
+
             client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=original_tweet_dict['id'],user_id=original_tweet_dict['user']['id']))
         
+            # Creamos una metricas de usuario básicas
+            # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+            # print (date_ts)
+            client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', tweetRatio = 0.5, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=original_tweet_dict['user']['id'],followers=original_tweet_dict['user']['followers_count'],following=original_tweet_dict['user']['friends_count'], date = date_ts))    
+            # Planteamos crear el link de last metrics
+
+
         # Enlazamos el retweet y el usuario con el original 
         client.command("create edge Retweet from (select from Tweet where id = {retweet}) to (select from Tweet where id = {original})".format(retweet=tweetDict['id'], original=tweetDict['retweeted_status']['id']))
         cmd = "create edge Retweeted_by from (select from Tweet where id = {original}) to (select from User where id = {user_id})".format(original=tweetDict['retweeted_status']['id'], user_id=tweetDict['user']['id'])
         # logger.warning(cmd)
         client.command(cmd)   
+    
+    # Comprobamos si el Tweet es un reply, y lo enlazamos con el original
+    if 'reply_to_status_id' in tweetDict:
+        print("reply_status")
+        original_user = []
+        try:
+            original_user = client.query("select from User where id = {id_original}".format(id_original=tweetDict['reply_to_user_id']))
+        except:
+            pass
+
+        # Si no esta, creamos el Tweet
+        if not original_user:
+            cmd = "insert into User set id = {id}, pending = True, depth = 0".format(id = tweetDict['reply_to_user_id'])
+            client.command(cmd)
+
+        original_tweet = []
+        try:
+            original_tweet = client.query("select from Tweet where id = {id_original}".format(id_original=tweetDict['reply_to_status_id']))
+        except:
+            pass
+
+        # Si no esta, creamos el Tweet
+        if not original_tweet:
+            cmd = "insert into Tweet set id = {id}".format(id = tweetDict['reply_to_status_id'])
+            client.command(cmd)
+            client.command("create edge Created_by from (select from Tweet where id = {original_id}) to (select from User where id = {user_id})".format(original_id=tweetDict['reply_to_status_id'], user_id=tweetDict['reply_to_user_id']))
+
+        # Creamos las relaciones
+        cmd = "create edge Reply from (select from Tweet where id = {reply_id}) to (select from Tweet where id = {original_id})".format(reply_id=tweetDict['id'], original_id=tweetDict['reply_to_status_id'])
+        client.command(cmd)
+        cmd = "create edge Replied_by from (select from Tweet where id = {original_id}) to (select from User where id = {reply_user_id})".format(original=tweetDict['reply_to_status_id'], reply_user_id=tweetDict['user']['id'])
+        client.command(cmd)
+
     return ("Tweet added to DB")
 
 @celery.task
@@ -277,37 +370,89 @@ def topic_network(topic_id):
     pass
 
 #@periodic_task(run_every=timedelta(days=1))
-@periodic_task(run_every=timedelta(seconds=50))
-#@celery.task
+#@periodic_task(run_every=timedelta(minutes=60))
+#@periodic_task(run_every=crontab(hour=12, minute=25, day_of_week=5))
+#@celery.task(base=QueueOnce)
+@celery.task()
 def get_users_from_twitter(pending_users=None):
     print("TAREA PERIODICA")
     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
     if not pending_users:
-        pending_users = client.query("select id from User where pending = True limit -1")
-    pending_user_list = []
-    for user in pending_users:
-        pending_user_list.append(str(user.oRecordData['id']))
-    for user in bitter.utils.get_users(wq,pending_user_list):
-        user_final = json.dumps(user, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-        logger.warning(user['id'])
-        client.command("update User content {user} where id = {id}".format(user=user_final, id=user['id']))
-        client.command("update User set pending = False where id = {id}".format(id=user['id']))
-    return "SUCCESS"
+        limit = 500
+        skip = 0
+        depth = 1
 
-    #     client.command("delete vertex User where id = {id}".format(id=user.id))
-    #     client.command("insert into User content {user}".format(user=user))
-    #     client.command("update User set pending = false where id = {id}".format(id=user.id))
+        number_of_users = client.query("select count(*) from User where pending = True and depth < {depth}".format(depth=depth))[0].oRecordData['count']
+        iterations = math.ceil(number_of_users/limit)
+        print("numero de iteraciones: {iterations}".format(iterations=iterations))
 
-    #     client.command("create edge Created_by from (select from Tweet where user_id = {id} to (select from User where id = {id})".format(id=user.id))
-    #     client.command("create edge Retweeted_by from (select expand(out('Retweet')) from (select from Tweet where user_id = {id})) to (select from User where id={id})".format(id=user.id))
+        for iteration_num in range(0,iterations):
+            pending_users = client.query("select id, depth from User where pending = True and depth < {depth} skip {skip} limit {limit}".format(depth=depth, skip=skip, limit=limit))
+            pending_user_list = []
+            for user in pending_users:
+                pending_user_list.append(str(user.oRecordData['id']))
+            for user in bitter.utils.get_users(wq,pending_user_list):
+                user_final = json.dumps(user, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                logger.warning(user['id'])
+                cmd = "update User content {user} where id = {id}".format(user=user_final, id=user['id'])
+                # logger.warning(cmd)
+                client.command(cmd)
+                client.command("update User set pending = False where id = {id}".format(id=user['id']))
+                print("Usuario actualizado")
 
-    # users_retrieved = bitter.utils.get_users(wq,pending_user_list)
-    # for user_extracted in users_retrieved:
-    #     user_final = json.dumps(user_extracted, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-    #     logger.warning(user_final)
-    #     client.command("insert into User content {user}".format(user=user_final))
-    # return "SUCCESS"
-        #TODO RELACION FOLLOW
+                #Creamos una metrica nueva
+                ts = time.time()
+                date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', tweetRatio = 0.5, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user['id'],followers=user['followers_count'],following=user['friends_count'], date = date_ts))    
+
+                # RELACION FOLLOW
+                pending = True
+                cursor = -1
+                print("Empieza la descarga de usuarios de {id}".format(id=user['id']))
+                while pending:
+                    try:
+                        resp = wq.followers.ids(user_id=user['id'], cursor=cursor)
+                    except TwitterHTTPError as ex:
+                        # if ex.e.code in (401, ):
+                        break
+                    except:
+                        print ("Exception")
+                        #logger.info('Not authorized for user: {}'.format(user['id']))
+                        break
+                        #resp = {}
+                    # logger.warning(resp)
+                    print("Usuarios descargados")
+
+                    if 'ids' in resp:
+                        for follower in resp['ids']:
+                            #print ("esto es lo que da problemas: {follower}".format(follower=follower))
+                            follower_user=[]
+                            follower_user = client.query("select id from User where id = {id}".format(id=follower))
+                            if not follower_user:
+                                cmd = "insert into User set id = {id}, depth = {user_depth}, pending = True".format(id=follower, user_depth = 1 )
+                                # logger.warning(cmd)
+                                client.command(cmd)
+                                print("user added")
+
+                            cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=follower, user_id=user['id'])
+                            # logger.warning(cmd)
+                            client.command(cmd)
+
+                        cursor = resp["next_cursor"]
+                        print ("Cursor: {cursor}".format(cursor=cursor))
+                        if cursor > 0:
+                            logger.warning("Getting more followers for %s" % user['id'])
+                        else:
+                            logger.warning("Done getting followers for %s" % user['id'])
+                            cursor = -1
+                            pending = False
+                    else:
+                        pass
+
+            skip += limit
+
+    print ("SUCCESS")
+
 
 @celery.task
 def get_task_list():
@@ -319,20 +464,26 @@ def get_task_status(taskId):
     res = AsyncResult(taskId)
     return str(res.ready())
 
-# @periodic_task(run_every=timedelta(days=1))
-# def execute_metrics():
-#     influence_metrics.execution()
-
+#@periodic_task(run_every=timedelta(minutes=30))
 @celery.task
-def get_user_of_tweet(tweetId):
-    wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
-    # pending_user = client.query("select user.id from Tweet where id = {tweetId}".format(tweetId=tweetId))
-    # logger.error(pending_user[0].oRecordData)
-    # pending_user_list = [pending_user[0].oRecordData['id']]
-    pending_user_list = ["88602264",]
-    users_retrieved = bitter.utils.get_users(wq,pending_user_list)
-    for user_extracted in users_retrieved:
-        user_final = json.dumps(user_extracted, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-        logger.error(user_final)
-        client.command("insert into User content {user}".format(user=user_final))
-    return "SUCCESS"
+def execute_metrics():
+    print("COMIENZAN LAS METRICAS")
+    influence_metrics.execution()
+
+# @celery.task
+# def get_user_of_tweet(tweetId):
+#     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
+#     # pending_user = client.query("select user.id from Tweet where id = {tweetId}".format(tweetId=tweetId))
+#     # logger.error(pending_user[0].oRecordData)
+#     # pending_user_list = [pending_user[0].oRecordData['id']]
+#     pending_user_list = ["88602264",]
+#     users_retrieved = bitter.utils.get_users(wq,pending_user_list)
+#     for user_extracted in users_retrieved:
+#         user_final = json.dumps(user_extracted, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+#         logger.error(user_final)
+#         client.command("insert into User content {user}".format(user=user_final))
+#     return "SUCCESS"
+
+
+#get_users_from_twitter.delay()
+#execute_metrics()

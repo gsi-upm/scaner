@@ -1,7 +1,7 @@
 from flask import current_app
 from scaner.utils import add_metadata
 import json
-from time import sleep
+# from time import sleep
 
 
 @add_metadata()
@@ -20,7 +20,7 @@ def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
 @add_metadata()
 def post(body, *args, **kwargs):
     post_task = current_app.tasks.add_tweet.delay(json.dumps(body))
-    return {'result': post_task.get(timeout=10)}, 200
+    return {'result': post_task.get(interval=3)}, 200
 
 @add_metadata()
 def delete(tweetId, *args, **kwargs):

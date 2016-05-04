@@ -2,20 +2,21 @@ from flask import current_app
 from scaner.utils import add_metadata
 import json
 
-# PRUEBA EXTRACIION USUARIOS
-# @add_metadata()
-# def get(userId, fields=None, *args, **kwargs):
-#     get_task = current_app.tasks.get_user_of_tweet.delay(userId)
-#     return {'users': get_task.get(timeout=10)}, 200 
-
-
+# PRUEBA EXTRACION USUARIOS
 @add_metadata()
 def get(userId, fields=None, *args, **kwargs):
-    if fields:
-        get_task = current_app.tasks.user_attributes.delay(userId, fields)
-    else:
-        get_task = current_app.tasks.user.delay(userId)
-    return {'users': get_task.get(timeout=10)}, 200 
+    get_task = current_app.tasks.get_users_from_twitter.delay()
+    #get_task = current_app.tasks.execute_metrics.delay()
+    return {'result': "In progress"}, 200 
+
+
+# @add_metadata()
+# def get(userId, fields=None, *args, **kwargs):
+#     if fields:
+#         get_task = current_app.tasks.user_attributes.delay(userId, fields)
+#     else:
+#         get_task = current_app.tasks.user.delay(userId)
+#     return {'users': get_task.get(timeout=10)}, 200 
 
 @add_metadata('links')
 def get_network(userId, *args, **kwargs):

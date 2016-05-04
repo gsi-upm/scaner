@@ -925,7 +925,7 @@ definitions:
         description: "User Influence Score: measures the “amount of attention” that a user receives from the rest of the users"
       openinfluence:
         type: number
-        description: "User nfluence calculated using the OpenInfluence algorithm: https://en.paradigmadigital.com/dev/openinfluence/"
+        description: "User Influence calculated using the OpenInfluence algorithm: https://en.paradigmadigital.com/dev/openinfluence/"
       relevance:
         type: number
         description: "User Relevance Score: This metric is the combined score of the Tweet Rate Score, the User Influence Score and the Follow Relation Factor"
@@ -935,6 +935,12 @@ definitions:
       impact:
         type: number
         description: "User Impact: measures the ability of a user to improve the relevance of a tweet depending on their influence"
+      tweetRatio:
+        type: number
+        description: "Tweet ratio: Measures the proportion of the tweets published by the user which are related to the topic"
+      followRelationScore:
+        type: number
+        description: "Follow Relation Score: Measures the cuality of the relations of this sers with other users of the network"
       lastUpdated:
         type: string
         description: "Timestamp of last metrics collection"

@@ -32,7 +32,7 @@ create property User.profile_image_url_https                STRING
 create property User.id_str                                 STRING
 create property User.withheld_in_countries                  STRING
 create property User.profile_sidebar_border_color           STRING
-create property User.utc_offset                             INTEGER
+create property User.utc_offset                             STRING
 # Debajo podría ser BOOLEAN
 create property User.is_translator                          STRING
 # Debajo podría ser BOOLEAN
@@ -46,7 +46,7 @@ create property User.screen_name                            STRING
 create property User.url                                    STRING
 create property User.listed_count                           INTEGER
 create property User.description                            STRING
-create property User.statuses_count                         INTEGER
+create property User.statuses_count                         LONG
 create property User.profile_background_tile                STRING
 create property User.favorite_count                         INTEGER
 create property User.entities                               EMBEDDEDLIST
@@ -69,6 +69,7 @@ create property User.geo_enabled                            STRING
 create property User.default_profile_image                  STRING
 #create property User.metrics                                EMBEDDEDMAP
 create property User.pending                                BOOLEAN
+create property User.depth                                  INTEGER
 
 create index User.id                                        UNIQUE
 create index User.pending                                   NOTUNIQUE_HASH_INDEX
@@ -129,45 +130,65 @@ create property Topic.tweet_count                   INTEGER
 create property Topic.user_count                    INTEGER
 
 
-create class User_metric extends V
+create class User_metrics extends V
 
-create property User_metric.id                      LONG
-# Debajo podría ser DATE
-create property User_metric.date                    STRING
-# create property User_metric.followers               INTEGER
-# create property User_metric.following               INTEGER
-# create property User_metric.influence               DOUBLE
-# create property User_metric.voice                   DOUBLE
-# create property User_metric.repliedRatio            DOUBLE
-# create property User_metric.hIndexFav               DOUBLE
-# create property User_metric.last_updated            STRING
-# create property User_metric.follow_ratio            DOUBLE
-# create property User_metric.relevance               DOUBLE
-# create property User_metric.popularity              DOUBLE
-# create property User_metric.replyRatio              DOUBLE
-# create property User_metric.hIndexRT                DOUBLE
-# create property User_metric.openinfluence           DOUBLE
-create property User_metric.impact                  DOUBLE
-create property User_metric.UI_score                DOUBLE
-create property User_metric.UI_unnormalized         DOUBLE
-create property User_metric.FR_score                DOUBLE
-create property User_metric.voice_r                 DOUBLE
-create property User_metric.TR_score                DOUBLE
-create property User_metric.user_relevance          DOUBLE
+create property User_metrics.id                     LONG
+create property User_metrics.lastMetrics            BOOLEAN
+# Debajo podría ser STRING
+create property User_metrics.date                   DATE
+create property User_metrics.followers              INTEGER
+create property User_metrics.following              INTEGER
+create property User_metrics.statuses_count         INTEGER
+create property User_metrics.influence              DOUBLE
+create property User_metrics.influenceUnnormalized  DOUBLE
+create property User_metrics.followRelationScore    DOUBLE
+create property User_metrics.voice_t                DOUBLE
+create property User_metrics.voice_r                DOUBLE
+create property User_metrics.relevance              DOUBLE
+create property User_metrics.tweetRatio             DOUBLE
+create property User_metrics.impact                 DOUBLE
+create property User_metrics.lastUpdated            STRING
+# create property User_metrics.repliedRatio           DOUBLE
+# create property User_metrics.hIndexFav              DOUBLE
+# create property User_metrics.popularity             DOUBLE
+# create property User_metrics.replyRatio             DOUBLE
+# create property User_metrics.hIndexRT               DOUBLE
+# create property User_metrics.follow_ratio           DOUBLE
+# create property User_metrics.openinfluence          DOUBLE
+
+# create property User_metrics.UI_score               DOUBLE
+# create property User_metrics.UI_unnormalized        DOUBLE
+# create property User_metrics.FR_score               DOUBLE
+# create property User_metrics.voice_r                DOUBLE
+# create property User_metrics.user_relevance         DOUBLE
+# create property User_metrics.TR_score               DOUBLE
+
+create property User_metrics.complete               BOOLEAN
+
+create index User_metrics.id                        NOTUNIQUE
+create index User_metrics.complete                  NOTUNIQUE
 
 
-create class Tweet_metric extends V
+create class Tweet_metrics extends V
 
-create property Tweet_metric.id                     LONG
-# Debajo podría ser DATE
-# create property Tweet_metric.date                   STRING
-# create property Tweet_metric.popularity             DOUBLE
-# create property Tweet_metric.retweet_count          INTEGER
-# create property Tweet_metric.last_updated           STRING
-# create property Tweet_metric.relevance              DOUBLE
-# create property Tweet_metric.favourite_count        INTEGER
-create property Tweet_metric.TI_score               DOUBLE
-create property Tweet_metric.tweet_relevance        DOUBLE
+create property Tweet_metrics.id                    LONG
+create property Tweet_metrics.lastMetrics           BOOLEAN
+# Debajo podría ser STRING
+create property Tweet_metrics.date                  DATE
+create property Tweet_metrics.influence             DOUBLE
+create property Tweet_metrics.relevance             DOUBLE
+create property Tweet_metrics.retweetCount          INTEGER
+create property Tweet_metrics.favouriteCount        INTEGER
+create property Tweet_metrics.lastUpdated           STRING
+
+# create property Tweet_metrics.popularity            DOUBLE
+# create property Tweet_metrics.TI_score              DOUBLE
+# create property Tweet_metrics.tweet_relevance       DOUBLE
+
+create property Tweet_metrics.complete              BOOLEAN
+
+create index Tweet_metrics.id                       NOTUNIQUE
+create index Tweet_metrics.complete                 NOTUNIQUE
 
 
 create class EmotionSet extends V
