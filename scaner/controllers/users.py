@@ -5,8 +5,8 @@ import json
 # PRUEBA EXTRACION USUARIOS
 @add_metadata()
 def get(userId, fields=None, *args, **kwargs):
-    get_task = current_app.tasks.get_users_from_twitter.delay()
-    #get_task = current_app.tasks.execute_metrics.delay()
+    #get_task = current_app.tasks.get_users_from_twitter.delay()
+    get_task = current_app.tasks.execute_metrics.delay()
     return {'result': "In progress"}, 200 
 
 

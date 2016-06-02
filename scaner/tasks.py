@@ -206,13 +206,15 @@ def add_tweet(tweetJson):
         client.command(cmd)
         print("user added")
     client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetDict['id'],user_id=user_id))
-    
 
     # Creamos una metricas de usuario básicas
     
-    ts = tweetDict['created_at']
-    date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
-    cmd = "insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', tweetRatio = 0.5, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user_id,followers=tweetDict['user']['followers_count'],following=tweetDict['user']['friends_count'], date = date_ts)
+    # ts = tweetDict['created_at']
+    # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+    
+    ts = int(tweetDict['timestamp_ms'])/1000
+    date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    cmd = "insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user_id,followers=tweetDict['user']['followers_count'],following=tweetDict['user']['friends_count'], date = date_ts, timestamp = ts, statuses_count=tweetDict['user']['statuses_count'])
     #logger.warning(cmd)
     client.command(cmd)    
     # Planteamos crear el link de last metrics
@@ -259,7 +261,7 @@ def add_tweet(tweetJson):
             # Creamos una metricas de usuario básicas
             # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
             # print (date_ts)
-            client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', tweetRatio = 0.5, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=original_tweet_dict['user']['id'],followers=original_tweet_dict['user']['followers_count'],following=original_tweet_dict['user']['friends_count'], date = date_ts))    
+            client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=original_tweet_dict['user']['id'],followers=original_tweet_dict['user']['followers_count'],following=original_tweet_dict['user']['friends_count'], date = date_ts, statuses_count=original_tweet_dict['user']['statuses_count']))    
             # Planteamos crear el link de last metrics
 
 
@@ -270,35 +272,35 @@ def add_tweet(tweetJson):
         client.command(cmd)   
     
     # Comprobamos si el Tweet es un reply, y lo enlazamos con el original
-    if 'reply_to_status_id' in tweetDict:
+    if 'in_reply_to_status_id' in tweetDict:
         print("reply_status")
         original_user = []
         try:
-            original_user = client.query("select from User where id = {id_original}".format(id_original=tweetDict['reply_to_user_id']))
+            original_user = client.query("select from User where id = {id_original}".format(id_original=tweetDict['in_reply_to_user_id']))
         except:
             pass
 
-        # Si no esta, creamos el Tweet
+        # Si no esta, creamos el Tweet y el usuario
         if not original_user:
-            cmd = "insert into User set id = {id}, pending = True, depth = 0".format(id = tweetDict['reply_to_user_id'])
+            cmd = "insert into User set id = {id}, pending = True, depth = 0".format(id = tweetDict['in_reply_to_user_id'])
             client.command(cmd)
 
         original_tweet = []
         try:
-            original_tweet = client.query("select from Tweet where id = {id_original}".format(id_original=tweetDict['reply_to_status_id']))
+            original_tweet = client.query("select from Tweet where id = {id_original}".format(id_original=tweetDict['in_reply_to_status_id']))
         except:
             pass
 
         # Si no esta, creamos el Tweet
         if not original_tweet:
-            cmd = "insert into Tweet set id = {id}".format(id = tweetDict['reply_to_status_id'])
+            cmd = "insert into Tweet set id = {id}".format(id = tweetDict['in_reply_to_status_id'])
             client.command(cmd)
-            client.command("create edge Created_by from (select from Tweet where id = {original_id}) to (select from User where id = {user_id})".format(original_id=tweetDict['reply_to_status_id'], user_id=tweetDict['reply_to_user_id']))
+            client.command("create edge Created_by from (select from Tweet where id = {original_id}) to (select from User where id = {user_id})".format(original_id=tweetDict['in_reply_to_status_id'], user_id=tweetDict['in_reply_to_user_id']))
 
         # Creamos las relaciones
-        cmd = "create edge Reply from (select from Tweet where id = {reply_id}) to (select from Tweet where id = {original_id})".format(reply_id=tweetDict['id'], original_id=tweetDict['reply_to_status_id'])
+        cmd = "create edge Reply from (select from Tweet where id = {reply_id}) to (select from Tweet where id = {original_id})".format(reply_id=tweetDict['id'], original_id=tweetDict['in_reply_to_status_id'])
         client.command(cmd)
-        cmd = "create edge Replied_by from (select from Tweet where id = {original_id}) to (select from User where id = {reply_user_id})".format(original=tweetDict['reply_to_status_id'], reply_user_id=tweetDict['user']['id'])
+        cmd = "create edge Replied_by from (select from Tweet where id = {original_id}) to (select from User where id = {reply_user_id})".format(original_id=tweetDict['in_reply_to_status_id'], reply_user_id=tweetDict['user']['id'])
         client.command(cmd)
 
     return ("Tweet added to DB")
@@ -378,7 +380,7 @@ def get_users_from_twitter(pending_users=None):
     print("TAREA PERIODICA")
     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
     if not pending_users:
-        limit = 500
+        limit = 1000
         skip = 0
         depth = 1
 
@@ -403,7 +405,7 @@ def get_users_from_twitter(pending_users=None):
                 #Creamos una metrica nueva
                 ts = time.time()
                 date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-                client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', tweetRatio = 0.5, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user['id'],followers=user['followers_count'],following=user['friends_count'], date = date_ts))    
+                client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user['id'],followers=user['followers_count'],following=user['friends_count'], date = date_ts, timestamp = ts, statuses_count = user['statuses_count']))    
 
                 # RELACION FOLLOW
                 pending = True
@@ -432,7 +434,7 @@ def get_users_from_twitter(pending_users=None):
                                 cmd = "insert into User set id = {id}, depth = {user_depth}, pending = True".format(id=follower, user_depth = 1 )
                                 # logger.warning(cmd)
                                 client.command(cmd)
-                                print("user added")
+                                #print("user added")
 
                             cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=follower, user_id=user['id'])
                             # logger.warning(cmd)

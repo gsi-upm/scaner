@@ -136,6 +136,7 @@ create property User_metrics.id                     LONG
 create property User_metrics.lastMetrics            BOOLEAN
 # Debajo podría ser STRING
 create property User_metrics.date                   DATE
+create property User_metrics.timestamp              DOUBLE
 create property User_metrics.followers              INTEGER
 create property User_metrics.following              INTEGER
 create property User_metrics.statuses_count         INTEGER
@@ -175,6 +176,7 @@ create property Tweet_metrics.id                    LONG
 create property Tweet_metrics.lastMetrics           BOOLEAN
 # Debajo podría ser STRING
 create property Tweet_metrics.date                  DATE
+create property Tweet_metrics.timestamp             DOUBLE
 create property Tweet_metrics.influence             DOUBLE
 create property Tweet_metrics.relevance             DOUBLE
 create property Tweet_metrics.retweetCount          INTEGER
