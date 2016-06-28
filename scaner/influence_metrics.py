@@ -3,14 +3,22 @@ import math
 import numpy as np
 import time
 import datetime
-from decimal import *
 from scipy.sparse import csr_matrix
 from scipy.sparse import lil_matrix
 import gc
+import os
 
-client = pyorient.OrientDB("localhost", 2424)
+#CONFIGURACIÓN PARA DOCKER
+ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
+client = pyorient.OrientDB(ORIENTDB_HOST, 2424)
 session_id = client.connect("root", "root")
 client.db_open("mixedemotions", "admin", "admin")
+
+
+#CONFIGURACION PARA LOCAL
+# client = pyorient.OrientDB("localhost", 2424)
+# session_id = client.connect("root", "root")
+# client.db_open("mixedemotions", "admin", "admin")
 
 # FALTA TENER EL NÚMERO TOTAL DE TWEETS DE UN USUARIO FUERA DE LA BUSQUEDA
 # Metodo para calcular la metrica TR SCORE de todos los usuarios
@@ -32,8 +40,7 @@ def user_tweetratio_score(userlist):
 
         tweet_ratio = abs(tweet_ratio)
 
-        if tweet_ratio < 0.0000999:
-            tweet_ratio = 0.0001
+        tweet_ratio = truncate(tweet_ratio, 12)
 
         #tweet_ratio = 0.5
 
@@ -275,10 +282,15 @@ def influence_score(userlist, number_of_users, number_of_tweets):
         
         UI = UI_vector[n]
         UI_unnormalized = users_vector[n]
-        if UI_unnormalized < 0.0000999:
-            UI_unnormalized = 0
-        if UI < 0.0000999:
-            UI = 0.0001
+
+        UI = truncate(UI, 10)
+        UI_unnormalized = truncate(UI_unnormalized, 12)
+
+        # if UI_unnormalized < 0.0000999:
+        #     UI_unnormalized = 0
+        # if UI < 0.0000999:
+        #     UI = 0.0001
+
         command = "update User_metrics set influence={UI_score}, influenceUnnormalized={UI_unnormalized} where id={user_id} and lastMetrics = True".format(user_id=user.oRecordData['id'], UI_score=UI, UI_unnormalized=UI_unnormalized)
         #print (command)
         client.command(command)
@@ -293,8 +305,10 @@ def influence_score(userlist, number_of_users, number_of_tweets):
             # CREAMOS EL OBJETO DE METRICAS TWEET Y LO RELLENAMOS
             tweet_metrics_object_creation(tweet)
             TI_score = TI_vector[n+newindex]
-            if TI_score < 0.0000999:
-                TI_score = 0.0001
+            TI_score = truncate(TI_score, 12)
+
+            # if TI_score < 0.0000999:
+            #     TI_score = 0.0001
 
             command = "update Tweet_metrics set influence = {TI_score} where id = {id} and lastMetrics = True".format(id=tweet.oRecordData['id'], TI_score=TI_score)
             client.command(command)
@@ -365,8 +379,11 @@ def follow_relation_factor_user(userlist, number_of_users):
     # Metemos los resultados en la DB
     for n,user in enumerate(userlist):
         followRelationScore = FR_vector[n]
-        if followRelationScore < 0.0000999:
-            followRelationScore = 0.0001
+        followRelationScore = truncate(followRelationScore, 12)
+
+        # if followRelationScore < 0.0000999:
+        #     followRelationScore = 0.0001
+
         command = "update User_metrics set followRelationScore = {FR_score} where id = {id} and lastMetrics = True".format(id=user.oRecordData['id'], FR_score=followRelationScore)
         client.command(command)
 
@@ -385,6 +402,7 @@ def user_relevance_score(userlist):
         # print ("Puntuación FR de user " + str(userid) + " = " + user[0].oRecordData['FR_score'])
         user_metrics = client.query("select expand(out('Last_metrics')) from User where id = {id}".format(id=user.oRecordData['id']))
         user_relevance = float(user_metrics[0].oRecordData['tweetRatio'])**wr + float(user_metrics[0].oRecordData['influence'])**wi + float(user_metrics[0].oRecordData['followRelationScore'])**wf
+        user_relevance = truncate(user_relevance, 12)
         #print ("Relevancia de user {userid} = {user_relevance}".format(userid=user.oRecordData['id'], user_relevance=user_relevance))
         command = "update User_metrics set relevance = {user_relevance} where id = {id} and lastMetrics = True".format(id=user.oRecordData['id'], user_relevance=user_relevance)
         client.command(command)
@@ -426,8 +444,10 @@ def impact_user(userlist, number_of_tweets):
                 user_impact = float(user_metrics[0].oRecordData['influenceUnnormalized'])/number_of_tweets
             else:
                 user_impact = ((float(user_metrics[0].oRecordData['influenceUnnormalized'])/(n_tweets_related+sigma))*(1-d)) + ((float(user_metrics[0].oRecordData['influenceUnnormalized'])/number_of_tweets)*d)
-        if user_impact < 0.0000999:
-            user_impact = 0  
+        user_impact = truncate(user_impact, 12)
+
+        # if user_impact < 0.0000999:
+        #     user_impact = 0  
         
         command = "update User_metrics set impact = {impact} where id = {id} and lastMetrics = True".format(id=user.oRecordData['id'], impact=user_impact)
         client.command(command)
@@ -440,7 +460,6 @@ def voice_user(userlist):
 
     # Parametro SIGMA de suavizado
     sigma = 0.5
-    getcontext().prec = 7
     # Calculamos VOICE para cada usuario
     for n, user in enumerate(userlist):
         tweets_user = client.query("select expand(in('Created_by')) from User where id = {id}".format(id=user.oRecordData['id']))
@@ -458,12 +477,13 @@ def voice_user(userlist):
 
         
         retweets_user = client.query("select count(in('Retweeted_by')) from User where id = {id}".format(id=user.oRecordData['id']))
-        voice_t = Decimal((1/(len(tweets_user) + sigma)) * sumatorio_tweet_TI)
-        voice_r = Decimal((1/(retweets_user[0].oRecordData['count'] + sigma)) * sumatorio_retweet_TI)
+        voice_t =(1/(len(tweets_user) + sigma)) * sumatorio_tweet_TI
+        voice_r = (1/(retweets_user[0].oRecordData['count'] + sigma)) * sumatorio_retweet_TI
 
+        voice_t = truncate(voice_t, 12)
+        voice_r = truncate(voice_r, 12)
         print(voice_t)
         print(voice_r)
-
         command = "update User_metrics set voice = {voice_t}, voice_r = {voice_r} where id = {id} and lastMetrics = True".format(id=user.oRecordData['id'],voice_t=voice_t,voice_r=voice_r)
         print(command)
         client.command(command)
@@ -570,7 +590,14 @@ def preparation_phase():
     voice_user(userlist)
     tweet_relevance(number_of_tweets)
     user_relevance_score(userlist)
-        
+    
+def truncate(f, n):
+    '''Truncates/pads a float f to n decimal places without rounding'''
+    s = '{}'.format(f)
+    if 'e' in s or 'E' in s:
+        return '{0:.{1}f}'.format(f, n)
+    i, p, d = s.partition('.')
+    return '.'.join([i, (d+'0'*n)[:n]])    
 
 
 #EJECUCION

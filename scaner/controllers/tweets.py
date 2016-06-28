@@ -33,8 +33,9 @@ def put(*args, **kwargs):
 
 @add_metadata()
 def get_history(tweetId, *args, **kwargs):
-    #return {'result': current_app.tasks.tweet_history(tweetId)}, 200
-    pass
+    get_history_task = current_app.tasks.tweet_history.delay(tweetId)
+    return {'result': get_history_task.get(timeout=10)}, 200
+
 
 @add_metadata()
 def get_emotion(tweetId, *args, **kwargs):
@@ -48,5 +49,5 @@ def get_sentiment(tweetId, *args, **kwargs):
 
 @add_metadata()
 def get_metrics(tweetId, *args, **kwargs):
-    #return {'result': current_app.tasks.tweet_history(tweetId)}, 200
-    pass
+    get_metrics_task = current_app.tasks.get_tweet_metrics.delay(tweetId)
+    return {'result': get_metrics_task.get(timeout=10)}, 200

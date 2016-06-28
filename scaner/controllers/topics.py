@@ -15,7 +15,7 @@ def search(*args, **kwargs):
 
 @add_metadata()
 def get(topicId, *args, **kwargs):
-    get_task = current_app.tasks.topicdelay(topicId)
+    get_task = current_app.tasks.topic.delay(topicId)
     return {'topics': get_task.get(timeout = 10)}, 200 
 
 @add_metadata()

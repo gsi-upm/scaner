@@ -1,5 +1,4 @@
 from celery import Celery
-from celery_once import QueueOnce
 from celery.decorators import periodic_task
 from celery.schedules import crontab
 import pyorient
@@ -11,7 +10,6 @@ import math
 import time
 from datetime import timedelta
 import datetime
-import time
 from . import influence_metrics
 #from time import sleep
 from celery.task.control import inspect
@@ -25,29 +23,29 @@ REDIS_HOST = os.environ.get('REDIS_HOST')
 ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
 
 # CONFIGURACION PARA DOCKER
-# config = {}
-# config['SECRET_KEY'] = 'password'
-# config['CELERY_BROKER_URL'] = 'redis://%s:6379/0' % REDIS_HOST
-# config['CELERY_RESULT_BACKEND'] = 'redis://%s:6379/0' % REDIS_HOST
-# celery = Celery("prueba", broker='redis://%s:6379/0' % REDIS_HOST)
-# celery.conf.update(config)
-
-# client = pyorient.OrientDB(ORIENTDB_HOST, 2424)
-# session_id = client.connect("root", "root")
-# client.db_open("mixedemotions", "admin", "admin")
-
-# CONFIGURACION PARA LOCAL
 config = {}
 config['SECRET_KEY'] = 'password'
-config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-config['ONCE_DEFAULT_TIMEOUT'] = 18000
-celery = Celery("prueba", broker='redis://localhost:6379/0')
+config['CELERY_BROKER_URL'] = 'redis://%s:6379/0' % REDIS_HOST
+config['CELERY_RESULT_BACKEND'] = 'redis://%s:6379/0' % REDIS_HOST
+celery = Celery("prueba", broker='redis://%s:6379/0' % REDIS_HOST)
 celery.conf.update(config)
 
-client = pyorient.OrientDB("localhost", 2424)
+client = pyorient.OrientDB(ORIENTDB_HOST, 2424)
 session_id = client.connect("root", "root")
 client.db_open("mixedemotions", "admin", "admin")
+
+# CONFIGURACION PARA LOCAL
+# config = {}
+# config['SECRET_KEY'] = 'password'
+# config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+# config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+# #config['ONCE_DEFAULT_TIMEOUT'] = 18000
+# celery = Celery("prueba", broker='redis://localhost:6379/0')
+# celery.conf.update(config)
+
+# client = pyorient.OrientDB("localhost", 2424)
+# session_id = client.connect("root", "root")
+# client.db_open("mixedemotions", "admin", "admin")
 
 
 @celery.task
@@ -59,12 +57,25 @@ def user(user_id):
     user.pop("out_Follows", None)
     user.pop("in_Retweeted_by", None)
     user.pop("pending", None)
+    user.pop("out_Last_metrics")
     return user
 
 #TODO
 @celery.task
 def user_network(user_id):
-    userRecord = client.query("select from User where id='{userid}'".format(userid=user_id))
+    user_followers = client.query("select id from (select expand(in(Follows)) from User where id='{userid}' limit -1)".format(userid=user_id))
+    user_follower_list=[]
+    for user_record in user_followers:
+        user = user_record.oRecordData
+        # user.pop("in_Created_by", None)
+        # user.pop("in_Follows", None)
+        # user.pop("out_Follows", None)
+        # user.pop("in_Retweeted_by", None)
+        # user.pop("out_Last_metrics")
+        # user.pop("pending", None)
+        print(user)
+        user_follower_list.append(user)
+    return user_follower_list
 
 @celery.task
 def user_attributes(user_id, attributes):
@@ -90,6 +101,7 @@ def user_search(attributes, limit, topic, sort_by):
         user.pop("in_Follows", None)
         user.pop("out_Follows", None)
         user.pop("in_Retweeted_by", None)
+        user.pop("out_Last_metrics")
         user.pop("pending", None)
         user_list.append(user)
     return user_list
@@ -107,7 +119,9 @@ def get_user_sentiment(user_id):
 @celery.task
 def get_user_metrics(user_id):
     metricsRecord = client.query("select expand(out('Last_metrics')) from User where id = '{user_id}'".format(user_id=user_id))   
-    return metricsRecord[0].oRecordData
+    user_metrics = metricsRecord[0].oRecordData
+    user_metrics.pop("in_Last_metrics")
+    return user_metrics
 
 @celery.task
 def prueba():
@@ -139,6 +153,7 @@ def tweet(tweet_id):
     tweet.pop("out_Retweet", None)
     tweet.pop("out_Retweeted_by", None)
     tweet.pop("out_Belongs_to_topic", None)
+    tweet.pop("out_Last_metrics")
     return tweet
 
 @celery.task
@@ -148,13 +163,15 @@ def tweet_attributes(tweet_id, attributes):
 
 @celery.task
 def tweet_history(tweet_id):
-    tweet = tweetRecord[0].oRecordData
-    tweet.pop("out_Created_by", None)
-    tweet.pop("in_Retweet", None)
-    tweet.pop("out_Retweet", None)
-    tweet.pop("out_Retweeted_by", None)
-    tweet.pop("out_Belongs_to_topic", None)
-    return tweet
+    tweet_history = client.query("select from (select from Tweet_metrics where id = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
+    tweet_history_list=[]
+
+    for tweet_record in tweet_history:
+        tweet = tweet_record.oRecordData
+        tweet.pop("in_Last_metrics", None)
+        print(tweet)
+        tweet_history_list.append(tweet_record.oRecordData)
+    return tweet_history_list
 
 @celery.task
 def add_tweet(tweetJson):
@@ -331,6 +348,7 @@ def tweet_search(attributes, limit, topic, sort_by):
         tweet.pop("out_Retweet", None)
         tweet.pop("out_Retweeted_by", None)
         tweet.pop("out_Belongs_to_topic", None)
+        tweet.pop("out_Last_metrics")
         tweet_list.append(tweet)
     return tweet_list
 
@@ -347,7 +365,9 @@ def get_tweet_sentiment(tweet_id):
 @celery.task
 def get_tweet_metrics(tweet_id):
     metricsRecord = client.query("select expand(out('Last_metrics')) from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))   
-    return metricsRecord[0].oRecordData
+    tweet_metrics = metricsRecord[0].oRecordData
+    tweet_metrics.pop("in_Last_metrics")
+    return tweet_metrics
 
 @celery.task
 def topic_search():
@@ -459,12 +479,19 @@ def get_users_from_twitter(pending_users=None):
 @celery.task
 def get_task_list():
     i = inspect()
-    return i.scheduled()
+    return i.active()
+    #return i.registered_tasks()
+    #return i.scheduled()
     
 @celery.task
 def get_task_status(taskId):
     res = AsyncResult(taskId)
-    return str(res.ready())
+    status = "Unknown"
+    if str(res.ready())=="False":
+        status = "Pending"
+    elif str(res.ready())=="True":
+        status = "Finished"
+    return status
 
 #@periodic_task(run_every=timedelta(minutes=30))
 @celery.task
