@@ -39,6 +39,70 @@ paths:
             $ref: "#/definitions/Users"
         404:
           description: User not found
+          
+  /users/{userId}/emotion:
+    get:
+      operationId: scaner.controllers.users.get_emotion
+      tags:
+      - users
+      produces:
+      - application/json
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: User found and returned
+          schema:
+            $ref: "#/definitions/Users"
+        404:
+          description: User not found
+  /users/{userId}/sentiment:
+    get:
+      operationId: scaner.controllers.users.get_sentiment
+      tags:
+      - users
+      produces:
+      - application/json
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: User found and returned
+          # schema:
+          #   $ref: "#/definitions/Users"
+        404:
+          description: User not found
+  /users/{userId}/metrics:
+    get:
+      operationId: scaner.controllers.users.get_metrics
+      tags:
+      - users
+      produces:
+      - application/json
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: User found and returned
+          # schema:
+          #   $ref: "#/definitions/Users"
+        404:
+          description: User not found
   /users:
     get:
       tags:
@@ -78,6 +142,7 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Users_search"
+
   /tweets/{tweetId}:
     get:
       tags:
@@ -126,7 +191,6 @@ paths:
   /tweets/{tweetId}/history:
     get:
         operationId: scaner.controllers.tweets.get_history
-        description: Delete a Tweet
         tags:
             - tweets
         produces:
@@ -156,6 +220,71 @@ paths:
             404:
                 description: Tweet not found
 
+  /tweets/{tweetId}/sentiment:
+    get:
+      operationId: scaner.controllers.tweets.get_sentiment
+      tags:
+      - tweets
+      produces:
+      - application/json
+      parameters:
+      - name: tweetId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: Tweet found and returned
+          # schema:
+          #   $ref: '#/definitions/Tweets_search'
+        404:
+          description: Tweet not found
+
+  /tweets/{tweetId}/emotion:
+    get:
+      operationId: scaner.controllers.tweets.get_emotion
+      tags:
+      - tweets
+      produces:
+      - application/json
+      parameters:
+      - name: tweetId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: Tweet found and returned
+          # schema:
+          #   $ref: '#/definitions/Tweets_search'
+        404:
+          description: Tweet not found
+
+  /tweets/{tweetId}/metrics:
+    get:
+      operationId: scaner.controllers.tweets.get_metrics
+      tags:
+      - tweets
+      produces:
+      - application/json
+      parameters:
+      - name: tweetId
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: Tweet found and returned
+          # schema:
+          #   $ref: '#/definitions/Tweets_search'
+        404:
+          description: Tweet not found
       
   /tweets:
     get:
@@ -275,6 +404,35 @@ paths:
           schema:
             $ref: '#/definitions/Network'
 
+  /tasks:
+    get:
+      tags:
+      - tasks
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Tasks found and returned
+          # schema:
+          #   $ref: '#/definitions/Tasks'
+
+  /tasks/{taskId}:
+    get:
+      tags:
+      - tasks
+      produces:
+      - application/json
+      parameters:
+      - name: taskId
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Task found and returned
+          # schema:
+          #   $ref: '#/definitions/Tasks'      
+
 
 definitions:
 
@@ -376,14 +534,16 @@ definitions:
       quoted_status_id_str:
         type: string
       quoted_status:
-        $ref: '#/definitions/Tweets_Raw'
+        type: object
+        # $ref: '#/definitions/Tweets_Raw'
       scopes:
         type: object
         additionalProperties: {}
       retweet_count:
         type: integer
       retweeted_status:
-        $ref: '#/definitions/Tweets_Raw'
+        type: object
+        # $ref: '#/definitions/Tweets_Raw'
       source:
         type: string
       text:
@@ -445,6 +605,7 @@ definitions:
     properties:
       coordinates:
         type: array
+        #AQUI
         items:
           type: number
       type:
@@ -577,7 +738,7 @@ definitions:
       source_status_id:
         type: integer
       source_status_id_str:
-        type: integer
+        type: string
       type:
         type: string
       url:
@@ -614,7 +775,10 @@ definitions:
       expanded_url:
         type: string
       indices:
-        type: string
+        type: array
+        #AQUI
+        items:
+          type: integer
       url:
         type: string
 
@@ -664,8 +828,11 @@ definitions:
         type: array
         items:
           type: array
+          #AQUI
           items:
-            type: number
+            type: array
+            items:
+              type: number
       type:
         type: string
 
@@ -716,15 +883,16 @@ definitions:
   Tweet_metrics:
     type: object
     properties:
-      popularity:
-        type: number
       relevance:
         type: number
-      retweet_count:
+        description: "Tweet Relevance Score: shows the relevancy of a tweet based on the “voice” of the original user and the impact of the users that have posted, retweeted or replied to this tweet"
+      retweetCount:
         type: integer
-      favourite_count:
+        description: "Number of Retweets this Tweet has"
+      favouriteCount:
         type: integer
-      last_updated:
+        description: "Number of Favourite marks this Tweet has"
+      lastUpdated:
         type: string
         description: "Timestamp of last metrics collection"
 
@@ -733,43 +901,47 @@ definitions:
     properties:
       followers:
         type: integer
-        description: "Number of users this user is following"
+        description: "Number of users following this user"
       following:
         type: integer
-        description: "Number of users following this user"
-      follow_ratio:
+        description: "Number of users this user is following"
+      followRatio:
         type: number
         description: "Ratio followers/following"
       hIndexFav:
         type: number
-        description: "Favorite h-index - Last 100 Tweets"
+        description: "h-index calculated from the number of Favorite marks of the last 100 Tweets of the user. https://en.wikipedia.org/wiki/H-index"
       hIndexRt:
         type: number
-        description: "Retweet h-index - Last 100 Tweets"
+        description: "h-index calculated from the number of Retweets of the last 100 Tweets of the user. https://en.wikipedia.org/wiki/H-index"
       replyRatio:
         type: number
         description: "Ratio of user's tweets that are a reply to other users"
       repliedRatio:
         type: number
         description: "Ratio of user's tweets that receive a reply"
-      popularity:
-        type: number
       influence:
-        description: "User influence score"
         type: number
+        description: "User Influence Score: measures the “amount of attention” that a user receives from the rest of the users"
       openinfluence:
-        description: "User influence calculated using the OpenInfluence algorithm: https://en.paradigmadigital.com/dev/openinfluence/"
         type: number
+        description: "User Influence calculated using the OpenInfluence algorithm: https://en.paradigmadigital.com/dev/openinfluence/"
       relevance:
         type: number
-        description: ""
+        description: "User Relevance Score: This metric is the combined score of the Tweet Rate Score, the User Influence Score and the Follow Relation Factor"
       voice:
         type: number
-        description: "User voice. #TODO explain"
+        description: "User Voice: measures the ability of a user to posts or retweets influential tweets"
       impact:
         type: number
-        description: "User impact. #TODO explain"
-      last_updated:
+        description: "User Impact: measures the ability of a user to improve the relevance of a tweet depending on their influence"
+      tweetRatio:
+        type: number
+        description: "Tweet ratio: Measures the proportion of the tweets published by the user which are related to the topic"
+      followRelationScore:
+        type: number
+        description: "Follow Relation Score: Measures the cuality of the relations of this sers with other users of the network"
+      lastUpdated:
         type: string
         description: "Timestamp of last metrics collection"
       

@@ -3,3 +3,9 @@ Flask==0.10.1
 redis==2.10.5
 celery==3.1.19
 -e git+https://github.com/mogui/pyorient.git@994f044bd842c907f37c82efee74f7a871030056#egg=pyorient-master
+sqlalchemy
+twitter
+click
+bitter
+scipy
+numpy
