@@ -67,9 +67,9 @@ create property User.name                                   STRING
 create property User.geo_enabled                            STRING
 # Debajo podría ser BOOLEAN
 create property User.default_profile_image                  STRING
-#create property User.metrics                                EMBEDDEDMAP
 create property User.pending                                BOOLEAN
 create property User.depth                                  INTEGER
+create property User.topics                                 EMBEDDEDLIST
 
 create index User.id                                        UNIQUE
 create index User.pending                                   NOTUNIQUE_HASH_INDEX
@@ -125,9 +125,10 @@ create class Topic extends V
 
 create property Topic.id                            LONG
 create property Topic.name                          STRING
-create property Topic.last_tweet                    STRING
 create property Topic.tweet_count                   INTEGER
 create property Topic.user_count                    INTEGER
+
+create index Topic.name                             NOTUNIQUE
 
 
 create class User_metrics extends V
@@ -165,9 +166,11 @@ create property User_metrics.lastUpdated            STRING
 # create property User_metrics.TR_score               DOUBLE
 
 create property User_metrics.complete               BOOLEAN
+create property User_metrics.topic                  STRING
 
 create index User_metrics.id                        NOTUNIQUE
 create index User_metrics.complete                  NOTUNIQUE
+create index User_metrics.topic                     NOTUNIQUE
 
 
 create class Tweet_metrics extends V
@@ -182,6 +185,7 @@ create property Tweet_metrics.relevance             DOUBLE
 create property Tweet_metrics.retweetCount          INTEGER
 create property Tweet_metrics.favouriteCount        INTEGER
 create property Tweet_metrics.lastUpdated           STRING
+create property Tweet_metrics.topic                 STRING
 
 # create property Tweet_metrics.popularity            DOUBLE
 # create property Tweet_metrics.TI_score              DOUBLE
@@ -191,6 +195,7 @@ create property Tweet_metrics.complete              BOOLEAN
 
 create index Tweet_metrics.id                       NOTUNIQUE
 create index Tweet_metrics.complete                 NOTUNIQUE
+create index Tweet_metrics.topic                    NOTUNIQUE
 
 
 create class EmotionSet extends V
