@@ -30,7 +30,7 @@ services:
       - REDIS_HOST=redis
 
   orientdb:
-    image: orientdb/orientdb
+    image: orientdb
     ports:
       - "2424:2424"
       - "2480:2480"
@@ -38,7 +38,7 @@ services:
       - ./DB/databases:/orientdb/databases
       - ./DB/config:/orientdb/config
     environment:
-      - ORIENTDB_ROOT_PASSWORD=root
+      - ORIENTDB_ROOT_PASSWORD=rootpwd
     networks:
       - web-tier
 
