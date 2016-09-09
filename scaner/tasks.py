@@ -47,17 +47,23 @@ client.db_open("mixedemotions", "admin", "admin")
 # session_id = client.connect("root", "root")
 # client.db_open("mixedemotions", "admin", "admin")
 
+#LISTA DE ATRIBUTOS A ELIMINAR DE LAS PETICIONES A ORIENTDB
+
+delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic")
 
 @celery.task
 def user(user_id):
     userRecord = client.query("select from User where id = '{user_id}'".format(user_id=user_id))
     user = userRecord[0].oRecordData
-    user.pop("in_Created_by", None)
-    user.pop("in_Follows", None)
-    user.pop("out_Follows", None)
-    user.pop("in_Retweeted_by", None)
-    user.pop("pending", None)
-    user.pop("out_Last_metrics")
+    #user.pop("in_Created_by", None)
+    #user.pop("in_Follows", None)
+    #user.pop("out_Follows", None)
+    #user.pop("in_Retweeted_by", None)
+    #user.pop("pending", None)
+    #user.pop("out_Last_metrics")
+    for k in delete_variables:
+        if user.get(k):
+            del user[k]
     return user
 
 #TODO
@@ -97,12 +103,15 @@ def user_search(attributes, limit, topic, sort_by):
     user_list=[]
     for user_record in user_search:
         user = user_record.oRecordData
-        user.pop("in_Created_by", None)
-        user.pop("in_Follows", None)
-        user.pop("out_Follows", None)
-        user.pop("in_Retweeted_by", None)
-        user.pop("out_Last_metrics")
-        user.pop("pending", None)
+        #user.pop("in_Created_by", None)
+        #user.pop("in_Follows", None)
+        #user.pop("out_Follows", None)
+        #user.pop("in_Retweeted_by", None)
+        #user.pop("out_Last_metrics")
+        #user.pop("pending", None)
+        for k in delete_variables:
+            if user.get(k):
+                del user[k]
         user_list.append(user)
     return user_list
 
@@ -145,20 +154,23 @@ def ranking_tweets():
 
 @celery.task
 def tweet(tweet_id):
-    tweetRecord = client.query("select from Tweet where id = {tweet_id}".format(tweet_id=tweet_id))
+    tweetRecord = client.query("select from Tweet where id_str = {tweet_id}".format(tweet_id=tweet_id))
     # Procesar el tweet y eliminar los atributos de OrientDB y las metricas viejas
     tweet = tweetRecord[0].oRecordData
-    tweet.pop("out_Created_by", None)
-    tweet.pop("in_Retweet", None)
-    tweet.pop("out_Retweet", None)
-    tweet.pop("out_Retweeted_by", None)
-    tweet.pop("out_Belongs_to_topic", None)
-    tweet.pop("out_Last_metrics")
+    #tweet.pop("out_Created_by", None)
+    #tweet.pop("in_Retweet", None)
+    #tweet.pop("out_Retweet", None)
+    #tweet.pop("out_Retweeted_by", None)
+    #tweet.pop("out_Belongs_to_topic", None)
+    #tweet.pop("out_Last_metrics")
+    for k in delete_variables:
+        if tweet.get(k):
+            del tweet[k]
     return tweet
 
 @celery.task
 def tweet_attributes(tweet_id, attributes):
-    tweetRecord = client.query("select {attributes} from Tweet where id = {id}".format(attributes=attributes,id=tweet_id))
+    tweetRecord = client.query("select {attributes} from Tweet where id_str = {id}".format(attributes=attributes,id=tweet_id))
     return tweetRecord[0].oRecordData
 
 @celery.task
@@ -184,7 +196,7 @@ def add_tweet(tweetJson):
     if 'topics' in tweetDict:
         tweet_topics = tweetDict['topics']
 
-    tweetInDB = client.query("select id from Tweet where id = {id}".format(id=tweetDict['id']))
+    tweetInDB = client.query("select id from Tweet where id_Str = {id}".format(id=tweetDict['id']))
     if tweetInDB:
         client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
         return ("Tweet already in DB")
@@ -263,7 +275,7 @@ def add_tweet(tweetJson):
         print("retweeted_status")
         original_tweet = []
         try:
-            original_tweet = client.query("select from Tweet where id = {id_original}".format(id_original=tweetDict['retweeted_status']['id']))
+            original_tweet = client.query("select from Tweet where id_str = {id_original}".format(id_original=tweetDict['retweeted_status']['id']))
         except:
             pass
 
@@ -333,7 +345,7 @@ def add_tweet(tweetJson):
 
         original_tweet = []
         try:
-            original_tweet = client.query("select from Tweet where id = {id_original}".format(id_original=tweetDict['in_reply_to_status_id']))
+            original_tweet = client.query("select from Tweet where id_str = {id_original}".format(id_original=tweetDict['in_reply_to_status_id']))
         except:
             pass
 
@@ -360,7 +372,7 @@ def add_tweet(tweetJson):
 
 @celery.task
 def delete_tweet(tweet_id):
-    client.command("delete vertex from Tweet where id = {id}".format(id=tweet_id))
+    client.command("delete vertex from Tweet where id_str = {id}".format(id=tweet_id))
     return ("Tweet deleted from DB")
 
 @celery.task
@@ -379,28 +391,31 @@ def tweet_search(attributes, limit, topic, sort_by):
     tweet_list=[]
     for tweet_record in tweet_search:
         tweet = tweet_record.oRecordData
-        tweet.pop("out_Created_by", None)
-        tweet.pop("in_Retweet", None)
-        tweet.pop("out_Retweet", None)
-        tweet.pop("out_Retweeted_by", None)
-        tweet.pop("out_Belongs_to_topic", None)
-        tweet.pop("out_Last_metrics")
+        #tweet.pop("out_Created_by", None)
+        #tweet.pop("in_Retweet", None)
+        #tweet.pop("out_Retweet", None)
+        #tweet.pop("out_Retweeted_by", None)
+        #tweet.pop("out_Belongs_to_topic", None)
+        #tweet.pop("out_Last_metrics", None)
+        for k in delete_variables:
+            if tweet.get(k):
+                del tweet[k]
         tweet_list.append(tweet)
     return tweet_list
 
 @celery.task
 def get_tweet_emotion(tweet_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))   
+    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
     return emotionRecord[0].oRecordData
 
 @celery.task
 def get_tweet_sentiment(tweet_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))   
+    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
     return emotionRecord[0].oRecordData
 
 @celery.task
 def get_tweet_metrics(tweet_id):
-    metricsRecord = client.query("select expand(out('Last_metrics')) from Tweet where id = '{tweet_id}'".format(tweet_id=tweet_id))   
+    metricsRecord = client.query("select expand(out('Last_metrics')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
     tweet_metrics = metricsRecord[0].oRecordData
     tweet_metrics.pop("in_Last_metrics")
     return tweet_metrics
@@ -428,7 +443,7 @@ def topic_network(topic_id):
     pass
 
 #@periodic_task(run_every=timedelta(days=1))
-@periodic_task(run_every=timedelta(minutes=360))
+@periodic_task(run_every=timedelta(days=1))
 #@periodic_task(run_every=crontab(hour=12, minute=25, day_of_week=5))
 #@celery.task(base=QueueOnce)
 #@celery.task()
