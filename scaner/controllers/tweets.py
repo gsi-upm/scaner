@@ -20,7 +20,7 @@ def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
 @add_metadata()
 def post(body, *args, **kwargs):
     post_task = current_app.tasks.add_tweet.delay(json.dumps(body))
-    return {'result': post_task.get(interval=3)}, 200
+    return {'result': post_task.get(interval=0.1)}, 200
 
 @add_metadata()
 def delete(tweetId, *args, **kwargs):

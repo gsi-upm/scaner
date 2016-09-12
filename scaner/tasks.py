@@ -368,6 +368,7 @@ def add_tweet(tweetJson):
             cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=tweetDict['in_reply_to_user_id'], topic=topic)
             client.command(cmd)
 
+    print("Tweet added to DB")
     return ("Tweet added to DB")
 
 @celery.task
