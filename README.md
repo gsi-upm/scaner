@@ -1,6 +1,6 @@
 Scaner
 ##Arquitecture
-![alt tag](https://raw.githubusercontent.com/gsi-upm/scaner/newdata/overview.png)
+![alt tag](https://raw.githubusercontent.com/gsi-upm/scaner/newdata/overview.png?token=AKvRCZVCM46LZWHwF_50RvQPtwBSjtzaks5X389rwA%3D%3D)
 
 ## Installation
 Firstly you have to install [Docker](https://docs.docker.com/engine/installation/) and Docker Compose. This can be easily installed with [pip](https://pip.pypa.io/en/stable/installing/):
