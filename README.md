@@ -20,7 +20,7 @@ $ docker-compose build
 ```
 Then, it is necessary to run **OrientDB**
 ```
-$ ./populate_orient.sh
+$ ./populate_schema.sh
 ```
 Finally, we run the application
 ```

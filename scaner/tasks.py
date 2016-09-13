@@ -196,9 +196,9 @@ def add_tweet(tweetJson):
     if 'topics' in tweetDict:
         tweet_topics = tweetDict['topics']
 
-    tweetInDB = client.query("select id from Tweet where id_Str = {id}".format(id=tweetDict['id']))
+    tweetInDB = client.query("select id from Tweet where id_str = {id}".format(id=tweetDict['id']))
     if tweetInDB:
-        client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
+        client.command("update User set depth = 0 where id_str = {id}".format( id=tweetDict['user']['id']))
         return ("Tweet already in DB")
     
     tweetDict['topics'] = tweet_topics
