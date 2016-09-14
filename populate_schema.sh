@@ -5,4 +5,3 @@ docker run --rm -ti \
 	-v "$(pwd)/createmydb.sh:/createmydb.sh" \
 	orientdb \
 	/orientdb/bin/console.sh /createmydb.sh
-
