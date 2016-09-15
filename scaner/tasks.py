@@ -15,8 +15,8 @@ from . import influence_metrics
 from celery.task.control import inspect
 from celery.result import AsyncResult
 from twitter import TwitterHTTPError
-
 from celery.utils.log import get_task_logger
+
 logger = get_task_logger(__name__)
 
 REDIS_HOST = os.environ.get('REDIS_HOST')
@@ -48,7 +48,6 @@ client.db_open("mixedemotions", "admin", "admin")
 # client.db_open("mixedemotions", "admin", "admin")
 
 #LISTA DE ATRIBUTOS A ELIMINAR DE LAS PETICIONES A ORIENTDB
-
 delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic")
 
 @celery.task
@@ -127,10 +126,13 @@ def get_user_sentiment(user_id):
 
 @celery.task
 def get_user_metrics(user_id):
-    metricsRecord = client.query("select expand(out('Last_metrics')) from User where id = '{user_id}'".format(user_id=user_id))   
-    user_metrics = metricsRecord[0].oRecordData
-    user_metrics.pop("in_Last_metrics")
-    return user_metrics
+    try:
+        metricsRecord = client.query("select expand(out('Last_metrics')) from User where id = '{user_id}'".format(user_id=user_id))   
+        user_metrics = metricsRecord[0].oRecordData
+        user_metrics.pop("in_Last_metrics")
+        return user_metrics
+    except:
+        return "User metrics have not been calculated yet"
 
 @celery.task
 def prueba():
@@ -154,28 +156,34 @@ def ranking_tweets():
 
 @celery.task
 def tweet(tweet_id):
-    tweetRecord = client.query("select from Tweet where id_str = {tweet_id}".format(tweet_id=tweet_id))
-    # Procesar el tweet y eliminar los atributos de OrientDB y las metricas viejas
-    tweet = tweetRecord[0].oRecordData
-    #tweet.pop("out_Created_by", None)
-    #tweet.pop("in_Retweet", None)
-    #tweet.pop("out_Retweet", None)
-    #tweet.pop("out_Retweeted_by", None)
-    #tweet.pop("out_Belongs_to_topic", None)
-    #tweet.pop("out_Last_metrics")
-    for k in delete_variables:
-        if tweet.get(k):
-            del tweet[k]
-    return tweet
+    try:
+        tweetRecord = client.query("select from Tweet where id_str = {tweet_id}".format(tweet_id=tweet_id))
+        # Procesar el tweet y eliminar los atributos de OrientDB y las metricas viejas
+        tweet = tweetRecord[0].oRecordData
+        #tweet.pop("out_Created_by", None)
+        #tweet.pop("in_Retweet", None)
+        #tweet.pop("out_Retweet", None)
+        #tweet.pop("out_Retweeted_by", None)
+        #tweet.pop("out_Belongs_to_topic", None)
+        #tweet.pop("out_Last_metrics")
+        for k in delete_variables:
+            if tweet.get(k):
+                del tweet[k]
+        return tweet
+    except:
+        return "Tweet not found in DB"
 
 @celery.task
 def tweet_attributes(tweet_id, attributes):
-    tweetRecord = client.query("select {attributes} from Tweet where id_str = {id}".format(attributes=attributes,id=tweet_id))
-    return tweetRecord[0].oRecordData
+    try:
+        tweetRecord = client.query("select {attributes} from Tweet where id_str = {id}".format(attributes=attributes,id=tweet_id))
+        return tweetRecord[0].oRecordData
+    except:
+        return "Tweet not found in DB"
 
 @celery.task
 def tweet_history(tweet_id):
-    tweet_history = client.query("select from (select from Tweet_metrics where id = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
+    tweet_history = client.query("select from (select from Tweet_metrics where id_str = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
     tweet_history_list=[]
 
     for tweet_record in tweet_history:
@@ -196,17 +204,20 @@ def add_tweet(tweetJson):
     if 'topics' in tweetDict:
         tweet_topics = tweetDict['topics']
 
-    tweetInDB = client.query("select id from Tweet where id_str = {id}".format(id=tweetDict['id']))
+    tweetInDB = client.query("select id_str from Tweet where id_str = {id}".format(id=tweetDict['id']))
     if tweetInDB:
-        client.command("update User set depth = 0 where id_str = {id}".format( id=tweetDict['user']['id']))
+        client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
         return ("Tweet already in DB")
     
     tweetDict['topics'] = tweet_topics
     logger.warning(tweetDict['topics'])
     tweetJson = json.dumps(tweetDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-    cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
-    # logger.warning(cmd)
-    client.command(cmd)
+    try:
+        cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
+        # logger.warning(cmd)
+        client.command(cmd)
+    except pyorient.exceptions.PyOrientORecordDuplicatedException:
+        print ("Tweet already in DB")
 
 
     #Relacion con topic
@@ -284,9 +295,11 @@ def add_tweet(tweetJson):
             original_tweet_dict = tweetDict['retweeted_status']
             original_tweet_dict['topics'] = tweet_topics
             original_tweet = json.dumps(original_tweet_dict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-            cmd = "insert into Tweet content {original_tweet}".format(original_tweet = original_tweet)
-            client.command(cmd)
-
+            try:
+                cmd = "insert into Tweet content {original_tweet}".format(original_tweet = original_tweet)
+                client.command(cmd)
+            except pyorient.exceptions.PyOrientORecordDuplicatedException:
+                print ("Tweet already in DB")
             user = []
             try:
                 user = client.query("select from User where id = {id}".format(id=original_tweet_dict['user']['id']))
@@ -334,15 +347,17 @@ def add_tweet(tweetJson):
         print("reply_status")
         original_user = []
         try:
-            original_user = client.query("select from User where id = {id_original}".format(id_original=tweetDict['in_reply_to_user_id']))
+            original_user = client.query("select from User where id_str = {id_original}".format(id_original=tweetDict['in_reply_to_user_id']))
         except:
             pass
 
         # Si no esta, creamos el Tweet y el usuario
         if not original_user:
-            cmd = "insert into User set id = {id}, pending = True, depth = 0, topics = {topics}".format(id = tweetDict['in_reply_to_user_id'], topics = tweet_topics)
-            client.command(cmd)
-
+            try:
+                cmd = "insert into User set id = {id}, pending = True, depth = 0, topics = {topics}".format(id = tweetDict['in_reply_to_user_id'], topics = tweet_topics)
+                client.command(cmd)
+            except pyorient.exceptions.PyOrientORecordDuplicatedException:
+                print ("Tweet already in DB")
         original_tweet = []
         try:
             original_tweet = client.query("select from Tweet where id_str = {id_original}".format(id_original=tweetDict['in_reply_to_status_id']))
@@ -351,10 +366,12 @@ def add_tweet(tweetJson):
 
         # Si no esta, creamos el Tweet
         if not original_tweet:
-            cmd = "insert into Tweet set id = {id}, topics= {topics}".format(id = tweetDict['in_reply_to_status_id'], topics=tweet_topics)
-            client.command(cmd)
-            client.command("create edge Created_by from (select from Tweet where id = {original_id}) to (select from User where id = {user_id})".format(original_id=tweetDict['in_reply_to_status_id'], user_id=tweetDict['in_reply_to_user_id']))
-
+            try:
+                cmd = "insert into Tweet set id = {id}, topics= {topics}".format(id = tweetDict['in_reply_to_status_id'], topics=tweet_topics)
+                client.command(cmd)
+                client.command("create edge Created_by from (select from Tweet where id = {original_id}) to (select from User where id = {user_id})".format(original_id=tweetDict['in_reply_to_status_id'], user_id=tweetDict['in_reply_to_user_id']))
+            except pyorient.exceptions.PyOrientORecordDuplicatedException:
+                print ("Tweet already in DB")
         # Creamos las relaciones
         cmd = "create edge Reply from (select from Tweet where id = {reply_id}) to (select from Tweet where id = {original_id})".format(reply_id=tweetDict['id'], original_id=tweetDict['in_reply_to_status_id'])
         client.command(cmd)
@@ -416,10 +433,13 @@ def get_tweet_sentiment(tweet_id):
 
 @celery.task
 def get_tweet_metrics(tweet_id):
-    metricsRecord = client.query("select expand(out('Last_metrics')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
-    tweet_metrics = metricsRecord[0].oRecordData
-    tweet_metrics.pop("in_Last_metrics")
-    return tweet_metrics
+    try:
+        metricsRecord = client.query("select expand(out('Last_metrics')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
+        tweet_metrics = metricsRecord[0].oRecordData
+        tweet_metrics.pop("in_Last_metrics")
+        return tweet_metrics
+    except:
+        return "Tweet metrics have not been calculated yet"
 
 @celery.task
 def topic_search():
