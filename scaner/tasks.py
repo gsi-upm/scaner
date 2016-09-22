@@ -464,8 +464,8 @@ def topic_network(topic_id):
     pass
 
 #@periodic_task(run_every=timedelta(days=1))
-@periodic_task(run_every=timedelta(days=1))
-#@periodic_task(run_every=crontab(hour=12, minute=25, day_of_week=5))
+#@periodic_task(run_every=timedelta(minutes=1))
+@periodic_task(run_every=crontab(hour=8, minute=30, day_of_week="thu"))
 #@celery.task(base=QueueOnce)
 #@celery.task()
 def get_users_from_twitter(pending_users=None):
@@ -486,10 +486,12 @@ def get_users_from_twitter(pending_users=None):
             for user in pending_users:
                 pending_user_list.append(str(user.oRecordData['id']))
             for user in bitter.utils.get_users(wq,pending_user_list):
+                
                 user_topics = client.query("select topics from User where id = {id}".format(id=user['id']))[0].oRecordData['topics'] 
                 user['topics'] = user_topics
                 user_final = json.dumps(user, ensure_ascii=False).encode().decode('ascii', errors='ignore')
                 logger.warning(user['id'])
+
                 cmd = "update User content {user} where id = {id}".format(user=user_final, id=user['id'])
                 # logger.warning(cmd)
                 client.command(cmd)
@@ -501,7 +503,7 @@ def get_users_from_twitter(pending_users=None):
                 date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
                 for topic in user_topics:
                     client.command("insert into User_metrics set id = {id}, lastMetrics = True, topic = '{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user['id'],followers=user['followers_count'],following=user['friends_count'], topic= topic, date = date_ts, timestamp = ts, statuses_count = user['statuses_count']))    
-
+                
                 # RELACION FOLLOW
                 pending = True
                 cursor = -1
@@ -527,7 +529,7 @@ def get_users_from_twitter(pending_users=None):
                             follower_user = client.query("select id from User where id = {id}".format(id=follower))
 
                             if not follower_user:
-                                user_content ={'id': follower, 'depth': 1, 'pending': True, 'topics': user_topics}
+                                user_content ={'id': follower, 'depth': 2, 'pending': False, 'topics': user_topics}
                                 user_content_json = json.dumps(user_content, ensure_ascii=False).encode().decode('ascii', errors='ignore')
                                 cmd = "insert into User content {content}".format(content=user_content_json)
                                 #cmd = "insert into User set id = {id}, depth = {user_depth}, pending = True, topics={topics}".format(id=follower, user_depth = 1, topics=topics_json)
@@ -558,6 +560,46 @@ def get_users_from_twitter(pending_users=None):
 
     print ("SUCCESS")
 
+#Tarea periódica que descarga los detalles de los usuarios de twitter incompletos
+#@celery.task()
+@periodic_task(run_every=crontab(hour=8, minute=49, day_of_week="thu"))
+#@celery.task(base=QueueOnce)
+#@periodic_task(run_every=timedelta(minutes=20))
+def get_detailed_users_from_twitter(pending_users=None):
+    print("TAREA DETALLES USUARIOS")
+    wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
+    if not pending_users:
+        limit = 10000
+        skip = 0
+        depth = 2
+
+        number_of_users = client.query("select count(*) from User where pending = false and screen_name is null".format(depth=depth))[0].oRecordData['count']
+        iterations = math.ceil(number_of_users/limit)
+        print("numero de iteraciones: {iterations}".format(iterations=iterations))
+
+        for iteration_num in range(0,iterations):
+            pending_users = client.query("select id, depth from User where pending = false and screen_name is null and depth <= {depth} skip {skip} limit {limit}".format(depth=depth, skip=skip, limit=limit))
+            pending_user_list = []
+            for user in pending_users:
+                pending_user_list.append(str(user.oRecordData['id']))
+            for user in bitter.utils.get_users(wq,pending_user_list):
+                user_topics = client.query("select topics from User where id = {id}".format(id=user['id']))[0].oRecordData['topics'] 
+                user['topics'] = user_topics
+                user_final = json.dumps(user, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                logger.warning(user['id'])
+                cmd = "update User content {user} where id = {id}".format(user=user_final, id=user['id'])
+                # logger.warning(cmd)
+                client.command(cmd)
+                print("Usuario actualizado")
+
+                #Creamos una metrica nueva
+                ts = time.time()
+                date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                for topic in user_topics:
+                    client.command("insert into User_metrics set id = {id}, lastMetrics = True, topic = '{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user['id'],followers=user['followers_count'],following=user['friends_count'], topic= topic, date = date_ts, timestamp = ts, statuses_count = user['statuses_count']))    
+
+            skip += limit
+    print ("SUCCESS")
 
 @celery.task
 def get_task_list():
