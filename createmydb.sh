@@ -8,7 +8,7 @@ set echo true
 # set ignoreErrors true
 
 # Create database
-create database plocal:../databases/mixedemotions root root plocal graph
+create database plocal:/orientdb/databases/mixedemotions root root plocal graph
 
 # Create User vertex
 create class User extends V
