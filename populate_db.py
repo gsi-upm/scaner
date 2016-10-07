@@ -3,8 +3,9 @@ import requests
 import json
 import glob
 import multiprocessing
+import datetime
 from itertools import islice
-from time import sleep
+from time import sleep, mktime
 from os import path
 
 parser = argparse.ArgumentParser(description="Populate the OrientDB database")
@@ -45,13 +46,22 @@ def print_count(count, resp=None):
         print("Tweet added ({})".format(str(count)))
 
 
-def post_tweet(line, return_response=False):
-    tweet_full = json.loads(line)
-    temp = tweet_full['raw']
+def post_tweet(line, return_response=False, raw=False):
+    tweet = json.loads(line)
+    if not raw:
+	    temp = tweet['raw']
+    else:
+        temp = tweet
+
     tweet={}
     for k,v in temp.items():
         if v:
             tweet[k] = v
+
+    time = tweet['created_at']
+    time = datetime.datetime.strptime(time, "%a %b %d %X %z %Y")
+    time = mktime(time.timetuple())
+    tweet['timestamp_ms'] = time
 
     r = requests.post(url, headers = headers, data=json.dumps(tweet))
     if return_response:
@@ -103,7 +113,7 @@ if __name__ == '__main__':
                     if not parallel:
                         for line in islice(f, tweet_limit):
                             counter_, resp = post_tweet(line,
-                                                         return_response=True)
+                                                         return_response=True, raw=True)
                             counter += counter_
                             if verbose:
                                 print_count(counter, resp)
