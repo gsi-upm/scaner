@@ -8,11 +8,14 @@ import bitter.crawlers
 import bitter.utils
 import math
 import time
+import requests
 from datetime import timedelta
 import datetime
+from time import sleep, mktime
 from . import influence_metrics
 #from time import sleep
 from celery.task.control import inspect
+from celery.task.control import revoke
 from celery.result import AsyncResult
 from twitter import TwitterHTTPError
 from celery.utils.log import get_task_logger
@@ -52,18 +55,24 @@ delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by"
 
 @celery.task
 def user(user_id):
-    userRecord = client.query("select from User where id = '{user_id}'".format(user_id=user_id))
-    user = userRecord[0].oRecordData
-    #user.pop("in_Created_by", None)
-    #user.pop("in_Follows", None)
-    #user.pop("out_Follows", None)
-    #user.pop("in_Retweeted_by", None)
-    #user.pop("pending", None)
-    #user.pop("out_Last_metrics")
-    for k in delete_variables:
-        if user.get(k):
-            del user[k]
-    return user
+    try:
+        userRecord = client.query("select from User where id = '{user_id}'".format(user_id=user_id))
+        user = userRecord[0].oRecordData
+        for k in delete_variables:
+            if user.get(k):
+                del user[k]
+        return user
+    except:
+        return "User not found in DB"
+
+@celery.task
+def stoptask(taskId):
+    try:
+        revoke(taskId, terminate=True)
+        return("Task stopped correctly")
+    except:
+        return("Task did not stop correctly")
+
 
 #TODO
 @celery.task
@@ -72,12 +81,6 @@ def user_network(user_id):
     user_follower_list=[]
     for user_record in user_followers:
         user = user_record.oRecordData
-        # user.pop("in_Created_by", None)
-        # user.pop("in_Follows", None)
-        # user.pop("out_Follows", None)
-        # user.pop("in_Retweeted_by", None)
-        # user.pop("out_Last_metrics")
-        # user.pop("pending", None)
         print(user)
         user_follower_list.append(user)
     return user_follower_list
@@ -102,12 +105,6 @@ def user_search(attributes, limit, topic, sort_by):
     user_list=[]
     for user_record in user_search:
         user = user_record.oRecordData
-        #user.pop("in_Created_by", None)
-        #user.pop("in_Follows", None)
-        #user.pop("out_Follows", None)
-        #user.pop("in_Retweeted_by", None)
-        #user.pop("out_Last_metrics")
-        #user.pop("pending", None)
         for k in delete_variables:
             if user.get(k):
                 del user[k]
@@ -160,12 +157,6 @@ def tweet(tweet_id):
         tweetRecord = client.query("select from Tweet where id_str = {tweet_id}".format(tweet_id=tweet_id))
         # Procesar el tweet y eliminar los atributos de OrientDB y las metricas viejas
         tweet = tweetRecord[0].oRecordData
-        #tweet.pop("out_Created_by", None)
-        #tweet.pop("in_Retweet", None)
-        #tweet.pop("out_Retweet", None)
-        #tweet.pop("out_Retweeted_by", None)
-        #tweet.pop("out_Belongs_to_topic", None)
-        #tweet.pop("out_Last_metrics")
         for k in delete_variables:
             if tweet.get(k):
                 del tweet[k]
@@ -204,11 +195,11 @@ def add_tweet(tweetJson):
     if 'topics' in tweetDict:
         tweet_topics = tweetDict['topics']
 
-    tweetInDB = client.query("select id_str from Tweet where id_str = {id}".format(id=tweetDict['id']))
+    tweetInDB = client.query("select id_str from Tweet where id_str = {id}".format(id=tweetDict['id_str']))
     if tweetInDB:
         client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
         return ("Tweet already in DB")
-    
+
     tweetDict['topics'] = tweet_topics
     logger.warning(tweetDict['topics'])
     tweetJson = json.dumps(tweetDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
@@ -230,54 +221,58 @@ def add_tweet(tweetJson):
             logger.warning(cmd)
             client.command(cmd)
 
-        cmd = "create Edge Belongs_to_topic from (select from Tweet where id = {tweet_id}) to (select from Topic where name = '{topic}')".format(tweet_id=tweetDict['id'], topic=topic)
+        cmd = "create Edge Belongs_to_topic from (select from Tweet where id_str = {tweet_id}) to (select from Topic where name = '{topic}')".format(tweet_id=tweetDict['id_str'], topic=topic)
         logger.warning(cmd)
         client.command(cmd)
 
 
 
     # Comprobamos que su usuario esta en la DB, y si no lo creamos, y lo enlazamos
-    user_id = tweetDict['user']['id']
-    print("USER ID: " + str(user_id))
-    print("TWEET ID: " + str(tweetDict['id']))
-    user = []
     try:
-        user = client.query("select from User where id = {id}".format(id=user_id))
-    except:
-        pass
-    if not user:
-        #print ("No user")
-        user_content = tweetDict['user']
-        user_content['topics'] = tweet_topics
-        if user_content['following'] == None:
-            user_content['following'] = 0
-        if user_content['followers_count'] == None:
-            user_content['followers_count'] = 0        
-        for key, value in user_content.items():
-            if value==None:
-                user_content[key]=""
-        cmd = "insert into User content {content}".format(content=user_content)
-        #logger.warning(cmd)
+        user_id = tweetDict['user']['id']
+        logger.info("USER ID: " + str(user_id))
+        logger.info("TWEET ID: " + str(tweetDict['id']))
+        user = []
+        try:
+            user = client.query("select from User where id = {id}".format(id=user_id))
+        except:
+            pass
+        if not user:
+            #print ("No user")
+            user_content = tweetDict['user']
+            user_content['topics'] = tweet_topics
+            user_content['depth'] = 0
+            if user_content['following'] == None:
+                user_content['following'] = 0
+            if user_content['followers_count'] == None:
+                user_content['followers_count'] = 0        
+            for key, value in user_content.items():
+                if value==None:
+                    user_content[key]=""
+            cmd = "insert into User content {content}".format(content=user_content)
+            #logger.warning(cmd)
+            client.command(cmd)
+            cmd = "update User set pending = True, depth = 0 where id = {id}".format(id= user_id)
+            #logger.warning(cmd)
+            client.command(cmd)
+            print("user added")
+        client.command("create edge Created_by from (select from Tweet where id_str = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetDict['id_str'],user_id=user_id))
+        
+        cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=user_id, topic=topic)
         client.command(cmd)
-        cmd = "update User set pending = True, depth = 0 where id = {id}".format(id= user_id)
-        #logger.warning(cmd)
-        client.command(cmd)
-        print("user added")
-    client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetDict['id'],user_id=user_id))
-    
-    cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=user_id, topic=topic)
-    client.command(cmd)
 
-    # Creamos una metricas de usuario básicas
-    
-    # ts = tweetDict['created_at']
-    # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
-    
-    ts = int(tweetDict['timestamp_ms'])/1000
-    date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-    cmd = "insert into User_metrics set id = {id}, lastMetrics = True, topic='{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user_id,followers=tweetDict['user']['followers_count'],topic=topic,following=tweetDict['user']['friends_count'], date = date_ts, timestamp = ts, statuses_count=tweetDict['user']['statuses_count'])
-    #logger.warning(cmd)
-    client.command(cmd)    
+        # Creamos una metricas de usuario básicas
+        
+        # ts = tweetDict['created_at']
+        # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+        
+        ts = int(tweetDict['timestamp_ms'])/1000
+        date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        cmd = "insert into User_metrics set id = {id}, lastMetrics = True, topic='{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user_id,followers=tweetDict['user']['followers_count'],topic=topic,following=tweetDict['user']['friends_count'], date = date_ts, timestamp = ts, statuses_count=tweetDict['user']['statuses_count'])
+        #logger.warning(cmd)
+        client.command(cmd)
+    except:
+        logger.warning("Tweet does not have User defined")    
     # Planteamos crear el link de last metrics
 
 
@@ -369,22 +364,26 @@ def add_tweet(tweetJson):
             try:
                 cmd = "insert into Tweet set id = {id}, topics= {topics}".format(id = tweetDict['in_reply_to_status_id'], topics=tweet_topics)
                 client.command(cmd)
+                logger.info(tweetDict['in_reply_to_status_id'])
+                logger.info(tweetDict['in_reply_to_user_id'])
                 client.command("create edge Created_by from (select from Tweet where id = {original_id}) to (select from User where id = {user_id})".format(original_id=tweetDict['in_reply_to_status_id'], user_id=tweetDict['in_reply_to_user_id']))
             except pyorient.exceptions.PyOrientORecordDuplicatedException:
                 print ("Tweet already in DB")
         # Creamos las relaciones
+        
         cmd = "create edge Reply from (select from Tweet where id = {reply_id}) to (select from Tweet where id = {original_id})".format(reply_id=tweetDict['id'], original_id=tweetDict['in_reply_to_status_id'])
         client.command(cmd)
         cmd = "create edge Replied_by from (select from Tweet where id = {original_id}) to (select from User where id = {reply_user_id})".format(original_id=tweetDict['in_reply_to_status_id'], reply_user_id=tweetDict['user']['id'])
         client.command(cmd)
 
-        # Los enlazamos con el topic
+            # Los enlazamos con el topic
         for topic in tweet_topics:
             cmd = "create edge Belongs_to_topic from (select from Tweet where id = {tweet_id}) to (select from Topic where name = '{topic}')".format(tweet_id=tweetDict['in_reply_to_status_id'], topic=topic)
             client.command(cmd)
             cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=tweetDict['in_reply_to_user_id'], topic=topic)
             client.command(cmd)
-
+       
+        
     print("Tweet added to DB")
     return ("Tweet added to DB")
 
@@ -409,12 +408,6 @@ def tweet_search(attributes, limit, topic, sort_by):
     tweet_list=[]
     for tweet_record in tweet_search:
         tweet = tweet_record.oRecordData
-        #tweet.pop("out_Created_by", None)
-        #tweet.pop("in_Retweet", None)
-        #tweet.pop("out_Retweet", None)
-        #tweet.pop("out_Retweeted_by", None)
-        #tweet.pop("out_Belongs_to_topic", None)
-        #tweet.pop("out_Last_metrics", None)
         for k in delete_variables:
             if tweet.get(k):
                 del tweet[k]
@@ -465,9 +458,9 @@ def topic_network(topic_id):
 
 #@periodic_task(run_every=timedelta(days=1))
 #@periodic_task(run_every=timedelta(minutes=1))
-@periodic_task(run_every=crontab(hour=8, minute=30, day_of_week="thu"))
+#@periodic_task(run_every=crontab(hour=9, minute=45, day_of_week="mon"))
 #@celery.task(base=QueueOnce)
-#@celery.task()
+@celery.task()
 def get_users_from_twitter(pending_users=None):
     print("TAREA PERIODICA")
     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
@@ -495,7 +488,7 @@ def get_users_from_twitter(pending_users=None):
                 cmd = "update User content {user} where id = {id}".format(user=user_final, id=user['id'])
                 # logger.warning(cmd)
                 client.command(cmd)
-                client.command("update User set pending = False where id = {id}".format(id=user['id']))
+                client.command("update User set pending = False, depth = 0 where id = {id}".format(id=user['id']))
                 print("Usuario actualizado")
 
                 #Creamos una metrica nueva
@@ -548,21 +541,21 @@ def get_users_from_twitter(pending_users=None):
                         cursor = resp["next_cursor"]
                         print ("Cursor: {cursor}".format(cursor=cursor))
                         if cursor > 0:
-                            logger.warning("Getting more followers for %s" % user['id'])
+                            logger.info("Getting more followers for %s" % user['id'])
                         else:
-                            logger.warning("Done getting followers for %s" % user['id'])
+                            logger.info("Done getting followers for %s" % user['id'])
                             cursor = -1
                             pending = False
                     else:
                         pass
 
             skip += limit
-
+    #get_detailed_users_from_twitter()
     print ("SUCCESS")
 
 #Tarea periódica que descarga los detalles de los usuarios de twitter incompletos
-#@celery.task()
-@periodic_task(run_every=crontab(hour=8, minute=49, day_of_week="thu"))
+@celery.task()
+#@periodic_task(run_every=crontab(hour=8, minute=49, day_of_week="thu"))
 #@celery.task(base=QueueOnce)
 #@periodic_task(run_every=timedelta(minutes=20))
 def get_detailed_users_from_twitter(pending_users=None):
@@ -587,7 +580,7 @@ def get_detailed_users_from_twitter(pending_users=None):
                 user['topics'] = user_topics
                 user_final = json.dumps(user, ensure_ascii=False).encode().decode('ascii', errors='ignore')
                 logger.warning(user['id'])
-                cmd = "update User content {user} where id = {id}".format(user=user_final, id=user['id'])
+                cmd = "update User content {user} and depth = 2 where id = {id}".format(user=user_final, id=user['id'])
                 # logger.warning(cmd)
                 client.command(cmd)
                 print("Usuario actualizado")
@@ -600,6 +593,48 @@ def get_detailed_users_from_twitter(pending_users=None):
 
             skip += limit
     print ("SUCCESS")
+
+@celery.task()
+def get_tweets_by_id(pending_tweets=None):
+    wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
+    if not pending_tweets:
+        limit = 100
+        skip = 0
+        number_of_tweets = client.query("select count(*) from Tweet where pending = True")[0].oRecordData['count']
+        while number_of_tweets > 0:
+            pending_tweets = client.query("select id_str from Tweet where pending = True limit {limit} skip {skip}".format(limit=limit, skip = skip))
+            number_of_tweets = number_of_tweets - limit
+            logger.info(" %s tweets remaining" % number_of_tweets)
+            pending_tweets_list = []
+            for tweet in pending_tweets:
+                pending_tweets_list.append(str(tweet.oRecordData['id_str']))
+            ids = ""
+            for tweet in pending_tweets_list:
+                if tweet == pending_tweets_list[len(pending_tweets_list)-1]:
+                    ids += tweet
+                else:
+                    ids += tweet + ","
+            logger.info(ids)        
+            for tweet in wq.statuses.lookup(_id=ids):
+                tweet_topics = client.query("select topics from tweet where id_str = {id_str}".format(id_str=tweet['id_str']))[0].oRecordData['topics'] 
+                tweet['topics'] = tweet_topics
+                tweet['pending'] = False
+                time = tweet['created_at']
+                time = datetime.datetime.strptime(time, "%a %b %d %X %z %Y")
+                time = mktime(time.timetuple())
+                tweet['timestamp_ms'] = time
+                reply_variables = ['in_reply_to_user_id','in_reply_to_status_id','in_reply_to_user_id_str','in_reply_to_status_id_str','in_reply_to_screen_name']
+                for k in reply_variables:
+                    if not tweet.get(k):
+                        del tweet[k]
+                tweet_json = json.dumps(tweet, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                cmd = "delete vertex from Tweet where id_str = {id_str}".format(id_str=tweet['id_str'])
+                logger.info(tweet_json)
+                client.command(cmd)
+                logger.info(cmd)
+                add_tweet(tweet_json)
+            skip += limit
+    logger.info("TWEETS HYDRATED")
 
 @celery.task
 def get_task_list():
@@ -618,10 +653,10 @@ def get_task_status(taskId):
         status = "Finished"
     return status
 
-@periodic_task(run_every=timedelta(days=1))
-#@celery.task
+#@periodic_task(run_every=crontab(hour=10, minute=54, day_of_week="wed"))
+@celery.task
 def execute_metrics():
-    print("COMIENZAN LAS METRICAS")
+    logger.info("COMIENZAN LAS METRICAS")
     influence_metrics.execution()
 
 # @celery.task
@@ -639,5 +674,45 @@ def execute_metrics():
 #     return "SUCCESS"
 
 
+#@celery.task
+#def add_new_emotion(emotion):
+	
+
 #get_users_from_twitter.delay()
 #execute_metrics()
+#@periodic_task(run_every=crontab(hour=11, minute=4))
+@celery.task
+def get_emotions_from_tweets():
+    tweets = client.command("select from tweet")
+    # Adding emotions to DB 
+    for tweet_record in tweets:
+        tweet = tweet_record.oRecordData
+        emotionSetInDB = client.query("select expand(out('hasEmotionSet')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet['id_str']))
+        if not emotionSetInDB:
+            r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=EmoTextANEW&lang=es&i=%s' % tweet["text"])
+            response = r.content.decode('utf-8')
+            response_json = json.loads(response)
+            text = response_json["entries"][0]["nif:isString"].replace("'","\"")
+            arousal = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal"]
+            dominance = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance"]
+            valence = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence"]
+            hasEmotionCategory = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["onyx:hasEmotionCategory"]
+            add_new_emotion(hasEmotionCategory)
+            emo_id = int(response_json["entries"][0]["@id"].split("_")[-1].replace(".",""))
+            onyx_hasEmotion = {"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal":arousal,"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance":dominance,"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence":valence,"onyx:hasEmotionCategory":hasEmotionCategory}
+            onyx_hasEmotion_json = json.dumps(onyx_hasEmotion, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+            try:
+                cmd = "insert into EmotionSet set nif__isString = '{text}', id = {id}, onyx__hasEmotion = {onyx}".format(text=text, id=emo_id, onyx=onyx_hasEmotion_json)
+                logger.warning(cmd)
+                client.command(cmd)
+            except:
+                print("Tweet inválido para analizar emociones")
+            try:
+                cmd = "create Edge hasEmotionSet from (select from Tweet where id_str = '{tweet_id}') to (select from EmotionSet where id = '{emotion_id}')".format(tweet_id = tweet['id_str'],emotion_id = emo_id)
+                logger.warning(cmd)
+                client.command(cmd)
+            except:
+                print("No se ha podido enlazar la emocion con el tweet")
+        else:    
+        	print("Emociones ya calculadas para este tweet")    
+    print("Finish Task")

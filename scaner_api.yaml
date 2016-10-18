@@ -39,7 +39,6 @@ paths:
             $ref: "#/definitions/Users"
         404:
           description: User not found
-          
   /users/{userId}/emotion:
     get:
       operationId: scaner.controllers.users.get_emotion
@@ -285,7 +284,6 @@ paths:
           #   $ref: '#/definitions/Tweets_search'
         404:
           description: Tweet not found
-      
   /tweets:
     get:
       tags:
@@ -341,7 +339,6 @@ paths:
       responses:
         200:
           description: "Uploaded"
-          
 
   /users/{userId}/network:
     get:
@@ -360,7 +357,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Network'
-          
   /topics:
     get:
       tags:
@@ -386,7 +382,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Topics'
-    
   /topics/{topicId}/network:
     get:
       operationId: scaner.controllers.topics.get_network
@@ -432,7 +427,47 @@ paths:
           description: Task found and returned
           # schema:
           #   $ref: '#/definitions/Tasks'      
+  /tasks/emotiontask:
+    get:
+      operationId: scaner.controllers.tasks.get_emotions_from_twitter
+      tags:
+      - tasks
+      responses:
+        200:
+          description: Task running
+          # schema:
+          #   $ref: '#/definitions/Tasks'
+  /tasks/influencemetrics:
+    get:
+      operationId: scaner.controllers.tasks.run_metrics
+      tags:
+      - tasks
+      responses:
+        200:
+          description: Task running
+          # schema:
+          #   $ref: '#/definitions/Tasks'
+  /tasks/updateusers:
+    get:
+      operationId: scaner.controllers.tasks.update_users
+      tags:
+      - tasks
+      responses:
+        200:
+          description: Task running
+          # schema:
+          #   $ref: '#/definitions/Tasks'
 
+  /tasks/getweetsbyid:
+      get:
+        operationId: scaner.controllers.tasks.get_tweets_from_twitter
+        tags:
+        - tasks
+        responses:
+          200:
+            description: Task running
+            # schema:
+            #   $ref: '#/definitions/Tasks'
 
 definitions:
 
