@@ -1,11 +1,11 @@
 What is Scaner?
 --------------
 
-Senpy is an open source reference implementation of a linked data model for sentiment and emotion analysis services based on the vocabularies NIF, Marl and Onyx. 
+SCANER: Social Context Analysis aNd Emotion Recognition is a platform to collect and analyse social context, i.e context of users and content in social media. In particular, Scaner detects possible influencers and assess their relevance and impact capabilities in a given topic.
 
-The overall goal of the reference implementation Senpy is easing the adoption of the proposed linked data model for sentiment and emotion analysis services, so that services from different providers become interoperable. With this aim, the design of the reference implementation has focused on its extensibility and reusability. 
+The overall goal of the reference implementation Scaner is easing the adoption of the proposed linked data model for sentiment and emotion analysis services, so that services from different providers become interoperable. With this aim, the design of the reference implementation has focused on its extensibility and reusability. 
 
-A modular approach allows organizations to replace individual components with custom ones developed in-house. Furthermore, organizations can benefit from reusing prepackages modules that provide advanced functionalities, such as algorithms for sentiment and emotion analysis, linked data publication or emotion and sentiment mapping between different providers.
+A modular approach allows organizations to replace indiv
 
 Specifications
 ==============
