@@ -29,6 +29,7 @@ setup(
     version="0.0.1",
     install_requires=install_reqs,
     tests_require=test_reqs,
+    test_suite="tests",
     include_package_data=True,
     # entry_points="""
     #     [console_scripts]
