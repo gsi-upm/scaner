@@ -13,7 +13,6 @@ Contents:
    installation
    usage
    api
-   schema
-   plugins
+   metrics
    demo
    :maxdepth: 2

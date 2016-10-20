@@ -3,33 +3,26 @@ What is Scaner?
 
 SCANER: Social Context Analysis aNd Emotion Recognition is a platform to collect and analyse social context, i.e context of users and content in social media. In particular, Scaner detects possible influencers and assess their relevance and impact capabilities in a given topic.
 
-The overall goal of the reference implementation Scaner is easing the adoption of the proposed linked data model for sentiment and emotion analysis services, so that services from different providers become interoperable. With this aim, the design of the reference implementation has focused on its extensibility and reusability. 
+The platform is able to extract and process social media information data from Twitter, allowing us to analyse and process different metrics from tweets and users. To perform the test of the platform, it includes models of users and tweets. It creates the appropriate relationships between users and their related tweets, it calculates their influences and makes this information available through a REST API.
 
-A modular approach allows organizations to replace indiv
-
-Specifications
+Social Context
 ==============
 
-The model used in Senpy is based on the following specifications:
+There are two main components in social context: users and content. Any information from the social network that is not present in the bare textual content could be considered part of its social context. Scaner calculates metrics to include richer aspects from the social network, exploiting he graph of relationships and interactions between users and content. Some of these aspects, the more general ones, are already provided by the social network site through its API, such as the number of mentions, favourites or replies. More specific or intensive metrics need to be computed by third parties.
 
-* Marl, a vocabulary designed to annotate and describe subjetive opinions expressed on the web or in information systems.
-* Onyx, which is built one the same principles as Marl to annotate and describe emotions, and provides interoperability with Emotion Markup Language.
-* NIF 2.0, which defines a semantic format and APO for improving interoperability among natural language processing services
 
 Architecture
 ============
 
-The main component of a sentiment analysis service is the algorithm itself. However, for the algorithm to work, it needs to get the appropriate parameters from the user, format the results according to the defined API, interact with the user whn errors occur or more information is needed, etc.
+The modular architecture of Scaner allows retrieving, storing and processing large amounts of information. The independent task system and API further contribute to decouple the modules in the platform. 
 
-Senpy proposes a modular and dynamic architecture that allows:
+* OrientDB stores all the amount of data that we needed and easily edges the information to create graphs.
+* The crawler has been able to extract the necessarry information from Twitter, being only limited by the Twitter API rate limit. Scaner uses `bitter <https://github.com/balkian/bitter>`_ to implement this task.
+* The task manager process all this information.
 
-* Implementing different algorithms in a extensible way, yet offering a common interface.
-* Offering common services that facilitate development, so developers can focus on implementing new and better algorithms.
 
-The framework consists of two main modules: Senpy core, which is the building block of the service, and Senpy plugins, which consist of the analysis algorithm. The next figure depicts a simplified version of the processes involved in an analysis with the Senpy framework.
-
-.. image:: senpy-architecture.png
-  :height: 400px
+.. image:: overview.png
+  :height: 800px
   :width: 800px
   :scale: 100 %
   :align: center
