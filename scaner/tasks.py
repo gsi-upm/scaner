@@ -81,7 +81,7 @@ def user_network(user_id):
     user_follower_list=[]
     for user_record in user_followers:
         user = user_record.oRecordData
-        print(user)
+        #print(user)
         user_follower_list.append(user)
     return user_follower_list
 
@@ -174,13 +174,13 @@ def tweet_attributes(tweet_id, attributes):
 
 @celery.task
 def tweet_history(tweet_id):
-    tweet_history = client.query("select from (select from Tweet_metrics where id_str = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
+    tweet_history = client.query("select from (select from Tweet_metrics where id = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
     tweet_history_list=[]
 
     for tweet_record in tweet_history:
         tweet = tweet_record.oRecordData
         tweet.pop("in_Last_metrics", None)
-        print(tweet)
+        #print(tweet)
         tweet_history_list.append(tweet_record.oRecordData)
     return tweet_history_list
 

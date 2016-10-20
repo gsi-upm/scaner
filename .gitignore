@@ -9,3 +9,5 @@ dump*
 DB/databases
 bitter
 db_insertion_examples
+tests/DB/databases
+docs/_build
