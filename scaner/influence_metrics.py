@@ -23,7 +23,6 @@ else:
     session_id = client.connect("root", "root")
     client.db_open("mixedemotions", "admin", "admin")
 
-
 #CONFIGURACION PARA LOCAL
 # client = pyorient.OrientDB("localhost", 2424)
 # session_id = client.connect("root", "root")
@@ -33,6 +32,10 @@ else:
 # Metodo para calcular la metrica TR SCORE de todos los usuarios
 def user_tweetratio_score(userlist, topic):
     print("USER TWEETRATIO")
+    IS_TEST = os.environ.get('IS_TEST')
+    if IS_TEST:
+        print ("Testing...")
+        test_metrics = {}
     # userlist = client.query("select from User limit -1")
     for user in userlist:
         user_metrics_list = client.query("select from User_metrics where topic = '{topic}' and id = {id} order by timestamp desc".format(id = user.oRecordData['id'], topic=topic))
@@ -50,10 +53,13 @@ def user_tweetratio_score(userlist, topic):
         tweet_ratio = abs(tweet_ratio)
         tweet_ratio = truncate(tweet_ratio, 12)
         #tweet_ratio = 0.5
-
+        if IS_TEST:
+            test_metrics[user.oRecordData['id']] = tweet_ratio
         # CREAMOS EL OBJETO DE METRICAS DE USUARIO
         user_metrics_object_creation(user, tweet_ratio, topic)
 
+    if IS_TEST:
+        return test_metrics
     logger.info("METRICAS CREADAS")
 
         # tweets_related_user = client.query("select from Tweet where user_id = '{userid}'".format(userid=user.oRecorData['id']) )
@@ -68,6 +74,10 @@ def user_tweetratio_score(userlist, topic):
 # Metodo para calcular la metrica UI SCORE
 def influence_score(userlist, number_of_users, number_of_tweets, topic):
     logger.info("INFLUENCE SCORE")
+    IS_TEST = os.environ.get('IS_TEST')
+    if IS_TEST:
+        print ("Testing...")
+        influence_score = {}
     # Parametros
     limit = 10000
     iterationRID = "#-1:-1"
@@ -296,6 +306,8 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         #     UI_unnormalized = 0
         # if UI < 0.0000999:
         #     UI = 0.0001
+        if IS_TEST:
+            influence_score[user.oRecordData['id']] = UI_unnormalized
 
         command = "update User_metrics set influence={UI_score}, influenceUnnormalized={UI_unnormalized} where id={user_id} and lastMetrics = True and topic = '{topic}'".format(user_id=user.oRecordData['id'], UI_score=UI, UI_unnormalized=UI_unnormalized, topic=topic)
         #print (command)
@@ -315,11 +327,15 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
 
             # if TI_score < 0.0000999:
             #     TI_score = 0.0001
+            if IS_TEST:
+                influence_score[tweet.oRecordData['id']] = TI_score
 
             command = "update Tweet_metrics set influence = {TI_score} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=tweet.oRecordData['id'], TI_score=TI_score, topic=topic)
             client.command(command)
         newindex += 10000 
         iterationRID = tweet._rid
+    if IS_TEST:
+        return influence_score
     logger.info("FIN influence_score")
 
     # while (error_u > 0.1) or (error_t > 0.1):
@@ -333,6 +349,10 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     
 def follow_relation_factor_user(userlist, number_of_users, topic):
     logger.info("FOLLOW RELATION FACTOR USER")
+    IS_TEST = os.environ.get('IS_TEST')
+    if IS_TEST:
+        print ("Testing...")
+        follow_relation_score = {}
     # userlist = client.query("select from User order by metrics.followers desc limit 500")
     # userlist = client.query("select from User limit -1")
 
@@ -388,12 +408,16 @@ def follow_relation_factor_user(userlist, number_of_users, topic):
         followRelationScore = FR_vector[n]
         followRelationScore = truncate(followRelationScore, 12)
 
+        if IS_TEST:
+            follow_relation_score[user.oRecordData['id']] = followRelationScore
+
         # if followRelationScore < 0.0000999:
         #     followRelationScore = 0.0001
 
         command = "update User_metrics set followRelationScore = {FR_score} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=user.oRecordData['id'], FR_score=followRelationScore, topic=topic)
         client.command(command)
-
+    if IS_TEST:
+        return follow_relation_score
 
 # Metodo para calcular la relevancia de un usuario a partir de las otras métricas
 def user_relevance_score(userlist, topic):
@@ -430,6 +454,10 @@ def user_relevance_score(userlist, topic):
 # Metodo para calcular el parametro IMPACT de un usuario
 def impact_user(userlist, number_of_tweets, topic):
     logger.info("USER IMPACT")
+    IS_TEST = os.environ.get('IS_TEST')
+    if IS_TEST:
+        print ("Testing...")
+        impact_user_score = {}
     # userlist = client.query("select from User order by metrics.followers desc limit 500")
     impact_vector = np.array([])
     # DAMPING FACTOR
@@ -454,15 +482,24 @@ def impact_user(userlist, number_of_tweets, topic):
         user_impact = truncate(user_impact, 12)
 
         # if user_impact < 0.0000999:
-        #     user_impact = 0  
+        #     user_impact = 0 
+
+        if IS_TEST:
+            impact_user_score[user.oRecordData['id']] = user_impact
         
         command = "update User_metrics set impact = {impact} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=user.oRecordData['id'], impact=user_impact, topic=topic)
         client.command(command)
+    if IS_TEST:
+        return impact_user_score
 
 
 # Metodo para calcular el parametro VOICE de los usuario (As-is)
 def voice_user(userlist, topic):
     logger.info("USER VOICE")
+    IS_TEST = os.environ.get('IS_TEST')
+    if IS_TEST:
+        print ("Testing...")
+        voice_user_score = {}
     #userlist = client.query("select from User order by metrics.followers desc limit 500")
 
     # Parametro SIGMA de suavizado
@@ -491,10 +528,16 @@ def voice_user(userlist, topic):
         voice_r = truncate(voice_r, 12)
         #print(voice_t)
         #print(voice_r)
+
+        if IS_TEST:
+            voice_user_score[user.oRecordData['id']] = { voice_t, voice_r}
+
         command = "update User_metrics set voice = {voice_t}, voice_r = {voice_r} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=user.oRecordData['id'],voice_t=voice_t,voice_r=voice_r,topic=topic)
         #print(command)
         client.command(command)
         #print ("Voz usuario {n}".format(n=n+1))
+    if IS_TEST:
+        return voice_user_score
 
 
 

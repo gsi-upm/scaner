@@ -653,8 +653,8 @@ def get_task_status(taskId):
         status = "Finished"
     return status
 
-#@periodic_task(run_every=crontab(hour=10, minute=54, day_of_week="wed"))
-@celery.task
+@periodic_task(run_every=crontab(hour=9, minute=4, day_of_week="fri"))
+#@celery.task
 def execute_metrics():
     logger.info("COMIENZAN LAS METRICAS")
     influence_metrics.execution()
