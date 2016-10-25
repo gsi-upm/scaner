@@ -77,7 +77,7 @@ def stoptask(taskId):
 #TODO
 @celery.task
 def user_network(user_id):
-    user_followers = client.query("select id from (select expand(in(Follows)) from User where id='{userid}' limit -1)".format(userid=user_id))
+    user_followers = client.query("select id from (select expand(in('Follows')) from User where id='{userid}' limit -1) limit -1".format(userid=user_id))
     user_follower_list=[]
     for user_record in user_followers:
         user = user_record.oRecordData

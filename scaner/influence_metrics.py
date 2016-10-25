@@ -544,6 +544,10 @@ def voice_user(userlist, topic):
 # Metodo para calcular el parametro TWEETRANKING de los tweets (As-is::ORIGINAL)
 def tweet_relevance(number_of_tweets, topic):
     logger.info("TWEET RELEVANCE")
+    IS_TEST = os.environ.get('IS_TEST')
+    if IS_TEST:
+        print ("Testing...")
+        tweet_relevance_score = {}
     # Parametro de ajuste ALPHA
     alpha = 0.5
     limit = 10000
@@ -581,10 +585,15 @@ def tweet_relevance(number_of_tweets, topic):
 
             tweet_relevance = alpha * VR_score + (1 - alpha) * IR_score
 
+            if IS_TEST:
+                tweet_relevance_score[tweet.oRecordData['id']] = tweet_relevance
+            
             command = "update Tweet_metrics set relevance = {tweet_relevance} where id = {id} and topic = '{topic}'".format(id=tweet.oRecordData['id'],tweet_relevance=tweet_relevance, topic = topic)
             client.command(command)
 
         iterationRID = tweet._rid
+        if IS_TEST:
+            return tweet_relevance_score
         print ("Tweet iterationRID".format(iterationRID=iterationRID))
 
 def user_metrics_object_creation(user, tweet_ratio, topic):
@@ -649,7 +658,6 @@ def preparation_phase(topic):
     # CREA OBJETOS DE METRICAS DE USUARIO
     else:
         user_tweetratio_score(userlist, topic)
-
         influence_score(userlist, number_of_users, number_of_tweets, topic)
         follow_relation_factor_user(userlist, number_of_users, topic)
         impact_user(userlist, number_of_tweets, topic)
