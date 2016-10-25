@@ -11,6 +11,7 @@ Once Scaner is running in your computer, you can add tweets to the system in ord
 
 
 This script has also more features that are explained if you type
+
 .. code:: bash
 
         python3 populate_db.py --h
