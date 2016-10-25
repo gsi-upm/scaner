@@ -8,6 +8,7 @@ import bitter.crawlers
 import bitter.utils
 import math
 import time
+from itertools import islice
 import requests
 from datetime import timedelta
 import datetime
@@ -282,8 +283,10 @@ def add_tweet(tweetJson):
         original_tweet = []
         try:
             original_tweet = client.query("select from Tweet where id_str = {id_original}".format(id_original=tweetDict['retweeted_status']['id']))
+            
         except:
             pass
+            logger.info("El tweet original no se encuentra en la base de datos")
 
         # Si el tweet original no está en la base de datos, lo creamos, junto con su usuario
         if not original_tweet:
@@ -332,7 +335,9 @@ def add_tweet(tweetJson):
 
 
         # Enlazamos el retweet y el usuario con el original 
-        client.command("create edge Retweet from (select from Tweet where id = {retweet}) to (select from Tweet where id = {original})".format(retweet=tweetDict['id'], original=tweetDict['retweeted_status']['id']))
+        cmd = "create edge Retweet from (select from Tweet where id_str = '{retweet}') to (select from Tweet where id_str = '{original}')".format(retweet=tweetDict['id'], original=tweetDict['retweeted_status']['id'])
+        client.command(cmd)
+        logger.warning(cmd)
         cmd = "create edge Retweeted_by from (select from Tweet where id = {original}) to (select from User where id = {user_id})".format(original=tweetDict['retweeted_status']['id'], user_id=tweetDict['user']['id'])
         # logger.warning(cmd)
         client.command(cmd)   
@@ -342,7 +347,7 @@ def add_tweet(tweetJson):
         print("reply_status")
         original_user = []
         try:
-            original_user = client.query("select from User where id_str = {id_original}".format(id_original=tweetDict['in_reply_to_user_id']))
+            original_user = client.query("select from User where id = {id_original}".format(id_original=tweetDict['in_reply_to_user_id']))
         except:
             pass
 
@@ -353,6 +358,7 @@ def add_tweet(tweetJson):
                 client.command(cmd)
             except pyorient.exceptions.PyOrientORecordDuplicatedException:
                 print ("Tweet already in DB")
+        
         original_tweet = []
         try:
             original_tweet = client.query("select from Tweet where id_str = {id_original}".format(id_original=tweetDict['in_reply_to_status_id']))
@@ -362,18 +368,16 @@ def add_tweet(tweetJson):
         # Si no esta, creamos el Tweet
         if not original_tweet:
             try:
-                cmd = "insert into Tweet set id = {id}, topics= {topics}".format(id = tweetDict['in_reply_to_status_id'], topics=tweet_topics)
+                cmd = "insert into Tweet set id = {id}, id_str = {id_str}, topics= {topics}".format(id = tweetDict['in_reply_to_status_id'],id_str = tweetDict['in_reply_to_status_id_str'], topics=tweet_topics)
                 client.command(cmd)
-                logger.info(tweetDict['in_reply_to_status_id'])
-                logger.info(tweetDict['in_reply_to_user_id'])
-                client.command("create edge Created_by from (select from Tweet where id = {original_id}) to (select from User where id = {user_id})".format(original_id=tweetDict['in_reply_to_status_id'], user_id=tweetDict['in_reply_to_user_id']))
+                client.command("create edge Created_by from (select from Tweet where id_str = {original_id}) to (select from User where id = {user_id})".format(original_id=tweetDict['in_reply_to_status_id_str'], user_id=tweetDict['in_reply_to_user_id']))
             except pyorient.exceptions.PyOrientORecordDuplicatedException:
                 print ("Tweet already in DB")
         # Creamos las relaciones
-        
-        cmd = "create edge Reply from (select from Tweet where id = {reply_id}) to (select from Tweet where id = {original_id})".format(reply_id=tweetDict['id'], original_id=tweetDict['in_reply_to_status_id'])
+        logger.info(tweetDict['in_reply_to_status_id'])
+        cmd = "create edge Reply from (select from Tweet where id_str = {reply_id}) to (select from Tweet where id_str = {original_id})".format(reply_id=tweetDict['id_str'], original_id=tweetDict['in_reply_to_status_id_str'])
         client.command(cmd)
-        cmd = "create edge Replied_by from (select from Tweet where id = {original_id}) to (select from User where id = {reply_user_id})".format(original_id=tweetDict['in_reply_to_status_id'], reply_user_id=tweetDict['user']['id'])
+        cmd = "create edge Replied_by from (select from Tweet where id_str = {original_id}) to (select from User where id = {reply_user_id})".format(original_id=tweetDict['in_reply_to_status_id_str'], reply_user_id=tweetDict['user']['id'])
         client.command(cmd)
 
             # Los enlazamos con el topic
@@ -462,6 +466,7 @@ def topic_network(topic_id):
 #@celery.task(base=QueueOnce)
 @celery.task()
 def get_users_from_twitter(pending_users=None):
+    limit_users = 10000
     print("TAREA PERIODICA")
     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
     if not pending_users:
@@ -500,6 +505,7 @@ def get_users_from_twitter(pending_users=None):
                 # RELACION FOLLOW
                 pending = True
                 cursor = -1
+                limitator = 0
                 print("Empieza la descarga de usuarios de {id}".format(id=user['id']))
                 while pending:
                     try:
@@ -516,6 +522,7 @@ def get_users_from_twitter(pending_users=None):
                     print("Usuarios descargados")
 
                     if 'ids' in resp:
+                        limitator +=1
                         for follower in resp['ids']:
                             #print ("esto es lo que da problemas: {follower}".format(follower=follower))
                             follower_user=[]
@@ -540,7 +547,7 @@ def get_users_from_twitter(pending_users=None):
 
                         cursor = resp["next_cursor"]
                         print ("Cursor: {cursor}".format(cursor=cursor))
-                        if cursor > 0:
+                        if cursor > 0 and limitator <= 2:
                             logger.info("Getting more followers for %s" % user['id'])
                         else:
                             logger.info("Done getting followers for %s" % user['id'])
@@ -600,40 +607,46 @@ def get_tweets_by_id(pending_tweets=None):
     if not pending_tweets:
         limit = 100
         skip = 0
-        number_of_tweets = client.query("select count(*) from Tweet where pending = True")[0].oRecordData['count']
-        while number_of_tweets > 0:
-            pending_tweets = client.query("select id_str from Tweet where pending = True limit {limit} skip {skip}".format(limit=limit, skip = skip))
-            number_of_tweets = number_of_tweets - limit
+        number_of_tweets = client.query("select count(*) from Tweet where pending = True ")[0].oRecordData['count']
+        pending_tweets_total = []
+        while number_of_tweets > 0:    
             logger.info(" %s tweets remaining" % number_of_tweets)
+            ids = ""
+            pending_tweets = client.query("select id_str from Tweet where pending = True limit {limit}".format(limit=limit))
+            
             pending_tweets_list = []
+            
             for tweet in pending_tweets:
                 pending_tweets_list.append(str(tweet.oRecordData['id_str']))
-            ids = ""
             for tweet in pending_tweets_list:
-                if tweet == pending_tweets_list[len(pending_tweets_list)-1]:
-                    ids += tweet
+                if tweet not in pending_tweets_total:
+                    if tweet == pending_tweets_list[len(pending_tweets_list)-1]:
+                        ids += tweet
+                    else:
+                        ids += tweet + ","
+                    pending_tweets_total.append(str(tweet))
+
                 else:
-                    ids += tweet + ","
-            logger.info(ids)        
-            for tweet in wq.statuses.lookup(_id=ids):
-                tweet_topics = client.query("select topics from tweet where id_str = {id_str}".format(id_str=tweet['id_str']))[0].oRecordData['topics'] 
-                tweet['topics'] = tweet_topics
-                tweet['pending'] = False
-                time = tweet['created_at']
-                time = datetime.datetime.strptime(time, "%a %b %d %X %z %Y")
-                time = mktime(time.timetuple())
-                tweet['timestamp_ms'] = time
-                reply_variables = ['in_reply_to_user_id','in_reply_to_status_id','in_reply_to_user_id_str','in_reply_to_status_id_str','in_reply_to_screen_name']
-                for k in reply_variables:
-                    if not tweet.get(k):
-                        del tweet[k]
-                tweet_json = json.dumps(tweet, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-                cmd = "delete vertex from Tweet where id_str = {id_str}".format(id_str=tweet['id_str'])
-                logger.info(tweet_json)
-                client.command(cmd)
-                logger.info(cmd)
-                add_tweet(tweet_json)
-            skip += limit
+                    cmd = "update tweet set pending = false where id_str = {id_str}".format(id_str=tweet)
+                    client.command(cmd)
+            if ids:
+                for tweet in wq.statuses.lookup(_id=ids):
+                    tweet_topics = client.query("select topics from tweet where id_str = {id_str}".format(id_str=tweet['id_str']))[0].oRecordData['topics'] 
+                    tweet['topics'] = tweet_topics
+                    tweet['pending'] = False
+                    time = tweet['created_at']
+                    time = datetime.datetime.strptime(time, "%a %b %d %X %z %Y")
+                    time = mktime(time.timetuple())
+                    tweet['timestamp_ms'] = time
+                    reply_variables = ['in_reply_to_user_id','in_reply_to_status_id','in_reply_to_user_id_str','in_reply_to_status_id_str','in_reply_to_screen_name']
+                    for k in reply_variables:
+                        if not tweet.get(k):
+                            del tweet[k]
+                    tweet_json = json.dumps(tweet, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                    cmd = "delete vertex from Tweet where id_str = {id_str}".format(id_str=tweet['id_str'])
+                    client.command(cmd)
+                    add_tweet(tweet_json)
+            number_of_tweets = client.query("select count(*) from Tweet where pending = True")[0].oRecordData['count']
     logger.info("TWEETS HYDRATED")
 
 @celery.task
