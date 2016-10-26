@@ -11,8 +11,8 @@ RUN pip install --upgrade pip
 RUN apt-get update
 RUN apt-get install build-essential gfortran libatlas-base-dev python-pip python-dev -y
 
-ADD test-requirements.txt /usr/src/app/
-RUN pip install -r /usr/src/app/test-requirements.txt
+ADD requirements.txt /usr/src/app/
+RUN pip install -r /usr/src/app/requirements.txt
 ADD . /usr/src/app
 
 ADD run-web.sh /usr/local/bin/

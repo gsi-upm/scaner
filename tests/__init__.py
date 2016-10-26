@@ -33,8 +33,8 @@ class UnitTests(unittest.TestCase):
 
     def test_user_network(self):
         js = task.user_network(85727936)
-        #print(len(js))
-        network = 12372
+        print(len(js))
+        network = 12628
         assert len(js) == network
 
     def test_tweet_in_DB(self):
@@ -64,7 +64,7 @@ class UnitTests(unittest.TestCase):
         userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText 'nuclear' and depth < 2 limit -1")
         js = metrics.user_tweetratio_score(userlist,'nuclear')
         print (js)
-        metrics_calculated = {85727936: '0.000002603150', 15978752: '0.222222222222', 585777494: '0.000031971354', 356195126: '0.333333333333', 136215277: '0.000022684996', 89049149: '0.000000000000'}
+        metrics_calculated = {85727936: '0.024390243902', 15978752: '0.008163265306', 2391161556: '0.020833333333', 585777494: '0.000031960114', 356195126: '0.005181347150', 136215277: '0.250000000000'}
         client.db_close()
         assert js == metrics_calculated
     
@@ -78,7 +78,7 @@ class UnitTests(unittest.TestCase):
         number_of_users = len(userlist);
         js = metrics.influence_score(userlist, number_of_users, number_of_tweets, 'nuclear')
         print (js)
-        influence_calculated = {85727936: '0.000002603150', 15978752: '0.500000000000', 585777494: '0.000031971354', 356195126: '0.333333333333', 136215277: '0.000022684996', 89049149: '0.000000000000'}
+        influence_calculated = {85727936: '0.000000000000', 15978752: '0.000024812343', 546861511633682433: '0.274291885177', 356195126: '0.000000000000', 546796939535065088: '1.000000000000', 546860197587591168: '0.000000000000', 546861939037446144: '0.274291885177', 546857890833641472: '0.000000000000', 136215277: '0.000003402912', 546587081934258176: '0.000000000000', 2391161556: '0.000000000000', 585777494: '0.000010208737', 546770821927010304: '0.333333333333'}
         client.db_close()
         assert js == influence_calculated
 
@@ -89,8 +89,8 @@ class UnitTests(unittest.TestCase):
         userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText 'nuclear' and depth < 2 limit -1")
         number_of_users = len(userlist);
         js = metrics.follow_relation_factor_user(userlist, number_of_users, 'nuclear')
-        #print(js)
-        follow_relation_calculated = {85727936: '0.499999999999', 15978752: '1.000000000000', 585777494: '0.999999999999', 356195126: '0.749999999999', 136215277: '0.499999999999', 89049149: '0.499999999999'}
+        print(js)
+        follow_relation_calculated = {85727936: '0.500000000000', 15978752: '1.000000000000', 2391161556: '0.500000000000', 585777494: '1.000000000000', 356195126: '0.500000000000', 136215277: '0.500000000000'}
         client.db_close()
         assert js == follow_relation_calculated
 
@@ -102,8 +102,8 @@ class UnitTests(unittest.TestCase):
         number_of_tweets = client.query("select count(*) as count from Tweet where topics containsText 'nuclear'")
         number_of_tweets = number_of_tweets[0].oRecordData['count']
         js = metrics.impact_user(userlist, number_of_tweets, 'nuclear')
-        #print(js)
-        impact_user_calculated = {85727936: '0.000000000000', 15978752: '0.000000000000', 585777494: '0.000000000000', 356195126: '0.000000000000', 136215277: '0.000000000000', 89049149: '0.000000000000'}
+        print(js)
+        impact_user_calculated = {85727936: '0.000000000000', 15978752: '0.000000000000', 2391161556: '0.000000000000', 585777494: '0.000000000000', 356195126: '0.000000000000', 136215277: '0.000000000000'}
         client.db_close()
         assert js == impact_user_calculated
 
@@ -113,8 +113,8 @@ class UnitTests(unittest.TestCase):
         client.db_open("mixedemotions", "admin", "admin")
         userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText 'nuclear' and depth < 2 limit -1")
         js = metrics.voice_user(userlist, 'nuclear')
-        #print (js)
-        voice_user_calculated = {85727936: {'0.000000000000'}, 15978752: {'0.219433508141'}, 585777494: {'0.000000000000', '0.666666666666'}, 356195126: {'0.000000000000'}, 136215277: {'0.000000000000', '0.222222222222'}, 89049149: {'0.000000000000'}}
+        print (js)
+        voice_user_calculated = {85727936: {'0.000000000000'}, 15978752: {'0.219433508141'}, 2391161556: {'0.000000000000'}, 585777494: {'0.000000000000', '0.666666666666'}, 356195126: {'0.000000000000'}, 136215277: {'0.000000000000', '0.222222222222'}}
         client.db_close()
         assert js == voice_user_calculated
 
@@ -126,6 +126,6 @@ class UnitTests(unittest.TestCase):
         number_of_tweets = number_of_tweets[0].oRecordData['count']
         js = metrics.tweet_relevance(number_of_tweets, 'nuclear')
         client.db_close()
-        #print (js)
+        print (js)
         relevance_calculated = {546587081934258176: 0.0, 546770821927010304: 0.0, 546861511633682433: 0.0, 546860197587591168: 0.0, 546796939535065088: 0.0, 546861939037446144: 0.0, 546857890833641472: 0.0}
         assert js == relevance_calculated
