@@ -15,14 +15,13 @@ Scaner uses data from Twitter to do several tasks as:
 -  Find the network of an user
 -  Analyze data from tweets studying its impact or relevance.
 
- To do so, Scaner provides an API REST to easily manage data and
- periodically calculate metrics of users and tweets.
+To do so, Scaner provides an API REST to easily manage data and periodically calculate metrics of users and tweets.
 
 Arquitecture
 ------------
 
 .. image:: img/architectures.png
-   :height: 4em
+   :height: 300px
    :target: http://scaner.readthedocs.io/en/latest/scaner.html
 
 Installation
@@ -81,7 +80,6 @@ This development has been partially funded by the European Union through the Mix
 .. image:: img/eu-flag.jpg
    :height: 100px
    :target: http://ec.europa.eu/research/participants/portal/desktop/en/opportunities/index.html
-For more information visit: http://scaner.readthedocs.io/en/latest/
 
 .. image:: http://vps161.cesvima.upm.es/images/stories/logos/gsi.png
    :alt: GSI Logo
