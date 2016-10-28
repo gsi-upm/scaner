@@ -13,60 +13,77 @@ Scaner uses data from Twitter to do several tasks as:
 
 -  Rank most influential users in Twitter according to topics
 -  Find the network of an user
-
- -  Analyze data from tweets studying its impact or relevance.
+-  Analyze data from tweets studying its impact or relevance.
 
  To do so, Scaner provides an API REST to easily manage data and
  periodically calculate metrics of users and tweets.
 
- Arquitecture
- ------------
+Arquitecture
+------------
 
- Installation
- ------------
+.. image:: img/architectures.png
+   :height: 6em
+   :target: http://scaner.readthedocs.io/en/latest/scaner.html
 
- Firstly you have to install
- `Docker <https://docs.docker.com/engine/installation/>`__ and Docker
- Compose. This can be easily installed with
- `pip <https://pip.pypa.io/en/stable/installing/>`__:
+Installation
+------------
 
- ::
+Firstly you have to install
+`Docker <https://docs.docker.com/engine/installation/>`__ and Docker
+Compose. This can be easily installed with
+`pip <https://pip.pypa.io/en/stable/installing/>`__:
 
-     $ pip install docker-compose
+.. code:: bash
 
- Now, clone the repository into your local system
+   $ pip install docker-compose
 
- ::
+Now, clone the repository into your local system
 
-     $ git clone http://github.com/gsi-upm/scaner
+.. code:: bash
 
- Use Docker Compose to build the application:
+   $ git clone http://github.com/gsi-upm/scaner
 
- ::
+Use Docker Compose to build the application:
 
-     $ cd scaner
-     $ docker-compose build
+.. code:: bash
 
- Then, it is necessary to run **OrientDB**
+   $ cd scaner
+   $ docker-compose build
 
- ::
+Then, it is necessary to run **OrientDB**
 
-     $ ./populate_schema.sh
+.. code:: bash
 
- Finally, we run the application
+   $ ./populate_schema.sh
 
- ::
+Finally, we run the application
 
-     $ docker-compose up
+.. code:: bash
 
- Scaner application it is now available on port **5000**
+   $ docker-compose up
 
- More
- ----
+Scaner application it is now available on port **5000**
 
+More
+----
+
+For more information visit http://scaner.readthedocs.io/en/latest/
+
+Acknowledgement
+---------------
+This development has been partially funded by the European Union through the MixedEmotions Project (project number H2020 655632), as part of the `RIA ICT 15 Big data and Open Data Innovation and take-up` programme.
+
+
+.. image:: img/me.png
+    :target: http://mixedemotions-project.eu
+    :height: 100px
+    :alt: MixedEmotions Logo
+
+.. image:: img/eu-flag.jpg
+    :height: 100px
+    :target: http://ec.europa.eu/research/participants/portal/desktop/en/opportunities/index.html
  For more information visit: http://scaner.readthedocs.io/en/latest/
 
- .. figure:: http://vps161.cesvima.upm.es/images/stories/logos/gsi.png
+ .. image:: http://vps161.cesvima.upm.es/images/stories/logos/gsi.png
     :alt: GSI Logo
-
     GSI Logo
