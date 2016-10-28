@@ -39,15 +39,18 @@ def get_history(tweetId, *args, **kwargs):
 
 @add_metadata()
 def get_emotion(tweetId, *args, **kwargs):
-    #return {'result': current_app.tasks.tweet_history(tweetId)}, 200
-    pass
+    get_tweet_emotion_task = current_app.tasks.get_tweet_emotion(tweetId)
+    return {'result': get_tweet_emotion_task.get(timeout=10)}, 200
+
 
 @add_metadata()
 def get_sentiment(tweetId, *args, **kwargs):
-    #return {'result': current_app.tasks.tweet_history(tweetId)}, 200
-    pass
+    get_tweet_sentiment_task = current_app.tasks.get_tweet_sentiment(tweetId)
+    return {'result': get_tweet_sentiment_task.get(timeout=10)}, 200
+
 
 @add_metadata()
 def get_metrics(tweetId, *args, **kwargs):
     get_metrics_task = current_app.tasks.get_tweet_metrics.delay(tweetId)
     return {'result': get_metrics_task.get(timeout=10)}, 200
+

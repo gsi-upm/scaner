@@ -328,7 +328,7 @@ def add_tweet(tweetJson):
                 client.command(cmd)
 
             # Creamos una metricas de usuario básicas
-            # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+            #date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['retweeted_status']['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
             # print (date_ts)
             client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=original_tweet_dict['user']['id'],followers=original_tweet_dict['user']['followers_count'],following=original_tweet_dict['user']['friends_count'], date = date_ts, statuses_count=original_tweet_dict['user']['statuses_count']))    
             # Planteamos crear el link de last metrics
@@ -338,9 +338,12 @@ def add_tweet(tweetJson):
         cmd = "create edge Retweet from (select from Tweet where id_str = '{retweet}') to (select from Tweet where id_str = '{original}')".format(retweet=tweetDict['id'], original=tweetDict['retweeted_status']['id'])
         client.command(cmd)
         logger.warning(cmd)
-        cmd = "create edge Retweeted_by from (select from Tweet where id = {original}) to (select from User where id = {user_id})".format(original=tweetDict['retweeted_status']['id'], user_id=tweetDict['user']['id'])
-        # logger.warning(cmd)
-        client.command(cmd)   
+        try:
+            cmd = "create edge Retweeted_by from (select from Tweet where id = {original}) to (select from User where id = {user_id})".format(original=tweetDict['retweeted_status']['id'], user_id=tweetDict['user']['id'])
+            # logger.warning(cmd)
+            client.command(cmd)   
+        except:
+            pass
     
     # Comprobamos si el Tweet es un reply, y lo enlazamos con el original
     if 'in_reply_to_status_id' in tweetDict:
@@ -466,8 +469,8 @@ def topic_network(topic_id):
 #@celery.task(base=QueueOnce)
 @celery.task()
 def get_users_from_twitter(pending_users=None):
-    limit_users = 10000
     print("TAREA PERIODICA")
+    n_lim = 2
     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
     if not pending_users:
         limit = 1000
@@ -547,7 +550,7 @@ def get_users_from_twitter(pending_users=None):
 
                         cursor = resp["next_cursor"]
                         print ("Cursor: {cursor}".format(cursor=cursor))
-                        if cursor > 0 and limitator <= 2:
+                        if cursor > 0 and limitator < n_lim:
                             logger.info("Getting more followers for %s" % user['id'])
                         else:
                             logger.info("Done getting followers for %s" % user['id'])
