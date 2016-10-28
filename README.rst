@@ -22,7 +22,7 @@ Arquitecture
 ------------
 
 .. image:: img/architectures.png
-   :height: 6em
+   :height: 4em
    :target: http://scaner.readthedocs.io/en/latest/scaner.html
 
 Installation
@@ -73,17 +73,16 @@ Acknowledgement
 ---------------
 This development has been partially funded by the European Union through the MixedEmotions Project (project number H2020 655632), as part of the `RIA ICT 15 Big data and Open Data Innovation and take-up` programme.
 
-
 .. image:: img/me.png
-    :target: http://mixedemotions-project.eu
-    :height: 100px
-    :alt: MixedEmotions Logo
+   :target: http://mixedemotions-project.eu
+   :height: 100px
+   :alt: MixedEmotions Logo
 
 .. image:: img/eu-flag.jpg
-    :height: 100px
-    :target: http://ec.europa.eu/research/participants/portal/desktop/en/opportunities/index.html
- For more information visit: http://scaner.readthedocs.io/en/latest/
+   :height: 100px
+   :target: http://ec.europa.eu/research/participants/portal/desktop/en/opportunities/index.html
+For more information visit: http://scaner.readthedocs.io/en/latest/
 
- .. image:: http://vps161.cesvima.upm.es/images/stories/logos/gsi.png
-    :alt: GSI Logo
-    GSI Logo
+.. image:: http://vps161.cesvima.upm.es/images/stories/logos/gsi.png
+   :alt: GSI Logo
+   
