@@ -184,6 +184,54 @@ def tweet_history(tweet_id):
         print(tweet)
         tweet_history_list.append(tweet_record.oRecordData)
     return tweet_history_list
+@celery.task
+def add_user(userJson):
+    print("User recibido")
+    userDict = json.loads(userJson)
+    logger.info(userDict)
+    userInDB = client.query("select id from User where id = {id}".format(id=userDict['id']))
+    if not userInDB:
+        client.command("insert into User content {content}".format(content=userDict))
+        client.command('update User set pending=True where id={id}'.format(id=userDict['id']))
+
+        for topic in userDict['topics']:
+            cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=userDict['id'], topic=topic)
+            client.command(cmd)
+    else:
+        print("User exists in DB")
+        if 'friends_ids' in userDict:
+            client.command('update User set friends_ids = {friends_ids}, pending=True where id={id}'.format(friends_ids=userDict['friends_ids'],id=userDict['id']))
+ 
+ 
+@celery.task
+def followers_rel():
+    #pending_users = client.query("select id, screen_name from User skip {skip} limit {limit}".format(skip=skip, limit=limit))
+    pending_users = client.query("select id,friends_ids from User where pending = True limit -1")
+    pending_user_list = []
+    for user in pending_users:
+        if 'friends_ids' in user.oRecordData:
+            pending_user_list.append({'id':user.oRecordData['id'],'friends_ids':user.oRecordData['friends_ids']})
+
+    for user_friends in pending_user_list:
+        if user_friends['friends_ids'] == []:
+            client.command('update User set pending=False where id={id}'.format(id=user_friends['id']))
+        else:    
+            for friend in user_friends['friends_ids']:
+                print(friend)
+                friend_id = client.query("select id from User where screen_name='{friend}'".format(friend=str(friend)))
+                print("select id from User where screen_name='{friend}'".format(friend=str(friend)))
+                print(friend_id)
+                if friend_id:
+                    friend_id = friend_id[0].oRecordData['id']
+                    print(friend_id)
+                    cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=friend_id, user_id=user_friends['id'])
+                    client.command(cmd)
+                    user_friends['friends_ids'].remove(friend)
+                
+                if user_friends['friends_ids'] == []:
+                    client.command('update User set pending=False where id={id}'.format(id=user_friends['id']))
+
+
 
 @celery.task
 def add_tweet(tweetJson):

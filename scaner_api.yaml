@@ -102,6 +102,20 @@ paths:
           #   $ref: "#/definitions/Users"
         404:
           description: User not found
+  /users/followersRel:
+    get:
+      operationId: scaner.controllers.users.followers_rel
+      tags:
+      - users
+      produces:
+      - application/json
+      responses:
+        200:
+          description: User found and returned
+          # schema:
+          #   $ref: "#/definitions/Users"
+        404:
+          description: User not found
   /users:
     get:
       tags:
@@ -141,7 +155,22 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Users_search"
-
+    post:
+        description: Upload a user
+        tags:
+           - users
+        produces:
+             - application/json
+        parameters:
+          - name: body
+            in: body
+            required: true
+            x-is-map: false
+            schema:
+                $ref: '#/definitions/Raw_Users'
+        responses:
+          200:
+            description: "Uploaded"
   /tweets/{tweetId}:
     get:
       tags:
@@ -716,7 +745,7 @@ definitions:
       profile_use_background_image:
         type: boolean
       protected:
-        type: boolean
+        type: integer
       screen_name:
         type: string
       show_all_inline_media:

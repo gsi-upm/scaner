@@ -29,8 +29,9 @@ def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
 
 @add_metadata()
 def post(body, *args, **kwargs):
-    pass
-    #return {'result': current_app.tasks.add_user(body)}, 200
+    post_task = current_app.tasks.add_user.delay(json.dumps(body))
+    return {'result': post_task.get(interval=0.1)}, 200
+ 
 
 @add_metadata()
 def delete(userId, *args, **kwargs):
@@ -53,3 +54,9 @@ def get_sentiment(*args, **kwargs):
 def get_metrics(userId, *args, **kwargs):
     get_metrics_task = current_app.tasks.get_user_metrics.delay(userId)
     return {'result': get_metrics_task.get(timeout=10)}, 200
+
+@add_metadata()
+def followers_rel(*args, **kwargs):
+    followers_rel_task = current_app.tasks.followers_rel.delay()
+    return {'result': followers_rel_task.get(timeout=10)}, 200
+ 
