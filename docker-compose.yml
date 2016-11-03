@@ -29,6 +29,19 @@ services:
       - ORIENTDB_HOST=orientdb
       - REDIS_HOST=redis
 
+  celery-flower:
+    build: .
+    ports:
+     - "5555:5555"
+    command: "/usr/local/bin/run-flower.sh"
+    networks:
+      - web-tier
+    depends_on:
+      - redis
+      - celery
+    environment:
+      - REDIS_HOST=redis
+
   orientdb:
     image: orientdb
     ports:

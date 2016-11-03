@@ -19,6 +19,7 @@ from celery.task.control import revoke
 from celery.result import AsyncResult
 from twitter import TwitterHTTPError
 from celery.utils.log import get_task_logger
+from billiard.exceptions import Terminated
 
 logger = get_task_logger(__name__)
 
@@ -230,8 +231,8 @@ def add_tweet(tweetJson):
     # Comprobamos que su usuario esta en la DB, y si no lo creamos, y lo enlazamos
     try:
         user_id = tweetDict['user']['id']
-        logger.info("USER ID: " + str(user_id))
-        logger.info("TWEET ID: " + str(tweetDict['id']))
+        print("USER ID: " + str(user_id))
+        print("TWEET ID: " + str(tweetDict['id']))
         user = []
         try:
             user = client.query("select from User where id = {id}".format(id=user_id))
@@ -458,9 +459,9 @@ def topic_network(topic_id):
 
 #@periodic_task(run_every=timedelta(days=1))
 #@periodic_task(run_every=timedelta(minutes=1))
-#@periodic_task(run_every=crontab(hour=9, minute=45, day_of_week="mon"))
+#@periodic_task(run_every=crontab(hour=14, minute=9, day_of_week="wed"))
 #@celery.task(base=QueueOnce)
-@celery.task()
+@celery.task(throws=(Terminated,))
 def get_users_from_twitter(pending_users=None):
     print("TAREA PERIODICA")
     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
@@ -468,8 +469,9 @@ def get_users_from_twitter(pending_users=None):
         limit = 1000
         skip = 0
         depth = 1
-
-        number_of_users = client.query("select count(*) from User where pending = True and depth < {depth}".format(depth=depth))[0].oRecordData['count']
+        user_count = client.query("select count(*) from User where pending = True and depth < {depth}".format(depth=depth))
+        print(user_count)
+        number_of_users = user_count[0].oRecordData['count']
         iterations = math.ceil(number_of_users/limit)
         print("numero de iteraciones: {iterations}".format(iterations=iterations))
 
@@ -552,10 +554,11 @@ def get_users_from_twitter(pending_users=None):
             skip += limit
     #get_detailed_users_from_twitter()
     print ("SUCCESS")
+    return "Users updated"
 
 #Tarea periódica que descarga los detalles de los usuarios de twitter incompletos
-@celery.task()
-#@periodic_task(run_every=crontab(hour=8, minute=49, day_of_week="thu"))
+#@celery.task()
+#@periodic_task(run_every=crontab(hour=13, minute=44, day_of_week="wed"))
 #@celery.task(base=QueueOnce)
 #@periodic_task(run_every=timedelta(minutes=20))
 def get_detailed_users_from_twitter(pending_users=None):
@@ -653,11 +656,12 @@ def get_task_status(taskId):
         status = "Finished"
     return status
 
-@periodic_task(run_every=crontab(hour=9, minute=4, day_of_week="fri"))
-#@celery.task
+#@periodic_task(run_every=crontab(hour=10, minute=40, day_of_week="thu"))
+@celery.task(throws=(Terminated,))
 def execute_metrics():
-    logger.info("COMIENZAN LAS METRICAS")
+    print("COMIENZAN LAS METRICAS")
     influence_metrics.execution()
+    return "Metrics calculated"
 
 # @celery.task
 # def get_user_of_tweet(tweetId):

@@ -54,13 +54,14 @@ def user_tweetratio_score(userlist, topic):
         tweet_ratio = truncate(tweet_ratio, 12)
         #tweet_ratio = 0.5
         if IS_TEST:
-            test_metrics[user.oRecordData['id']] = tweet_ratio
+            screen_name = client.query("select screen_name from user where id = {id}".format(id=user.oRecordData['id']))
+            test_metrics[screen_name[0].oRecordData['screen_name']] = tweet_ratio
         # CREAMOS EL OBJETO DE METRICAS DE USUARIO
         user_metrics_object_creation(user, tweet_ratio, topic)
 
     if IS_TEST:
         return test_metrics
-    logger.info("METRICAS CREADAS")
+    print("METRICAS CREADAS")
 
         # tweets_related_user = client.query("select from Tweet where user_id = '{userid}'".format(userid=user.oRecorData['id']) )
         # tweets_related_user = len(tweets_related_user)
@@ -73,7 +74,7 @@ def user_tweetratio_score(userlist, topic):
 
 # Metodo para calcular la metrica UI SCORE
 def influence_score(userlist, number_of_users, number_of_tweets, topic):
-    logger.info("INFLUENCE SCORE")
+    print("INFLUENCE SCORE")
     IS_TEST = os.environ.get('IS_TEST')
     if IS_TEST:
         print ("Testing...")
@@ -95,7 +96,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     # userlist = client.query("select from User limit -1")
     print("COMIENZO A CALCULAR")
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is not null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         # Iteramos los usuarios y los tweets para rellenar las matrices
         index_start = index
@@ -307,7 +308,8 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         # if UI < 0.0000999:
         #     UI = 0.0001
         if IS_TEST:
-            influence_score[user.oRecordData['id']] = UI_unnormalized
+            screen_name = client.query("select screen_name from user where id = {id}".format(id=user.oRecordData['id']))
+            influence_score[screen_name[0].oRecordData['screen_name']] = UI_unnormalized
 
         command = "update User_metrics set influence={UI_score}, influenceUnnormalized={UI_unnormalized} where id={user_id} and lastMetrics = True and topic = '{topic}'".format(user_id=user.oRecordData['id'], UI_score=UI, UI_unnormalized=UI_unnormalized, topic=topic)
         #print (command)
@@ -316,7 +318,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     newindex = 0
     iterationRID = "#-1:-1"
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is not null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         for n,tweet in enumerate(tweetlist):
 
@@ -336,7 +338,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         iterationRID = tweet._rid
     if IS_TEST:
         return influence_score
-    logger.info("FIN influence_score")
+    print("FIN influence_score")
 
     # while (error_u > 0.1) or (error_t > 0.1):
     #     error_u = -np.mod(users_vector)
@@ -348,7 +350,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
 
     
 def follow_relation_factor_user(userlist, number_of_users, topic):
-    logger.info("FOLLOW RELATION FACTOR USER")
+    print("FOLLOW RELATION FACTOR USER")
     IS_TEST = os.environ.get('IS_TEST')
     if IS_TEST:
         print ("Testing...")
@@ -409,7 +411,8 @@ def follow_relation_factor_user(userlist, number_of_users, topic):
         followRelationScore = truncate(followRelationScore, 12)
 
         if IS_TEST:
-            follow_relation_score[user.oRecordData['id']] = followRelationScore
+            screen_name = client.query("select screen_name from user where id = {id}".format(id=user.oRecordData['id']))
+            follow_relation_score[screen_name[0].oRecordData['screen_name']] = followRelationScore
 
         # if followRelationScore < 0.0000999:
         #     followRelationScore = 0.0001
@@ -421,7 +424,11 @@ def follow_relation_factor_user(userlist, number_of_users, topic):
 
 # Metodo para calcular la relevancia de un usuario a partir de las otras métricas
 def user_relevance_score(userlist, topic):
-    logger.info("USER RELEVANCE SCORE")
+    print("USER RELEVANCE SCORE")
+    IS_TEST = os.environ.get('IS_TEST')
+    if IS_TEST:
+        print ("Testing...")
+        user_score = {}
     # userlist = client.query("select from User order by metrics.followers desc limit 500")
     # Pesos para el ajuste de las diferentes métricas: wr + wi + wf = 1
     wr = 0.1
@@ -434,9 +441,14 @@ def user_relevance_score(userlist, topic):
         user_metrics = client.query("select from User_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=user.oRecordData['id'], topic=topic))
         user_relevance = float(user_metrics[0].oRecordData['tweetRatio'])**wr + float(user_metrics[0].oRecordData['influence'])**wi + float(user_metrics[0].oRecordData['followRelationScore'])**wf
         user_relevance = truncate(user_relevance, 12)
+        if IS_TEST:
+            screen_name = client.query("select screen_name from user where id = {id}".format(id=user.oRecordData['id']))
+            user_score[screen_name[0].oRecordData['screen_name']] = user_relevance
         #print ("Relevancia de user {userid} = {user_relevance}".format(userid=user.oRecordData['id'], user_relevance=user_relevance))
         command = "update User_metrics set relevance = {user_relevance} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=user.oRecordData['id'], user_relevance=user_relevance, topic=topic)
         client.command(command)
+    if IS_TEST:
+        return user_score    
 
 # # Metodo para conseguir la lista de usuarios ordenados por su relevacia
 # def user_ranking():
@@ -453,7 +465,7 @@ def user_relevance_score(userlist, topic):
 
 # Metodo para calcular el parametro IMPACT de un usuario
 def impact_user(userlist, number_of_tweets, topic):
-    logger.info("USER IMPACT")
+    print("USER IMPACT")
     IS_TEST = os.environ.get('IS_TEST')
     if IS_TEST:
         print ("Testing...")
@@ -485,7 +497,8 @@ def impact_user(userlist, number_of_tweets, topic):
         #     user_impact = 0 
 
         if IS_TEST:
-            impact_user_score[user.oRecordData['id']] = user_impact
+            screen_name = client.query("select screen_name from user where id = {id}".format(id=user.oRecordData['id']))
+            impact_user_score[screen_name[0].oRecordData['screen_name']] = user_impact
         
         command = "update User_metrics set impact = {impact} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=user.oRecordData['id'], impact=user_impact, topic=topic)
         client.command(command)
@@ -495,7 +508,7 @@ def impact_user(userlist, number_of_tweets, topic):
 
 # Metodo para calcular el parametro VOICE de los usuario (As-is)
 def voice_user(userlist, topic):
-    logger.info("USER VOICE")
+    print("USER VOICE")
     IS_TEST = os.environ.get('IS_TEST')
     if IS_TEST:
         print ("Testing...")
@@ -530,7 +543,8 @@ def voice_user(userlist, topic):
         #print(voice_r)
 
         if IS_TEST:
-            voice_user_score[user.oRecordData['id']] = { voice_t, voice_r}
+            screen_name = client.query("select screen_name from user where id = {id}".format(id=user.oRecordData['id']))
+            voice_user_score[screen_name[0].oRecordData['screen_name']] = { voice_t, voice_r}
 
         command = "update User_metrics set voice = {voice_t}, voice_r = {voice_r} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=user.oRecordData['id'],voice_t=voice_t,voice_r=voice_r,topic=topic)
         #print(command)
@@ -543,7 +557,7 @@ def voice_user(userlist, topic):
 
 # Metodo para calcular el parametro TWEETRANKING de los tweets (As-is::ORIGINAL)
 def tweet_relevance(number_of_tweets, topic):
-    logger.info("TWEET RELEVANCE")
+    print("TWEET RELEVANCE")
     IS_TEST = os.environ.get('IS_TEST')
     if IS_TEST:
         print ("Testing...")
@@ -557,7 +571,7 @@ def tweet_relevance(number_of_tweets, topic):
     print("numero de iteraciones: {iterations}".format(iterations=iterations))
 
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is not null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         for tweet in tweetlist:
             user_creator_metrics = client.query("select from (select expand(out('Created_by').out('Last_metrics')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id'], topic=topic))
@@ -634,16 +648,16 @@ def preparation_phase(topic):
     userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText '{topic}' and depth < 2 limit -1".format(topic=topic))
     #print(userlist)
     # Calculamos el numero de usuarios y tweets que tenemos en la DB
-    number_of_tweets = client.query("select count(*) as count from Tweet where topics containsText '{topic}'".format(topic=topic))
+    number_of_tweets = client.query("select count(*) as count from Tweet where topics containsText '{topic}' and retweeted_status is not null".format(topic=topic))
     number_of_tweets = number_of_tweets[0].oRecordData['count']
     number_of_users = len(userlist);
 
-    logger.info("Numero de Tweet: {tweets}".format(tweets=number_of_tweets))
-    logger.info("Numero de usuarios con tweets: {usuarios}".format(usuarios=number_of_users))
+    print("Numero de Tweet originales: {tweets}".format(tweets=number_of_tweets))
+    print("Numero de usuarios con tweets: {usuarios}".format(usuarios=number_of_users))
 
     if len(userlist) > 1000:
         while skip < len (userlist):
-            logger.info("More than 1000 users, we process queries in different phases")
+            print("More than 1000 users, we process queries in different phases")
             userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText '{topic}' and depth < 2 limit 1000 skip {skip}".format(topic=topic))
             user_tweetratio_score(userlist, topic)
             influence_score(userlist, number_of_users, number_of_tweets, topic)
@@ -683,10 +697,10 @@ def execution():
     for topicObject in topics:
         topic = topicObject.oRecordData['name']
         if topic != "default":        
-            logger.info(topic)
+            print(topic)
             preparation_phase(topic)
 
-    logger.info("::::::::FIN::::::::")
+    print("::::::::FIN::::::::")
 
 if __name__ == '__main__':
 
@@ -699,4 +713,4 @@ if __name__ == '__main__':
     #user_ranking()
     #tweet_ranking()
 
-    logger.info("::::::::FIN::::::::")
+    print("::::::::FIN::::::::")
