@@ -61,11 +61,11 @@ def post_user(line, return_response=False, raw=False):
     topics = []
     topics.append(path.basename(brand.split('.')[0]))
     user['topics'] = topics
+    user['screen_name'] = user['screen_name'].lower()
     #time = datetime.datetime.strptime(time, "%a %b %d %X %z %Y")
     #time = mktime(time.timetuple())
     #tweet['timestamp_ms'] = time
     
-    print(user)
     r = requests.post(url, headers = headers, data=json.dumps(user))
     if return_response:
         return 1, r
@@ -131,9 +131,10 @@ if __name__ == '__main__':
 
     elif path.isfile(in_path):
         with open(in_path) as f:
+            a = json.load(f)
             if not parallel:
-                for line in islice(f, tweet_limit):
-                    counter_, resp = post_user(line, return_response=True)
+                for line in islice(a.items(), tweet_limit):
+                    counter_, resp = post_user(line, return_response=True, raw=True)
                     counter += counter_
                     if verbose:
                         print_count(counter, resp)

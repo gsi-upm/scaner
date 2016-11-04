@@ -41,6 +41,8 @@ def user_tweetratio_score(userlist, topic):
         if len(user_metrics_list) > 1:
             tweet_difference = user_metrics_list[0].oRecordData['statuses_count'] - user_metrics_list[-1].oRecordData['statuses_count']
             if tweet_difference == 0:
+                logger.info(tweets_from_user_in_DB[0])
+                logger.info(user_metrics_list[0])
                 tweet_ratio = tweets_from_user_in_DB[0].oRecordData['count'] / user_metrics_list[0].oRecordData['statuses_count']
             else:
                 tweet_ratio = tweets_from_user_in_DB[0].oRecordData['count'] / tweet_difference
@@ -502,7 +504,7 @@ def voice_user(userlist, topic):
 def tweet_relevance(number_of_tweets, topic):
     logger.info("TWEET RELEVANCE")
     # Parametro de ajuste ALPHA
-    alpha = 0.5
+    alpha = 0.4
     limit = 10000
     iterationRID = "#-1:-1"
 
@@ -592,7 +594,7 @@ def preparation_phase(topic):
     if len(userlist) > 1000:
         while skip < len (userlist):
             logger.info("More than 1000 users, we process queries in different phases")
-            userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText '{topic}' and depth < 2 limit 1000 skip {skip}".format(topic=topic))
+            userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText '{topic}' and depth < 2 limit 1000 skip {skip}".format(topic=topic,skip=skip))
             user_tweetratio_score(userlist, topic)
             influence_score(userlist, number_of_users, number_of_tweets, topic)
             follow_relation_factor_user(userlist, number_of_users, topic)

@@ -190,23 +190,30 @@ def add_user(userJson):
     userDict = json.loads(userJson)
     logger.info(userDict)
     userInDB = client.query("select id from User where id = {id}".format(id=userDict['id']))
+    print("select id from User where id = {id}".format(id=userDict['id']))
+    print(userInDB)
     if not userInDB:
         client.command("insert into User content {content}".format(content=userDict))
         client.command('update User set pending=True where id={id}'.format(id=userDict['id']))
-
+        ts = time.time()
+        date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         for topic in userDict['topics']:
             cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=userDict['id'], topic=topic)
             client.command(cmd)
+            client.command("insert into User_metrics set id = {id}, lastMetrics = True, topic = '{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=userDict['id'],followers=userDict['followers_count'],following=userDict['friends_count'], topic= topic, date = date_ts, timestamp = ts, statuses_count = userDict['statuses_count']))    
     else:
         print("User exists in DB")
         if 'friends_ids' in userDict:
-            client.command('update User set friends_ids = {friends_ids}, pending=True where id={id}'.format(friends_ids=userDict['friends_ids'],id=userDict['id']))
- 
+            client.command("update User set friends_ids = {friends_ids}, screen_name = '{screen_name}', pending=True where id={id}".format(friends_ids=userDict['friends_ids'],id=userDict['id'],screen_name=userDict['screen_name']))
+        ts = time.time()
+        date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        for topic in userDict['topics']:
+            client.command("insert into User_metrics set id = {id}, lastMetrics = True, topic = '{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=userDict['id'],followers=userDict['followers_count'],following=userDict['friends_count'], topic= topic, date = date_ts, timestamp = ts, statuses_count = userDict['statuses_count']))    
  
 @celery.task
 def followers_rel():
     #pending_users = client.query("select id, screen_name from User skip {skip} limit {limit}".format(skip=skip, limit=limit))
-    pending_users = client.query("select id,friends_ids from User where pending = True limit -1")
+    pending_users = client.query("select id,friends_ids from User where pending = true limit -1")
     pending_user_list = []
     for user in pending_users:
         if 'friends_ids' in user.oRecordData:
@@ -226,11 +233,7 @@ def followers_rel():
                     print(friend_id)
                     cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=friend_id, user_id=user_friends['id'])
                     client.command(cmd)
-                    user_friends['friends_ids'].remove(friend)
-                
-                if user_friends['friends_ids'] == []:
-                    client.command('update User set pending=False where id={id}'.format(id=user_friends['id']))
-
+            client.command('update User set pending=False where id={id}'.format(id=user_friends['id']))
 
 
 @celery.task
@@ -291,6 +294,7 @@ def add_tweet(tweetJson):
             user_content = tweetDict['user']
             user_content['topics'] = tweet_topics
             user_content['depth'] = 0
+            user_content['screen_name'] = user_content['screen_name'].lower()
             if user_content['following'] == None:
                 user_content['following'] = 0
             if user_content['followers_count'] == None:
@@ -340,6 +344,7 @@ def add_tweet(tweetJson):
         if not original_tweet:
             original_tweet_dict = tweetDict['retweeted_status']
             original_tweet_dict['topics'] = tweet_topics
+            original_tweet_dict['user']['screen_name'] = original_tweet_dict['user']['screen_name'].lower()
             original_tweet = json.dumps(original_tweet_dict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
             try:
                 cmd = "insert into Tweet content {original_tweet}".format(original_tweet = original_tweet)
@@ -354,6 +359,7 @@ def add_tweet(tweetJson):
             if not user:
                 original_user_content = original_tweet_dict['user']
                 original_user_content['topics'] = tweet_topics
+                original_user_content['screen_name'] = original_user_content['screen_name'].lower()
                 if original_user_content['following'] == None:
                     original_user_content['following'] = 0
                 if original_user_content['followers_count'] == None:
