@@ -96,7 +96,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     # userlist = client.query("select from User limit -1")
     print("COMIENZO A CALCULAR")
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is not null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         # Iteramos los usuarios y los tweets para rellenar las matrices
         index_start = index
@@ -318,7 +318,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     newindex = 0
     iterationRID = "#-1:-1"
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is not null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         for n,tweet in enumerate(tweetlist):
 
@@ -571,7 +571,7 @@ def tweet_relevance(number_of_tweets, topic):
     print("numero de iteraciones: {iterations}".format(iterations=iterations))
 
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is not null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         for tweet in tweetlist:
             user_creator_metrics = client.query("select from (select expand(out('Created_by').out('Last_metrics')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id'], topic=topic))
@@ -648,36 +648,22 @@ def preparation_phase(topic):
     userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText '{topic}' and depth < 2 limit -1".format(topic=topic))
     #print(userlist)
     # Calculamos el numero de usuarios y tweets que tenemos en la DB
-    number_of_tweets = client.query("select count(*) as count from Tweet where topics containsText '{topic}' and retweeted_status is not null".format(topic=topic))
+    number_of_tweets = client.query("select count(*) as count from Tweet where topics containsText '{topic}' and retweeted_status is null".format(topic=topic))
     number_of_tweets = number_of_tweets[0].oRecordData['count']
     number_of_users = len(userlist);
 
     print("Numero de Tweet originales: {tweets}".format(tweets=number_of_tweets))
     print("Numero de usuarios con tweets: {usuarios}".format(usuarios=number_of_users))
 
-    if len(userlist) > 1000:
-        while skip < len (userlist):
-            print("More than 1000 users, we process queries in different phases")
-            userlist = client.query("select id, followers_count, friends_count, statuses_count, topics from User where pending = false and topics containsText '{topic}' and depth < 2 limit 1000 skip {skip}".format(topic=topic))
-            user_tweetratio_score(userlist, topic)
-            influence_score(userlist, number_of_users, number_of_tweets, topic)
-            follow_relation_factor_user(userlist, number_of_users, topic)
-            impact_user(userlist, number_of_tweets, topic)
-            voice_user(userlist, topic)
-            tweet_relevance(number_of_tweets, topic)
-            user_relevance_score(userlist, topic)
-            skip += 1000
-
 
     # CREA OBJETOS DE METRICAS DE USUARIO
-    else:
-        user_tweetratio_score(userlist, topic)
-        influence_score(userlist, number_of_users, number_of_tweets, topic)
-        follow_relation_factor_user(userlist, number_of_users, topic)
-        impact_user(userlist, number_of_tweets, topic)
-        voice_user(userlist, topic)
-        tweet_relevance(number_of_tweets, topic)
-        user_relevance_score(userlist, topic)
+    user_tweetratio_score(userlist, topic)
+    influence_score(userlist, number_of_users, number_of_tweets, topic)
+    follow_relation_factor_user(userlist, number_of_users, topic)
+    impact_user(userlist, number_of_tweets, topic)
+    voice_user(userlist, topic)
+    tweet_relevance(number_of_tweets, topic)
+    user_relevance_score(userlist, topic)
 
     client.command("update Topic set tweet_count = {tweets}, user_count = {users} where name = '{topic}'".format(tweets=number_of_tweets, users=number_of_users, topic=topic))
 
