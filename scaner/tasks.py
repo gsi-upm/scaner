@@ -231,7 +231,7 @@ def followers_rel():
                 if friend_id:
                     friend_id = friend_id[0].oRecordData['id']
                     print(friend_id)
-                    cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=friend_id, user_id=user_friends['id'])
+                    cmd = "create edge Follows from (select from User where id = {user_id}) to (select from User where id = {following_id})".format(user_id=user_friends['id'], following_id=friend_id)
                     client.command(cmd)
             client.command('update User set pending=False where id={id}'.format(id=user_friends['id']))
 
