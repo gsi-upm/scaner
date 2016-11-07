@@ -58,5 +58,5 @@ def get_metrics(userId, *args, **kwargs):
 @add_metadata()
 def followers_rel(*args, **kwargs):
     followers_rel_task = current_app.tasks.followers_rel.delay()
-    return {'result': followers_rel_task.get(timeout=10)}, 200
+    return {'result': 'Background task'}, 200
  
