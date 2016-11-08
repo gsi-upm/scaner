@@ -17,10 +17,10 @@ def get(userId, fields=None, *args, **kwargs):
         get_task = current_app.tasks.user.delay(userId)
     return {'users': get_task.get(timeout=10)}, 200 
 
-@add_metadata()
+@add_metadata('users')
 def get_network(userId, *args, **kwargs):
     get_network_task = current_app.tasks.user_network.delay(userId)
-    return {'result': get_network_task.get(timeout=10)}, 200
+    return {'users': get_network_task.get(timeout=100)}, 200
 
 @add_metadata('users')
 def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
@@ -43,11 +43,11 @@ def put(*args, **kwargs):
 
 @add_metadata()
 def get_emotion(*args, **kwargs):
-    return {'result': current_app.tasks.get_user(userId)}, 200
+    return {'result': {"id": 0, "emotion": "negative-fear"}}, 200
 
 @add_metadata()
 def get_sentiment(*args, **kwargs):
-    return {'result': current_app.tasks.get_user(userId)}, 200
+    return {'result': {"id": 0, "sentiment": "positive"}}, 200
 
 @add_metadata()
 def get_metrics(userId, *args, **kwargs):

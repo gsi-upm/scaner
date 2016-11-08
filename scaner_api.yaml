@@ -15,6 +15,7 @@ produces:
 paths:
   /users/{userId}:
     get:
+      description: Method to get a user from the database by id. Is possible to filter user fields.
       tags:
       - users
       produces:
@@ -28,6 +29,7 @@ paths:
         description: Comma-separated list of fields to include in the response.
       - name: userId
         in: path
+        description: User id to filter by
         required: true
         x-is-map: false
         type: integer
@@ -41,6 +43,7 @@ paths:
           description: User not found
   /users/{userId}/emotion:
     get:
+      description: Method to get user's emotion from the database by id.
       operationId: scaner.controllers.users.get_emotion
       tags:
       - users
@@ -49,6 +52,7 @@ paths:
       parameters:
       - name: userId
         in: path
+        description: User id to filter by.
         required: true
         x-is-map: false
         type: integer
@@ -62,6 +66,7 @@ paths:
           description: User not found
   /users/{userId}/sentiment:
     get:
+      description: Method to get user's sentiment from the database by id.
       operationId: scaner.controllers.users.get_sentiment
       tags:
       - users
@@ -69,6 +74,7 @@ paths:
       - application/json
       parameters:
       - name: userId
+        description: User id to filter by.
         in: path
         required: true
         x-is-map: false
@@ -83,6 +89,7 @@ paths:
           description: User not found
   /users/{userId}/metrics:
     get:
+      description: Method to get the last User_metrics from a user by id.
       operationId: scaner.controllers.users.get_metrics
       tags:
       - users
@@ -90,6 +97,7 @@ paths:
       - application/json
       parameters:
       - name: userId
+        description: User id to filter by
         in: path
         required: true
         x-is-map: false
@@ -104,6 +112,7 @@ paths:
           description: User not found
   /users:
     get:
+      description: Method to get all users from the database. Is possible to filter user fields or filter users by topic.
       tags:
       - users
       produces:
@@ -114,20 +123,20 @@ paths:
         required: false
         x-is-map: false
         type: string
-        description: Comma-separated list of fields to retrieve
+        description: Comma-separated list of fields to retrieve e.g 'screen_name' 'following'
       - name: limit
         in: query
         required: false
         x-is-map: false
         type: integer
         format: int64
-        description: Get only this many users per request
+        description: Get only this many users per request by default limit is 20 tweets
       - name: topic
         in: query
         required: false
         x-is-map: false
         type: string
-        description: Only retrieve users related to a certain topic
+        description: Only retrieve users related to a certain topic e.g 'LaboralKutxa'
       - name: sort_by
         in: query
         required: false
@@ -144,6 +153,7 @@ paths:
 
   /tweets/{tweetId}:
     get:
+      description: Method to get a tweet from the database by id. Is possible to filter tweets fields.
       tags:
       - tweets
       produces:
@@ -157,6 +167,7 @@ paths:
         description: Comma-separated list of fields to include in the response.
       - name: tweetId
         in: path
+        description: Tweet id to filter by.
         required: true
         x-is-map: false
         type: integer
@@ -170,7 +181,7 @@ paths:
           description: Tweet not found
 
     delete:
-      description: Delete a Tweet
+      description: Method to delete a tweet from the database by id
       tags:
       - tweets
       produces:
@@ -179,6 +190,7 @@ paths:
       - name: tweetId
         in: path
         required: true
+        description: Tweet id to be deleted
         x-is-map: false
         type: integer
         format: int64
@@ -189,6 +201,7 @@ paths:
           description: Tweet not found
   /tweets/{tweetId}/history:
     get:
+        description: Method to get all Tweet_metrics of a tweet from the database by id.
         operationId: scaner.controllers.tweets.get_history
         tags:
             - tweets
@@ -197,6 +210,7 @@ paths:
         parameters:
           - name: tweetId
             in: path
+            description: Tweet id to filter by.
             required: true
             x-is-map: false
             type: integer
@@ -213,7 +227,7 @@ paths:
             required: false
         responses:
             200:
-                description: "History"
+                description: "Tweet_history founded and returned"
                 schema:
                     $ref: '#/definitions/Tweet_history'
             404:
@@ -221,6 +235,7 @@ paths:
 
   /tweets/{tweetId}/sentiment:
     get:
+      description: Method to get tweet's sentiment of a tweet from the database by id.
       operationId: scaner.controllers.tweets.get_sentiment
       tags:
       - tweets
@@ -229,6 +244,7 @@ paths:
       parameters:
       - name: tweetId
         in: path
+        description: Tweet id to filter by.
         required: true
         x-is-map: false
         type: integer
@@ -243,6 +259,7 @@ paths:
 
   /tweets/{tweetId}/emotion:
     get:
+      description: Method to get tweet's emotion from a tweet from the database by id.
       operationId: scaner.controllers.tweets.get_emotion
       tags:
       - tweets
@@ -251,6 +268,7 @@ paths:
       parameters:
       - name: tweetId
         in: path
+        description: Tweet id to filter by.
         required: true
         x-is-map: false
         type: integer
@@ -265,6 +283,7 @@ paths:
 
   /tweets/{tweetId}/metrics:
     get:
+      description: Method to get last tweet's metrics from a tweet from the database by id.
       operationId: scaner.controllers.tweets.get_metrics
       tags:
       - tweets
@@ -272,6 +291,7 @@ paths:
       - application/json
       parameters:
       - name: tweetId
+        description: Tweet id to filter by
         in: path
         required: true
         x-is-map: false
@@ -286,6 +306,7 @@ paths:
           description: Tweet not found
   /tweets:
     get:
+      description: Method to get all tweets from the database. Is possible to filter tweets fields or filter tweets by topic.
       tags:
       - tweets
       produces:
@@ -296,20 +317,20 @@ paths:
         required: false
         x-is-map: false
         type: string
-        description: Comma-separated list of fields to retrieve
+        description: Comma-separated list of fields to retrieve. e.g. 'user.screen_name' 'id' 
       - name: limit
         in: query
         required: false
         x-is-map: false
         type: integer
         format: int64
-        description: Get only this many tweets per request
+        description: Get only this many tweets per request by default limit is 20 tweets
       - name: topic
         in: query
         required: false
         x-is-map: false
         type: string
-        description: Only retrieve tweets related to a certain topic
+        description: Only retrieve tweets related to a certain topic. e.g. 'LaboralKutxa'
       - name: sort_by
         in: query
         required: false
@@ -359,11 +380,12 @@ paths:
             $ref: '#/definitions/Network'
   /topics:
     get:
+      description: Returns a array with all the topics. It also returns each topic detailed parameters.
       tags:
         - topics
       responses:
         200:
-          description: OK
+          description: OK 
           schema:
             $ref: '#/definitions/Topics'
 
@@ -371,28 +393,36 @@ paths:
     get:
       tags:
         - topics
-      description: returns detailed info about relationships of a user
+      description: Returns each topic detailed parameters.
       parameters:
       - name: topicId
         in: path
         type: string
         required: true
+        description: Topic id to filter by.
       responses:
         200:
           description: OK
           schema:
             $ref: '#/definitions/Topics'
+
   /topics/{topicId}/network:
     get:
       operationId: scaner.controllers.topics.get_network
       tags:
         - topics
-      description: returns detailed info about the users related to a topic
+      description: Returns info about the tweets/users related to a topic.
       parameters:
       - name: topicId
         in: path
         type: string
         required: true
+        description: Network related to this topic id
+      - name: entity
+        in: query
+        type: string
+        required: true
+        description: Enter 'tweet' if you want to display tweet network or 'user' to display user network 
       responses:
         200:
           description: OK
@@ -422,6 +452,7 @@ paths:
         in: path
         type: string
         required: true
+        description: Enter the taskId you want to explore
       responses:
         200:
           description: Task found and returned
@@ -434,7 +465,7 @@ paths:
       - tasks
       responses:
         200:
-          description: Task running
+          description: Task for update emotions running
           # schema:
           #   $ref: '#/definitions/Tasks'
   /tasks/influencemetrics:
@@ -444,7 +475,7 @@ paths:
       - tasks
       responses:
         200:
-          description: Task running
+          description: Task for update metrics running
           # schema:
           #   $ref: '#/definitions/Tasks'
   /tasks/updateusers:
@@ -454,7 +485,7 @@ paths:
       - tasks
       responses:
         200:
-          description: Task running
+          description: Task for update users running
           # schema:
           #   $ref: '#/definitions/Tasks'
 
@@ -468,6 +499,102 @@ paths:
             description: Task running
             # schema:
             #   $ref: '#/definitions/Tasks'
+
+  /communities:
+    get:
+      description: Method to get all communities from the database.  It also returns each community detailed parameters.
+      tags:
+      - communities
+      produces:
+      - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Communities"
+
+  /communities/{communityId}:
+    get:
+      description: Returns each community detailed parameters.
+      tags:
+      - communities
+      produces:
+      - application/json
+      parameters:
+      - name: communityId
+        in: path
+        description: Community id to filter by
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Communities"
+        404:
+          description: Community not found
+
+  /communities/{communityId}/emotion:
+    get:
+      description: Method to get community's emotion from the database by id.
+      operationId: scaner.controllers.communities.get_emotion
+      tags:
+      - communities
+      produces:
+      - application/json
+      parameters:
+      - name: communityId
+        in: path
+        description: Community id to filter by.
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: Community found and returned
+        404:
+          description: Community not found
+
+  /communities/{communityId}/sentiment:
+    get:
+      description: Method to get community's sentiment from the database by id.
+      operationId: scaner.controllers.communities.get_sentiment
+      tags:
+      - communities
+      produces:
+      - application/json
+      parameters:
+      - name: communityId
+        description: Community id to filter by.
+        in: path
+        required: true
+        x-is-map: false
+        type: integer
+        format: int64
+      responses:
+        200:
+          description: Community found and returned
+        404:
+          description: Community not found
+
+  /communities/{communityId}/users:
+    get:
+      description: Method to get all users ids belonging to a community
+      operationId: scaner.controllers.communities.get_network
+      tags:
+        - communities
+      parameters:
+      - name: communityId
+        in: path
+        required: true
+        description: Community id to get users of
+        type: integer
+      responses:
+        200:
+          description: OK
 
 definitions:
 
@@ -603,13 +730,22 @@ definitions:
   Tweet_history:
     type: object
     properties:
+      complete:
+        type: boolean
+      date:
+        type: string
       id:
+        type : integer
+      influence:
         type: integer
-        description: Tweet ID
-      retweet_count:
-        $ref: '#/definitions/History'
-      favourite_count:
-        $ref: '#/definitions/History'
+      lastMetrics:
+        type: boolean
+      relevance:
+        type: integer
+      timestamp:
+        type: integer
+      topic:
+        type: string
 
   History:
     type: array
@@ -623,7 +759,6 @@ definitions:
         required:
           - time
           - value
-      
 
   Contributors:
     type: object
@@ -738,7 +873,6 @@ definitions:
       withheld_scope:
         type: string
 
-    
   Hashtags:
     type: object
     properties:
@@ -894,7 +1028,7 @@ definitions:
         type: integer
       target_screen_name:
         type: string
-      
+
   Entities:
     type: object
     properties:
@@ -979,7 +1113,7 @@ definitions:
       lastUpdated:
         type: string
         description: "Timestamp of last metrics collection"
-      
+
   User_history:
     type: object
     description: 'Work in progress. Not implemented yet'
@@ -1026,7 +1160,7 @@ definitions:
       required:
         - polarityValue
         - hasPolarity
-      
+
   Emotions:
     type: array
     description: 'Emotions using the Onyx Ontology'
@@ -1079,18 +1213,35 @@ definitions:
     description: A topic
     properties:
       id:
-        type: string
-      last_tweet:
+        type: integer
+      name:
         type: string
       tweet_count:
         type: integer
       user_count:
         type: integer
 
+  Community:
+    type: object
+    description: A topic
+    properties:
+      id:
+        type: integer
+      user_count:
+        type: integer
+      emotion:
+        type: string
+      sentiment:
+        type: string
 
   Topics:
     type: array
     description: List of topics
     items:
         $ref: '#/definitions/Topic'
- 
+
+  Communities:
+    type: array
+    description: List of communities
+    items:
+        $ref: '#/definitions/Community'

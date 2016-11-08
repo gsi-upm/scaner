@@ -52,12 +52,12 @@ client.db_open("mixedemotions", "admin", "admin")
 # client.db_open("mixedemotions", "admin", "admin")
 
 #LISTA DE ATRIBUTOS A ELIMINAR DE LAS PETICIONES A ORIENTDB
-delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic")
+delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic","out_Replied_by","in_Reply","out_Reply")
 
 @celery.task
 def user(user_id):
     try:
-        userRecord = client.query("select from User where id = '{user_id}'".format(user_id=user_id))
+        userRecord = client.query("select from User where id_str = '{user_id}'".format(user_id=user_id))
         user = userRecord[0].oRecordData
         for k in delete_variables:
             if user.get(k):
@@ -175,7 +175,7 @@ def tweet_attributes(tweet_id, attributes):
 
 @celery.task
 def tweet_history(tweet_id):
-    tweet_history = client.query("select from (select from Tweet_metrics where id = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
+    tweet_history = client.query("select from (select from Tweet_metrics where id_str = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
     tweet_history_list=[]
 
     for tweet_record in tweet_history:
@@ -454,8 +454,17 @@ def topic(topic_id):
     return topic
 
 @celery.task
-def topic_network(topic_id):
-    pass
+def topic_network(topic_id, entity):
+    topicRecord = client.query("select name from Topic where id = {topic_id}".format(topic_id=topic_id))
+    topic = topicRecord[0].oRecordData['name']
+    print(topic)
+    user_topic = client.query("select id_str from {entity} where topics containstext '{topic}' and id_str is not null limit -1".format(topic=topic, entity=entity))
+    user_topic_list=[]
+    for user_record in user_topic:
+        user = user_record.oRecordData
+        #print(user)
+        user_topic_list.append(user)
+    return user_topic_list
 
 #@periodic_task(run_every=timedelta(days=1))
 #@periodic_task(run_every=timedelta(minutes=1))

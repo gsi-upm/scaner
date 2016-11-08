@@ -39,13 +39,11 @@ def get_history(tweetId, *args, **kwargs):
 
 @add_metadata()
 def get_emotion(tweetId, *args, **kwargs):
-    #return {'result': current_app.tasks.tweet_history(tweetId)}, 200
-    pass
+    return {'result': {"id": 0, "emotion": "negative-fear"}}, 200
 
 @add_metadata()
 def get_sentiment(tweetId, *args, **kwargs):
-    #return {'result': current_app.tasks.tweet_history(tweetId)}, 200
-    pass
+    return {'result': {"id": 0, "sentiment": "negative"}}, 200
 
 @add_metadata()
 def get_metrics(tweetId, *args, **kwargs):
