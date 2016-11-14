@@ -191,9 +191,9 @@ def add_user(userJson):
     logger.info(userDict)
     userInDB = client.query("select id from User where id = {id}".format(id=userDict['id']))
     print("select id from User where id = {id}".format(id=userDict['id']))
-    print(userInDB)
     if not userInDB:
-        client.command("insert into User content {content}".format(content=userDict))
+        userJson = json.dumps(userDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+        client.command("insert into User content {content}".format(content=userJson))
         client.command('update User set pending=True where id={id}'.format(id=userDict['id']))
         ts = time.time()
         date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
@@ -204,7 +204,7 @@ def add_user(userJson):
     else:
         print("User exists in DB")
         if 'friends_ids' in userDict:
-            client.command("update User set friends_ids = {friends_ids}, screen_name = '{screen_name}', pending=True where id={id}".format(friends_ids=userDict['friends_ids'],id=userDict['id'],screen_name=userDict['screen_name']))
+            client.command("update User set friends_ids = {friends_ids}, screen_name = '{screen_name}',followers_count= {followers_count}, protected = {protected}, friends_count = {friends_count}, lang = {lang}, statuses_count = {statuses_count}, pending=True where id={id}".format(friends_ids=userDict['friends_ids'],id=userDict['id'],screen_name=userDict['screen_name'], statuses_count = userDict['statuses_count'], followers_count = userDict['followers_count'], friends_count = userDict['friends_count'], protected = userDict['protected'], lang = userDict['lang'], created_at = userDict['created_at']))
         ts = time.time()
         date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         for topic in userDict['topics']:
@@ -216,24 +216,79 @@ def followers_rel():
     pending_users = client.query("select id,friends_ids from User where pending = true limit -1")
     pending_user_list = []
     for user in pending_users:
-        if 'friends_ids' in user.oRecordData:
-            pending_user_list.append({'id':user.oRecordData['id'],'friends_ids':user.oRecordData['friends_ids']})
+        pending_user_list.append({'id':user.oRecordData['id'],'friends_ids':user.oRecordData['friends_ids']})
 
     for user_friends in pending_user_list:
         if user_friends['friends_ids'] == []:
             client.command('update User set pending=False where id={id}'.format(id=user_friends['id']))
         else:    
             for friend in user_friends['friends_ids']:
-                print(friend)
                 friend_id = client.query("select id from User where screen_name='{friend}'".format(friend=str(friend)))
-                print("select id from User where screen_name='{friend}'".format(friend=str(friend)))
-                print(friend_id)
                 if friend_id:
                     friend_id = friend_id[0].oRecordData['id']
-                    print(friend_id)
                     cmd = "create edge Follows from (select from User where id = {user_id}) to (select from User where id = {following_id})".format(user_id=user_friends['id'], following_id=friend_id)
                     client.command(cmd)
             client.command('update User set pending=False where id={id}'.format(id=user_friends['id']))
+    print(':FIN:')
+@celery.task
+def add_tweet_raw(tweetJson):
+    tweetDict = json.loads(tweetJson)
+    tweetInDB = client.query("select id_str from Tweet where id_str = '{id}'".format(id=tweetDict['id_str']))
+    tweet_topics = tweetDict['topics']
+    if tweetInDB:
+        return ("Tweet already in DB")
+    else:
+        tweetJson = json.dumps(tweetDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+        cmd = "insert into Tweet content {tweetJson}".format(tweetJson=tweetJson)
+        client.command(cmd)
+
+    for topic in tweet_topics:
+        cmd = "create Edge Belongs_to_topic from (select from Tweet where id_str = '{tweet_id}') to (select from Topic where name = '{topic}')".format(tweet_id=tweetDict['id_str'], topic=topic)
+        client.command(cmd)
+
+    try:    
+        cmd = ("create edge Created_by from (select from Tweet where id_str = '{tweet_id}') to (select from User where id = {user_id})".format(tweet_id=tweetDict['id_str'],user_id=tweetDict['user']['id']))
+        print(cmd)
+        client.command(cmd)
+    except:
+        print("User not in DB")    
+    
+
+    return ("Tweet added to DB")
+
+
+@celery.task
+def add_tweets_relations():
+    pending_tweets = client.query("select from Tweet where pending = true limit -1")
+
+    for tweetDict in pending_tweets:
+        if 'retweeted_status' in tweetDict.oRecordData:
+            if tweetDict.oRecordData['retweeted_status'] != None:
+                try:
+                    cmd = "create edge Retweet from (select from Tweet where id_str = '{retweet}') to (select from Tweet where id_str = '{original}')".format(retweet=tweetDict.oRecordData['id_str'], original=tweetDict.oRecordData['retweeted_status']['id_str'])
+                    client.command(cmd)
+                except:
+                    pass
+                try:    
+                    cmd = "create edge Retweeted_by from (select from Tweet where id_str = '{original}') to (select from User where id = {user_id})".format(original=tweetDict.oRecordData['retweeted_status']['id_str'], user_id=tweetDict.oRecordData['user']['id'])
+                    client.command(cmd)
+                except:
+                    pass   
+        if 'in_reply_to_status_id' in tweetDict.oRecordData:
+            if tweetDict.oRecordData['in_reply_to_status_id'] != None:
+                try:
+                    cmd = "create edge Reply from (select from Tweet where id_str = '{reply_id}') to (select from Tweet where id_str = '{original_id}')".format(reply_id=tweetDict.oRecordData['id_str'], original_id=tweetDict.oRecordData['in_reply_to_status_id_str'])
+                    client.command(cmd)
+                except:
+                    pass
+                try:
+                    cmd = "create edge Replied_by from (select from Tweet where id_str = '{original_id}') to (select from User where id = {reply_user_id})".format(original_id=tweetDict.oRecordData['in_reply_to_status_id_str'], reply_user_id=tweetDict.oRecordData['user']['id'])
+                    client.command(cmd)
+                except:
+                    pass
+        client.command("update Tweet set pending = false where id_str = '{id_str}'".format(id_str=tweetDict.oRecordData['id_str']))
+
+    return(":FIN:")
 
 
 @celery.task

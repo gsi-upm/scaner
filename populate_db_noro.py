@@ -65,6 +65,7 @@ def post_tweet(line, return_response=False, raw=False):
     time = datetime.datetime.strptime(time, "%a %b %d %X %z %Y")
     time = mktime(time.timetuple())
     tweet['timestamp_ms'] = time
+    tweet['pending'] = True
     tweet['id'] = int(tweet['id'])
     tweet['user']['following'] = None
     if 'in_reply_to_status_id' in tweet:

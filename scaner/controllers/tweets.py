@@ -19,7 +19,7 @@ def search(fields='', limit=20, topic=None, sort_by=None, *args, **kwargs):
 
 @add_metadata()
 def post(body, *args, **kwargs):
-    post_task = current_app.tasks.add_tweet.delay(json.dumps(body))
+    post_task = current_app.tasks.add_tweet_raw.delay(json.dumps(body))
     return {'result': post_task.get(interval=0.1)}, 200
 
 @add_metadata()
@@ -54,3 +54,7 @@ def get_metrics(tweetId, *args, **kwargs):
     get_metrics_task = current_app.tasks.get_tweet_metrics.delay(tweetId)
     return {'result': get_metrics_task.get(timeout=10)}, 200
 
+@add_metadata()
+def tweets_rel(*args, **kwargs):
+    tweets_rel_task = current_app.tasks.add_tweets_relations.delay()
+    return {'result': 'Background task'}, 200

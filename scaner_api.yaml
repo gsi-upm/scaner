@@ -368,7 +368,21 @@ paths:
       responses:
         200:
           description: "Uploaded"
-
+  /tweets/tweetsRel:
+    get:
+      operationId: scaner.controllers.tweets.tweets_rel
+      tags:
+      - tweets
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Tweet found and returned
+          # schema:
+          #   $ref: "#/definitions/Users"
+        404:
+          description: Tweet not found
+  
   /users/{userId}/network:
     get:
       operationId: scaner.controllers.users.get_network
