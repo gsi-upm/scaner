@@ -190,16 +190,15 @@ def add_user(userJson):
     userDict = json.loads(userJson)
     logger.info(userDict)
     userInDB = client.query("select id from User where id = {id}".format(id=userDict['id']))
-    print("select id from User where id = {id}".format(id=userDict['id']))
     if not userInDB:
         userJson = json.dumps(userDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
         client.command("insert into User content {content}".format(content=userJson))
         client.command('update User set pending=True where id={id}'.format(id=userDict['id']))
-        ts = time.time()
-        date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         for topic in userDict['topics']:
             cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=userDict['id'], topic=topic)
             client.command(cmd)
+            ts = time.time()
+            date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
             client.command("insert into User_metrics set id = {id}, lastMetrics = True, topic = '{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=userDict['id'],followers=userDict['followers_count'],following=userDict['friends_count'], topic= topic, date = date_ts, timestamp = ts, statuses_count = userDict['statuses_count']))    
     else:
         print("User exists in DB")
@@ -228,7 +227,7 @@ def followers_rel():
                     friend_id = friend_id[0].oRecordData['id']
                     cmd = "create edge Follows from (select from User where id = {user_id}) to (select from User where id = {following_id})".format(user_id=user_friends['id'], following_id=friend_id)
                     client.command(cmd)
-            client.command('update User set pending=False where id={id}'.format(id=user_friends['id']))
+            client.command('update User set pending=False, depth = 0 where id={id}'.format(id=user_friends['id']))
     print(':FIN:')
 @celery.task
 def add_tweet_raw(tweetJson):
