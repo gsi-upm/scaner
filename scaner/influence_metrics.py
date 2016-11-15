@@ -422,13 +422,7 @@ def follow_relation_factor_user(userlist, number_of_users, topic):
         client.command(command)
     if IS_TEST:
         return follow_relation_score
-    
 
-    frs = client.query("select id, followRelationScore from user_metrics order by followRelationScore desc limit -1")
-    for item in frs:
-        screen_name = client.query("select screen_name from user where id = {id}".format(id = item.oRecordData['id']))
-        print(screen_name[0].oRecordData['screen_name'])
-        print(item.oRecordData['followRelationScore'])
 
 # Metodo para calcular la relevancia de un usuario a partir de las otras métricas
 def user_relevance_score(userlist, topic):
