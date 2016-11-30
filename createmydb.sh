@@ -202,7 +202,14 @@ create index Tweet_metrics.topic                    NOTUNIQUE
 create class EmotionSet extends V
 create class Emotion extends V
 
+create class Community extends V
+create property Community.id                    	LONG
+create property Community.user_count				INTEGER
+create index Community.id                           UNIQUE
+
+
 # Create Edges classes
+create class Belongs_to_Community extends E
 create class Follows extends E
 create class Retweet extends E
 create class Created_by extends E
