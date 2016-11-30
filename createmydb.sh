@@ -119,6 +119,7 @@ create property Tweet.created_at                    STRING
 #create property Tweet.metrics                       EMBEDDEDMAP
 
 create index Tweet.id                               UNIQUE
+create index Tweet.id_str                           UNIQUE
 # create index Tweet.topic                            NOTUNIQUE
 
 create class Topic extends V
@@ -199,9 +200,16 @@ create index Tweet_metrics.topic                    NOTUNIQUE
 
 
 create class EmotionSet extends V
+create class Emotion extends V
+
+create class Community extends V
+create property Community.id                    	LONG
+create property Community.user_count				INTEGER
+create index Community.id                           UNIQUE
 
 
 # Create Edges classes
+create class Belongs_to_Community extends E
 create class Follows extends E
 create class Retweet extends E
 create class Created_by extends E
@@ -211,3 +219,4 @@ create class Replied_by extends E
 create class Belongs_to_topic extends E
 create class Last_metrics extends E
 create class hasEmotionSet extends E
+create class hasEmotion extends E

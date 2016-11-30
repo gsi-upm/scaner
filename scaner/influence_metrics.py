@@ -96,7 +96,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     # userlist = client.query("select from User limit -1")
     print("COMIENZO A CALCULAR")
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select id_str from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         # Iteramos los usuarios y los tweets para rellenar las matrices
         index_start = index
@@ -112,14 +112,34 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
             # PUEDO OPTIMIZAR METIENDO ESTAS QUERYS EN LOS IF DE DEBAJO
             # PLANTEAR METER (in('Created_by').id) para optimizar > Cambiar ['id'] por value
 
-            user_created = client.query("select from (select expand(in('Created_by')) from User where id ={user_id}) where topics containsText '{topic}'".format(user_id=user.oRecordData['id'], topic = topic))
+            user_created = client.query("select from (select expand(in('Created_by')) from User where id ={user_id} limit -1) where topics containsText '{topic}' limit -1".format(user_id=user.oRecordData['id'], topic = topic))
             
-            user_retweeted = client.query("select from (select expand(in('Retweeted_by')) from  User where id ={user_id}) where topics containsText '{topic}'".format(user_id=user.oRecordData['id'], topic=topic))
+            user_retweeted = client.query("select from (select expand(in('Retweeted_by')) from User where id ={user_id} limit -1) where topics containsText '{topic}' limit -1".format(user_id=user.oRecordData['id'], topic=topic))
 
-            user_replied = client.query("select from (select expand(in('Replied_by')) from User where id ={user_id}) where topics containsText '{topic}'".format(user_id=user.oRecordData['id'], topic=topic))
+            user_replied = client.query("select from (select expand(in('Replied_by')) from User where id ={user_id} limit -1) where topics containsText '{topic}' limit -1".format(user_id=user.oRecordData['id'], topic=topic))
 
-            user_follows_created = client.query("select from (select expand(out('Follows').in('Created_by')) from User where id ={user_id}) where topics containsText '{topic}'".format(user_id=user.oRecordData['id'], topic=topic))
-
+            user_follows_created = client.query("select from (select expand(out('Follows').in('Created_by')) from User where id ={user_id} limit -1) where topics containsText '{topic}' limit -1".format(user_id=user.oRecordData['id'], topic=topic))
+            #Sin usar los edges
+            #user_follows_created = []
+            #user_friends_ids = client.query("select friends_ids from User where topics containsText '{topic}' and id = {id}".format(id=user.oRecordData['id'], topic=topic))
+            #if user_friends_ids:
+            #    for fuser in user_friends_ids[0].oRecordData['friends_ids']:
+            #        follower = client.query("select expand(in('Created_by')) from user where screen_name = '{screen_name}'".format(screen_name = fuser))
+            #        if follower:
+            #           for tweet in follower:
+            #                user_follows_created.append(tweet)
+            
+            
+            #user_follows_retweeted = []
+            #user_friends_retweeted_ids = client.query("select friends_ids from User where topics containsText '{topic}' and id = {id}".format(id=user.oRecordData['id'], topic=topic))
+            #if user_friends_ids:
+            #    for fuser in user_friends_retweeted_ids[0].oRecordData['friends_ids']:
+            #        print(fuser)
+            #        follower_rts = client.query("select expand(in('Retweeted_by')) from user where screen_name = '{screen_name}'".format(screen_name = fuser))
+            #        print(follower_rts)
+            #        if follower_rts:
+            #            for tweet in follower_rts:
+            #                user_follows_retweeted.append(tweet)
             user_follows_retweeted = client.query("select from (select expand(out('Follows').in('Retweeted_by')) from User where id ={user_id}) where topics containsText '{topic}'".format(user_id=user.oRecordData['id'], topic=topic))
 
             
@@ -130,7 +150,9 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
 
                 # Calculamos el vector para At y para Ar
                 for retweeted in user_retweeted:
-                    if retweeted.oRecordData['id'] == tweet.oRecordData['id']:
+                    #print("Retweeted:"+retweeted.oRecordData['id_str'])
+                    #print("Tweet:"+tweet.oRecordData['id_str'])
+                    if retweeted.oRecordData['id_str'] == tweet.oRecordData['id_str']:
                         user_tweet_At = np.append(user_tweet_At, np.ones(1))
                         found_At = True
                         tweet_user_Ar = np.append(tweet_user_Ar, np.ones(1))
@@ -139,27 +161,27 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
 
                 if not found_At:        
                     for created in user_created:
-                        if created.oRecordData['id'] == tweet.oRecordData['id']:
+                        if created.oRecordData['id_str'] == tweet.oRecordData['id_str']:
                             user_tweet_At = np.append(user_tweet_At, np.ones(1))
                             found_At = True
                             break
 
                 if not found_Ar:
                     for replied in user_replied:
-                        if replied.oRecordData['id'] == tweet.oRecordData['id']:
+                        if replied.oRecordData['id_str'] == tweet.oRecordData['id_str']:
                             tweet_user_Ar = np.append(tweet_user_Ar, np.ones(1))
                             found_Ar = True
                             break 
 
                 # Calculamos el vector para As
                 for tweet_follow in user_follows_created:
-                    if tweet_follow.oRecordData['id'] == tweet.oRecordData['id']:
+                    if tweet_follow.oRecordData['id_str'] == tweet.oRecordData['id_str']:
                         user_user_As = np.append(user_user_As, np.ones(1))
                         found_As = True
                         break
                 if not found_As:
                     for retweet_follow in user_follows_retweeted:
-                        if tweet_follow.oRecordData['id'] == tweet.oRecordData['id']:
+                        if retweet_follow.oRecordData['id_str'] == tweet.oRecordData['id_str']:
                             user_user_As = np.append(user_user_As, np.ones(1))
                             found_As = True
                             break
@@ -214,13 +236,14 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         iterationRID = tweet._rid
         print("Fin de iteracion {iteration_num}".format(iteration_num=iteration_num+1))
 
+
     # DAMPING FACTOR
-    d = 0.5
+    d = 0.15
 
     Ar = csr_matrix(Ar)
     At = csr_matrix(At)
     As = csr_matrix(As)
-
+   
     # Creamos la matriz Bt:
     Bt = lil_matrix((number_of_tweets,number_of_users))
     n_filas_At = At.shape[0]
@@ -235,7 +258,6 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
                 Bt[i,j] = 0
 
     Bt = csr_matrix(Bt)
-
     # LIMPIAMOS MEMORIA
     At = 0
     gc.collect()
@@ -277,7 +299,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     Bt = 0
     gc.collect()
 
-    for k in range(1, 100):
+    for k in range(1, 15):
         tweets_vector = Ba_transpose.dot(users_vector)
         users_vector = Bt_transpose.dot(tweets_vector)
 
@@ -291,7 +313,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         UI_vector = users_vector/np.amax(users_vector)
         TI_vector = tweets_vector/np.amax(tweets_vector)
     except:
-        logger.warning("USUARIOS NO RELACIONADOS")
+        print("USUARIOS NO RELACIONADOS")
 
 
     #ALMACENAMOS EN LA DB LAS PUNTUACIONES
@@ -339,7 +361,6 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     if IS_TEST:
         return influence_score
     print("FIN influence_score")
-
     # while (error_u > 0.1) or (error_t > 0.1):
     #     error_u = -np.mod(users_vector)
     #     error_t = -np.mod(tweets_vector)
@@ -381,7 +402,7 @@ def follow_relation_factor_user(userlist, number_of_users, topic):
         Af[n,:] = user_user_Af
 
     # DAMPING FACTOR
-    d = 0.5
+    d = 0.15
 
     # Creamos la matriz de adyacencia Bf
     Bf = np.zeros((number_of_users, number_of_users))
@@ -473,14 +494,14 @@ def impact_user(userlist, number_of_tweets, topic):
     # userlist = client.query("select from User order by metrics.followers desc limit 500")
     impact_vector = np.array([])
     # DAMPING FACTOR
-    d = 0.5
+    d = 0.15
     # SMOOTHING PARAMETER
     sigma = 0.5
 
     for n, user in enumerate(userlist):
         # PLANTEAR METER (in('Created_by').id) para optimizar > Cambiar ['id'] por value
-        tweets_retweeted = client.query("select count(*) from (select expand(in('Retweeted_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))
-        tweets_replied = client.query("select count(*) from (select expand(in('Replied_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))
+        tweets_retweeted = client.query("select count(*) from (select expand(in('Retweeted_by')) from User where id = {id} limit -1) where topics containsText '{topic}' limit -1".format(id=user.oRecordData['id'], topic=topic))
+        tweets_replied = client.query("select count(*) from (select expand(in('Replied_by')) from User where id = {id} limit -1) where topics containsText '{topic}' limit -1".format(id=user.oRecordData['id'], topic=topic))
         n_tweets_related = tweets_retweeted[0].oRecordData['count'] + tweets_replied[0].oRecordData['count']
 
         user_metrics = client.query("select from User_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=user.oRecordData['id'], topic=topic))
@@ -516,26 +537,31 @@ def voice_user(userlist, topic):
     #userlist = client.query("select from User order by metrics.followers desc limit 500")
 
     # Parametro SIGMA de suavizado
-    sigma = 0.5
+    sigma = 0.1
     # Calculamos VOICE para cada usuario
     for n, user in enumerate(userlist):
-        tweets_user = client.query("select from (select expand(in('Created_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))
-        retweets_user = client.query("select from (select expand(in('Retweeted_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))
+        tweets_user = client.query("select from (select expand(in('Created_by')) from User where id = {id} limit -1) where topics containsText '{topic}' and retweeted_status is null limit -1".format(id=user.oRecordData['id'], topic=topic))
+        retweets_user = client.query("select from (select expand(in('Retweeted_by')) from User where id = {id} limit -1) where topics containsText '{topic}' limit -1".format(id=user.oRecordData['id'], topic=topic))
         
         sumatorio_tweet_TI = 0
         sumatorio_retweet_TI = 0
         for tweet in tweets_user:
-            tweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=tweet.oRecordData['id'], topic=topic))
-            sumatorio_tweet_TI += float(tweet_metrics[0].oRecordData['influence'])
+            try:
+                tweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=tweet.oRecordData['id'], topic=topic))
+                sumatorio_tweet_TI += float(tweet_metrics[0].oRecordData['influence'])
+            except:
+                pass
 
         for retweet in retweets_user:
-            retweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=tweet.oRecordData['id'], topic=topic))
-            sumatorio_retweet_TI += float(retweet_metrics[0].oRecordData['influence'])
-
+            try:
+                retweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=tweet.oRecordData['id'], topic=topic))
+                sumatorio_retweet_TI += float(retweet_metrics[0].oRecordData['influence'])
+            except:
+                pass
         
-        retweets_user = client.query("select count(*) from (select expand(in('Retweeted_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))
-        voice_t =(1/(len(tweets_user) + sigma)) * sumatorio_tweet_TI
-        voice_r = (1/(retweets_user[0].oRecordData['count'] + sigma)) * sumatorio_retweet_TI
+        #retweets_user = client.query("select count(*) from (select expand(in('Retweeted_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))
+        voice_t = (1/(len(tweets_user) + sigma)) * sumatorio_tweet_TI
+        voice_r = (1/(len(retweets_user) + sigma)) * sumatorio_retweet_TI
 
         voice_t = truncate(voice_t, 12)
         voice_r = truncate(voice_r, 12)
@@ -571,10 +597,10 @@ def tweet_relevance(number_of_tweets, topic):
     print("numero de iteraciones: {iterations}".format(iterations=iterations))
 
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select id_str from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         for tweet in tweetlist:
-            user_creator_metrics = client.query("select from (select expand(out('Created_by').out('Last_metrics')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id'], topic=topic))
+            user_creator_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id_str'], topic=topic))
             VR_score = 0
             if 'in_reply_to_status_id' in tweet.oRecordData:
                 try:
@@ -586,8 +612,8 @@ def tweet_relevance(number_of_tweets, topic):
                     VR_score = float(user_creator_metrics[0].oRecordData['voice_r'])
                 except:
                     pass
-            users_retweeted_metrics = client.query("select from (select expand(out('Retweeted_by').out('Last_metrics')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id'], topic=topic))
-            users_replied_metrics = client.query("select from (select expand(out('Replied_by').out('Last_metrics')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id'], topic=topic))
+            users_retweeted_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Retweeted_by')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id_str'], topic=topic))
+            users_replied_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Replied_by')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id_str'], topic=topic))
             IR_score = 0
             for user_metrics in users_retweeted_metrics:
                 try:
@@ -600,9 +626,9 @@ def tweet_relevance(number_of_tweets, topic):
             tweet_relevance = alpha * VR_score + (1 - alpha) * IR_score
 
             if IS_TEST:
-                tweet_relevance_score[tweet.oRecordData['id']] = tweet_relevance
+                tweet_relevance_score[tweet.oRecordData['id_str']] = tweet_relevance
             
-            command = "update Tweet_metrics set relevance = {tweet_relevance} where id = {id} and topic = '{topic}'".format(id=tweet.oRecordData['id'],tweet_relevance=tweet_relevance, topic = topic)
+            command = "update Tweet_metrics set relevance = {tweet_relevance} where id = {id} and topic = '{topic}'".format(id=tweet.oRecordData['id_str'],tweet_relevance=tweet_relevance, topic = topic)
             client.command(command)
 
         iterationRID = tweet._rid

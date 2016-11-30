@@ -1,11 +1,12 @@
 
-Scaner usage: calculating influence in twitter
-==============================================
+Usage
+-----
 
 Department of Telematic Engineering Systems, Universidad Politécnica de Madrid, © 2016 
 
 Searching for Relevant Tweets and Users
---------------------------------------- 
+=======================================
+
 Suppose we have 3 twitter users:
 **Manu**, **Alberto** and **Rodrigo**. This three users are expressing
 their opinions about a concrete topic in Twitter, i.e about nuclear

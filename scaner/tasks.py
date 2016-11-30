@@ -175,7 +175,7 @@ def tweet_attributes(tweet_id, attributes):
 
 @celery.task
 def tweet_history(tweet_id):
-    tweet_history = client.query("select from (select from Tweet_metrics where id_str = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
+    tweet_history = client.query("select from (select from Tweet_metrics where id = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
     tweet_history_list=[]
 
     for tweet_record in tweet_history:

@@ -427,7 +427,7 @@ paths:
         200:
           description: OK
           schema:
-            $ref: '#/definitions/Network'
+            $ref: '#/definitions/TopicNetwork'
 
   /tasks:
     get:
@@ -1223,22 +1223,35 @@ definitions:
 
   Community:
     type: object
-    description: A topic
+    description: A community
     properties:
       id:
         type: integer
       user_count:
         type: integer
       emotion:
-        type: string
+        $ref: '#/definitions/Emotions'
       sentiment:
-        type: string
+        $ref: '#/definitions/Sentiments'
 
   Topics:
     type: array
     description: List of topics
     items:
         $ref: '#/definitions/Topic'
+
+  TopicNetwork:
+    type: array
+    description: List of ids
+    items:
+      $ref: '#/definitions/UserId'
+
+  UserId:
+    type: object
+    description: An id_str
+    properties:
+      id:
+        type: integer
 
   Communities:
     type: array

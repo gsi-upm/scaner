@@ -16,6 +16,9 @@ except AttributeError:
 install_reqs = [str(ir.req) for ir in install_reqs]
 test_reqs = [str(ir.req) for ir in test_reqs]
 
+with open('scaner/VERSION') as f:
+    VERSION = f.read().strip()
+
 
 setup(
     name="scaner",
@@ -26,7 +29,7 @@ setup(
     author='J. Fernando Sanchez',
     author_email='jfernando@dit.upm.es',
     url="http://gsi.dit.upm.es",
-    version="0.0.1",
+    version=VERSION,
     install_requires=install_reqs,
     tests_require=test_reqs,
     test_suite="tests",
