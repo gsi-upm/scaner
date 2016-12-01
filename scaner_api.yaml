@@ -490,6 +490,16 @@ paths:
           description: Task running
           # schema:
           #   $ref: '#/definitions/Tasks'
+  /tasks/executecommunities:
+    get:
+      operationId: scaner.controllers.tasks.run_communities
+      tags:
+      - tasks
+      responses:
+        200:
+          description: Task running
+          # schema:
+          #   $ref: '#/definitions/Tasks'
   /tasks/updateusers:
     get:
       operationId: scaner.controllers.tasks.update_users

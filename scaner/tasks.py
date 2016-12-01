@@ -14,6 +14,7 @@ from datetime import timedelta
 import datetime
 from time import sleep, mktime
 from . import influence_metrics
+from . import compute_communities
 #from time import sleep
 from celery.task.control import inspect
 from celery.task.control import revoke
@@ -65,15 +66,6 @@ def user(user_id):
         return user
     except:
         return "User not found in DB"
-
-@celery.task
-def stoptask(taskId):
-    try:
-        revoke(taskId, terminate=True)
-        return("Task stopped correctly")
-    except:
-        return("Task did not stop correctly")
-
 
 #TODO
 @celery.task
@@ -133,10 +125,6 @@ def get_user_metrics(user_id):
         return "User metrics have not been calculated yet"
 
 @celery.task
-def prueba():
-    return "prueba"
-
-@celery.task
 def ranking_users():
     rankingRecord = client.query("select from User order by user_relevance desc limit 20")
     ranking=[]
@@ -185,15 +173,26 @@ def tweet_history(tweet_id):
         tweet_history_list.append(tweet_record.oRecordData)
     return tweet_history_list
 @celery.task
-def add_user(userJson):
+def add_user(userJson, topics=None):
     print("User recibido")
+    
     userDict = json.loads(userJson)
+    if topics:
+        userDict['topics'] = topics
+    for topic in userDict['topics']:
+        topicInDB = client.query("select from Topic where name = '{topic}'".format(topic=topic))
+        if not topicInDB:
+            num_topics = client.query("select count(*) from Topic")[0].oRecordData['count']
+            cmd = "insert into Topic set name = '{topic}', id = {id}, tweet_count = 0, user_count = 0".format(topic=topic, id=num_topics)
+            logger.warning(cmd)
+            client.command(cmd)
+
     logger.info(userDict)
     userInDB = client.query("select id from User where id = {id}".format(id=userDict['id']))
     if not userInDB:
         userJson = json.dumps(userDict, ensure_ascii=False).encode().decode('ascii', errors='ignore')
         client.command("insert into User content {content}".format(content=userJson))
-        client.command('update User set pending=True where id={id}'.format(id=userDict['id']))
+        client.command('update User set pending=True, depth=0 where id={id}'.format(id=userDict['id']))
         for topic in userDict['topics']:
             cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=userDict['id'], topic=topic)
             client.command(cmd)
@@ -208,7 +207,10 @@ def add_user(userJson):
         date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         for topic in userDict['topics']:
             client.command("insert into User_metrics set id = {id}, lastMetrics = True, topic = '{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=userDict['id'],followers=userDict['followers_count'],following=userDict['friends_count'], topic= topic, date = date_ts, timestamp = ts, statuses_count = userDict['statuses_count']))    
- 
+
+
+
+# SOLO DATASET DE NORO 
 @celery.task
 def followers_rel():
     #pending_users = client.query("select id, screen_name from User skip {skip} limit {limit}".format(skip=skip, limit=limit))
@@ -229,9 +231,12 @@ def followers_rel():
                     client.command(cmd)
             client.command('update User set pending=False, depth = 0 where id={id}'.format(id=user_friends['id']))
     print(':FIN:')
+
+#Metodo alternativo para cargar tweets
 @celery.task
 def add_tweet_raw(tweetJson):
     tweetDict = json.loads(tweetJson)
+    tweetDict['pending'] = True
     tweetInDB = client.query("select id_str from Tweet where id_str = '{id}'".format(id=tweetDict['id_str']))
     tweet_topics = tweetDict['topics']
     if tweetInDB:
@@ -250,12 +255,15 @@ def add_tweet_raw(tweetJson):
         print(cmd)
         client.command(cmd)
     except:
-        print("User not in DB")    
-    
+        print("User not in DB")
+        add_user(json.dumps(tweetDict['user']),tweet_topics)    
+        cmd = ("create edge Created_by from (select from Tweet where id_str = '{tweet_id}') to (select from User where id = {user_id})".format(tweet_id=tweetDict['id_str'],user_id=tweetDict['user']['id']))
+        print(cmd)
+        client.command(cmd)
 
     return ("Tweet added to DB")
 
-
+#Metodo para realizar las relaciones entre tweets
 @celery.task
 def add_tweets_relations():
     pending_tweets = client.query("select from Tweet where pending = true limit -1")
@@ -287,8 +295,7 @@ def add_tweets_relations():
                     pass
         client.command("update Tweet set pending = false where id_str = '{id_str}'".format(id_str=tweetDict.oRecordData['id_str']))
 
-    return(":FIN:")
-
+    print(":FIN:")
 
 @celery.task
 def add_tweet(tweetJson):
@@ -304,7 +311,9 @@ def add_tweet(tweetJson):
     tweetInDB = client.query("select id_str from Tweet where id_str = {id}".format(id=tweetDict['id_str']))
     if tweetInDB:
         client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
-        return ("Tweet already in DB")
+        
+        relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
+        return ("Tweet added to DB. {relevance} in the topic {topic}".format(topic=tweet_topics[0],relevance=relevance))
 
     tweetDict['topics'] = tweet_topics
     logger.warning(tweetDict['topics'])
@@ -348,7 +357,7 @@ def add_tweet(tweetJson):
             user_content = tweetDict['user']
             user_content['topics'] = tweet_topics
             user_content['depth'] = 0
-            user_content['screen_name'] = user_content['screen_name'].lower()
+            user_content['screen_name'] = user_content['screen_name']
             if user_content['following'] == None:
                 user_content['following'] = 0
             if user_content['followers_count'] == None:
@@ -362,8 +371,14 @@ def add_tweet(tweetJson):
             cmd = "update User set pending = True, depth = 0 where id = {id}".format(id= user_id)
             #logger.warning(cmd)
             client.command(cmd)
+            ts = int(tweetDict['timestamp_ms'])/1000
+            date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+            cmd = "insert into User_metrics set id = {id}, lastMetrics = True, topic='{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user_id,followers=tweetDict['user']['followers_count'],topic=topic,following=tweetDict['user']['friends_count'], date = date_ts, timestamp = ts, statuses_count=tweetDict['user']['statuses_count'])
+            #logger.warning(cmd)
+            client.command(cmd)
             print("user added")
-        client.command("create edge Created_by from (select from Tweet where id_str = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=tweetDict['id_str'],user_id=user_id))
+
+        client.command("create edge Created_by from (select from Tweet where id_str = '{tweet_id}') to (select from User where id = {user_id})".format(tweet_id=tweetDict['id_str'],user_id=user_id))
         
         cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=user_id, topic=topic)
         client.command(cmd)
@@ -371,13 +386,8 @@ def add_tweet(tweetJson):
         # Creamos una metricas de usuario básicas
         
         # ts = tweetDict['created_at']
-        # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+        # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))        
         
-        ts = int(tweetDict['timestamp_ms'])/1000
-        date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        cmd = "insert into User_metrics set id = {id}, lastMetrics = True, topic='{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user_id,followers=tweetDict['user']['followers_count'],topic=topic,following=tweetDict['user']['friends_count'], date = date_ts, timestamp = ts, statuses_count=tweetDict['user']['statuses_count'])
-        #logger.warning(cmd)
-        client.command(cmd)
     except:
         logger.warning("Tweet does not have User defined")    
     # Planteamos crear el link de last metrics
@@ -413,7 +423,7 @@ def add_tweet(tweetJson):
             if not user:
                 original_user_content = original_tweet_dict['user']
                 original_user_content['topics'] = tweet_topics
-                original_user_content['screen_name'] = original_user_content['screen_name'].lower()
+                original_user_content['screen_name'] = original_user_content['screen_name']
                 if original_user_content['following'] == None:
                     original_user_content['following'] = 0
                 if original_user_content['followers_count'] == None:
@@ -426,7 +436,8 @@ def add_tweet(tweetJson):
                 cmd = "update User set pending = True, depth = 0 where id = {id}".format(id = original_tweet_dict['user']['id'])
                 client.command(cmd)
                 print("user added")
-
+                client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=original_tweet_dict['user']['id'],followers=original_tweet_dict['user']['followers_count'],following=original_tweet_dict['user']['friends_count'], date = date_ts, statuses_count=original_tweet_dict['user']['statuses_count']))
+            
             client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=original_tweet_dict['id'],user_id=original_tweet_dict['user']['id']))
             
             for topic in tweet_topics:
@@ -438,7 +449,7 @@ def add_tweet(tweetJson):
             # Creamos una metricas de usuario básicas
             #date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['retweeted_status']['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
             # print (date_ts)
-            client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=original_tweet_dict['user']['id'],followers=original_tweet_dict['user']['followers_count'],following=original_tweet_dict['user']['friends_count'], date = date_ts, statuses_count=original_tweet_dict['user']['statuses_count']))    
+            #client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=original_tweet_dict['user']['id'],followers=original_tweet_dict['user']['followers_count'],following=original_tweet_dict['user']['friends_count'], date = date_ts, statuses_count=original_tweet_dict['user']['statuses_count']))    
             # Planteamos crear el link de last metrics
 
 
@@ -452,7 +463,7 @@ def add_tweet(tweetJson):
             client.command(cmd)   
         except:
             pass
-    
+        
     # Comprobamos si el Tweet es un reply, y lo enlazamos con el original
     if 'in_reply_to_status_id' in tweetDict:
         print("reply_status")
@@ -498,9 +509,9 @@ def add_tweet(tweetJson):
             cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=tweetDict['in_reply_to_user_id'], topic=topic)
             client.command(cmd)
        
-        
+    relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
     print("Tweet added to DB")
-    return ("Tweet added to DB")
+    return ("Tweet added to DB. {relevance} in the topic {topic} ".format(topic=tweet_topics[0],relevance=relevance))
 
 @celery.task
 def delete_tweet(tweet_id):
@@ -783,6 +794,11 @@ def execute_metrics():
     logger.info("COMIENZAN LAS METRICAS")
     influence_metrics.execution()
 
+
+@celery.task
+def execute_communities():
+    logger.info("COMIENZAN LAS METRICAS")
+    compute_communities.execution()
 # @celery.task
 # def get_user_of_tweet(tweetId):
 #     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')

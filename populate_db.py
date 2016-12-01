@@ -3,6 +3,7 @@ import requests
 import json
 import glob
 import multiprocessing
+import re
 import datetime
 from itertools import islice
 from time import sleep, mktime
@@ -47,6 +48,9 @@ def print_count(count, resp=None):
 
 
 def post_tweet(line, return_response=False, raw=False):
+    line = line[0:line.find('[""')] + '[' + line[line.find('[""')+2:]
+    line = line[0:line.find('""]')] + line[line.find('""]')+1:]
+    print(line)
     tweet = json.loads(line)
     if not raw:
 	    temp = tweet['raw']

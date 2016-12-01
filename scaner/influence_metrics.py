@@ -2,7 +2,6 @@ import pyorient
 import math
 import numpy as np
 import time
-import pickle
 import datetime
 from scipy.sparse import csr_matrix
 from scipy.sparse import lil_matrix
@@ -83,6 +82,8 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     limit = 10000
     iterationRID = "#-1:-1"
     index = 0
+    # Parámetro de Noro
+    s = 0.1
     # iterations = max([(number_of_users/limit), (number_of_tweets/limit)])
     iterations = math.ceil(number_of_tweets/limit)
     print("numero de iteraciones: {iterations}".format(iterations=iterations))
@@ -165,7 +166,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
                             break
 
                 if not found_As:
-                    user_user_As = np.append(user_user_As,np.zeros(1))
+                    user_user_As = np.append(user_user_As,np.zeros(1)*s)
                 if not found_At:
                     user_tweet_At = np.append(user_tweet_At, np.zeros(1))
                 if not found_Ar:
@@ -216,7 +217,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
 
 
     # DAMPING FACTOR
-    d = 0.5
+    d = 0.15
 
     Ar = csr_matrix(Ar)
     At = csr_matrix(At)
@@ -433,15 +434,15 @@ def user_relevance_score(userlist, topic):
         user_score = {}
     # userlist = client.query("select from User order by metrics.followers desc limit 500")
     # Pesos para el ajuste de las diferentes métricas: wr + wi + wf = 1
-    wr = 0.1
-    wi = 0.5
-    wf = 0.4
+    wr = 0.4
+    wi = 0.4
+    wf = 0.2
     for user in userlist:
         # print ("Puntuación TR de user " + str(userid) + " = " + user[0].oRecordData['TR_score'])
         # print ("Puntuación UI de user " + str(userid) + " = " + user[0].oRecordData['UI_score'])
         # print ("Puntuación FR de user " + str(userid) + " = " + user[0].oRecordData['FR_score'])
         user_metrics = client.query("select from User_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=user.oRecordData['id'], topic=topic))
-        user_relevance = float(user_metrics[0].oRecordData['tweetRatio'])**wr + float(user_metrics[0].oRecordData['influence'])**wi + float(user_metrics[0].oRecordData['followRelationScore'])**wf
+        user_relevance = float(user_metrics[0].oRecordData['tweetRatio'])**wr + float(user_metrics[0].oRecordData['influenceUnnormalized'])**wi + float(user_metrics[0].oRecordData['followRelationScore'])**wf
         user_relevance = truncate(user_relevance, 12)
         if IS_TEST:
             screen_name = client.query("select screen_name from user where id = {id}".format(id=user.oRecordData['id']))
@@ -475,9 +476,9 @@ def impact_user(userlist, number_of_tweets, topic):
     # userlist = client.query("select from User order by metrics.followers desc limit 500")
     impact_vector = np.array([])
     # DAMPING FACTOR
-    d = 0.5
+    d = 0.15
     # SMOOTHING PARAMETER
-    sigma = 0.5
+    sigma = 1
 
     for n, user in enumerate(userlist):
         # PLANTEAR METER (in('Created_by').id) para optimizar > Cambiar ['id'] por value
@@ -518,11 +519,11 @@ def voice_user(userlist, topic):
     #userlist = client.query("select from User order by metrics.followers desc limit 500")
 
     # Parametro SIGMA de suavizado
-    sigma = 0.5
+    sigma = 1
     # Calculamos VOICE para cada usuario
     for n, user in enumerate(userlist):
         tweets_user = client.query("select from (select expand(in('Created_by')) from User where id = {id} limit -1) where topics containsText '{topic}' and retweeted_status is null limit -1".format(id=user.oRecordData['id'], topic=topic))
-        retweets_user = client.query("select from (select expand(in('Retweeted_by')) from User where id = {id} limit -1) where topics containsText '{topic}' limit -"1.format(id=user.oRecordData['id'], topic=topic))
+        retweets_user = client.query("select from (select expand(in('Retweeted_by')) from User where id = {id} limit -1) where topics containsText '{topic}' limit -1".format(id=user.oRecordData['id'], topic=topic))
         
         sumatorio_tweet_TI = 0
         sumatorio_retweet_TI = 0
@@ -531,7 +532,7 @@ def voice_user(userlist, topic):
             sumatorio_tweet_TI += float(tweet_metrics[0].oRecordData['influence'])
 
         for retweet in retweets_user:
-            retweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=tweet.oRecordData['id'], topic=topic))
+            retweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=retweet.oRecordData['id'], topic=topic))
             sumatorio_retweet_TI += float(retweet_metrics[0].oRecordData['influence'])
 
         
@@ -580,7 +581,7 @@ def tweet_relevance(number_of_tweets, topic):
             VR_score = 0
             if 'in_reply_to_status_id' in tweet.oRecordData:
                 try:
-                    VR_score = float(user_creator_metrics[0].oRecordData['voice_t'])
+                    VR_score = float(user_creator_metrics[0].oRecordData['voice'])
                 except:
                     pass
             else:
@@ -588,8 +589,8 @@ def tweet_relevance(number_of_tweets, topic):
                     VR_score = float(user_creator_metrics[0].oRecordData['voice_r'])
                 except:
                     pass
-            users_retweeted_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Retweeted_by')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id_str'], topic=topic))
-            users_replied_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Replied_by')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id_str'], topic=topic))
+            users_retweeted_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Retweeted_by')) from Tweet where id = {id} limit -1) where topics containsText '{topic}' limit -1".format(id=tweet.oRecordData['id_str'], topic=topic))
+            users_replied_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Replied_by')) from Tweet where id = {id} limit -1) where topics containsText '{topic}' limit -1".format(id=tweet.oRecordData['id_str'], topic=topic))
             IR_score = 0
             for user_metrics in users_retweeted_metrics:
                 try:
@@ -664,12 +665,10 @@ def preparation_phase(topic):
     follow_relation_factor_user(userlist, number_of_users, topic)
     impact_user(userlist, number_of_tweets, topic)
     voice_user(userlist, topic)
-    tweet_relevance(number_of_tweets, topic)
-    user_relevance_score(userlist, topic)
-
+    #user_relevance_score(userlist, topic)
+    tweet_relevance(number_of_tweets,topic)
     client.command("update Topic set tweet_count = {tweets}, user_count = {users} where name = '{topic}'".format(tweets=number_of_tweets, users=number_of_users, topic=topic))
 
-    
 def truncate(f, n):
     '''Truncates/pads a float f to n decimal places without rounding'''
     s = '{}'.format(f)
@@ -678,7 +677,72 @@ def truncate(f, n):
     i, p, d = s.partition('.')
     return '.'.join([i, (d+'0'*n)[:n]])    
 
+def main_phase(tweet, topic):
+    print("MAIN PHASE")
+    
+    #Parámetros predefinidos
+    p = -3.0
+    alpha = 0.4
 
+    #Comprobamos si hay métricas existentes para ese topic
+    metricsInDB = client.query("select from tweet_metrics where topic = '{topic}'".format(topic = topic))
+    if not metricsInDB:
+        return "You need to run preparation_phase for the topic {topic}".format(topic=topic)
+
+
+    # Comprobamos si el tweet es un reply
+    if 'in_reply_to_status_id' in tweet:
+        if tweet['in_reply_to_status_id'] != None:
+            original_tweet = client.query("select from tweet where id_str = {id_str}".format(id_str = tweet['in_reply_to_status_id_str']))
+
+    # Comprobamos si el tweet es un retweet
+    if 'retweeted_status' in tweet:
+        if tweet['retweeted_status'] != None:
+            original_user = client.query("select from user where id = {id}".format(id=tweet['user']['id']))
+    
+    # Comprobamos si tiene user definido en nuestra base de datos
+    user = client.query("select from user where id = {id}".format(id=tweet['user']['id']))
+    if not user:
+        return "User is not defined"
+
+    # Actualizamos las voces que son 0 siguiendo la formula de Noro de ponerle la minima voz multiplicada por un factor 'p'
+
+    voice_min = client.query("select min(voice) from user_metrics where topic containsText '{topic}'".format(topic=topic))
+    voice_r_min = client.query("select min(voice_r) from user_metrics where topic containsText '{topic}'".format(topic=topic))
+    user_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['id_str'], topic=topic))
+    if user_metrics[0].oRecordData['voice'] == 0:
+          new_voice = float(voice_min[0].oRecordData['min']*p)
+          client.command("update user_metrics set voice = {voice} where id = {id}".format(id=user[0].oRecordData['id'],voice=new_voice))
+    if user_metrics[0].oRecordData['voice_r'] == 0:
+          new_voice_r = float(voice_r_min[0].oRecordData['min']*p)
+          client.command("update user_metrics set voice = {voice} where id = {id}".format(id=user[0].oRecordData['id'],voice=new_voice_r))
+
+
+    # Tweet relevance calculated for the tweet
+
+    VR_score = 0
+    if 'retweeted_status' in tweet:        
+        user_original_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['retweeted_status']['id_str'], topic=topic))
+        VR_score = float(user_original_metrics[0].oRecordData['voice'])
+    else:
+        VR_score = float(user_metrics[0].oRecordData['voice'])
+
+    IR_score = 0
+    users_retweeted_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Retweeted_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['id_str'], topic=topic))
+    users_replied_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Replied_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['id_str'], topic=topic))
+    
+    for user_metrics in users_retweeted_metrics:
+        IR_score += float(user_metrics[0].oRecordData['impact'])
+    for user_metrics in users_replied_metrics:
+        IR_score += float(user_metrics[0].oRecordData['impact'])
+
+    tweet_relevance = alpha * VR_score + (1 - alpha) * IR_score
+
+    
+    command = "update Tweet_metrics set relevance = {tweet_relevance} where id = {id} and topic = '{topic}'".format(id=tweet['id_str'],tweet_relevance=tweet_relevance, topic = topic)
+    client.command(command)
+
+    return("Tweet relevance is {relevance}".format(relevance=tweet_relevance))
 #EJECUCION
 def execution():
     topics = client.query("select from Topic limit -1")

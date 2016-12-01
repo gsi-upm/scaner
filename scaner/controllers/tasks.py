@@ -19,6 +19,10 @@ def get_emotions_from_twitter(*args, **kwargs):
 def run_metrics(*args, **kwargs):
     metricstask = current_app.tasks.execute_metrics.delay()
     return {'status': "Background"}, 200 
+@add_metadata()
+def run_communities(*args, **kwargs):
+    metricstask = current_app.tasks.execute_communities.delay()
+    return {'status': "Background"}, 200 
 
 @add_metadata()
 def update_users(*args, **kwargs):
