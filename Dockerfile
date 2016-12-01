@@ -16,7 +16,8 @@ ADD . /usr/src/app
 
 ADD run-web.sh /usr/local/bin/
 ADD run-celery.sh /usr/local/bin/
+ADD run-flower.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/run-web.sh
 RUN chmod +x /usr/local/bin/run-celery.sh
-
+RUN chmod +x /usr/local/bin/run-flower.sh
 CMD ["run-web.sh"]
