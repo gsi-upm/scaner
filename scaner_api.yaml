@@ -501,57 +501,6 @@ paths:
           description: Task found and returned
           # schema:
           #   $ref: '#/definitions/Tasks'      
-  /tasks/emotiontask:
-    get:
-      operationId: scaner.controllers.tasks.get_emotions_from_twitter
-      tags:
-      - tasks
-      responses:
-        200:
-          description: Task for update emotions running
-          # schema:
-          #   $ref: '#/definitions/Tasks'
-  /tasks/influencemetrics:
-    get:
-      operationId: scaner.controllers.tasks.run_metrics
-      tags:
-      - tasks
-      responses:
-        200:
-          description: Task for update metrics running
-          # schema:
-          #   $ref: '#/definitions/Tasks'
-  /tasks/executecommunities:
-    get:
-      operationId: scaner.controllers.tasks.run_communities
-      tags:
-      - tasks
-      responses:
-        200:
-          description: Task running
-          # schema:
-          #   $ref: '#/definitions/Tasks'
-  /tasks/updateusers:
-    get:
-      operationId: scaner.controllers.tasks.update_users
-      tags:
-      - tasks
-      responses:
-        200:
-          description: Task for update users running
-          # schema:
-          #   $ref: '#/definitions/Tasks'
-
-  /tasks/getweetsbyid:
-      get:
-        operationId: scaner.controllers.tasks.get_tweets_from_twitter
-        tags:
-        - tasks
-        responses:
-          200:
-            description: Task running
-            # schema:
-            #   $ref: '#/definitions/Tasks'
 
   /communities:
     get:
