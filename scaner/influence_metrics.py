@@ -131,6 +131,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
 
                 # Calculamos el vector para At y para Ar
                 for retweeted in user_retweeted:
+
                     if retweeted.oRecordData['id_str'] == tweet.oRecordData['id_str']:
                         user_tweet_At = np.append(user_tweet_At, np.ones(1))
                         found_At = True
@@ -293,7 +294,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         UI_vector = users_vector/np.amax(users_vector)
         TI_vector = tweets_vector/np.amax(tweets_vector)
     except:
-        logger.warning("USUARIOS NO RELACIONADOS")
+        print("USUARIOS NO RELACIONADOS")
 
 
     #ALMACENAMOS EN LA DB LAS PUNTUACIONES
@@ -342,15 +343,6 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         return influence_score
     print("FIN influence_score")
 
-    # while (error_u > 0.1) or (error_t > 0.1):
-    #     error_u = -np.mod(users_vector)
-    #     error_t = -np.mod(tweets_vector)
-    #     tweets_vector = np.dot(Ba.transpose(), users_vector)
-    #     users_vector = np.dot(Bt.transpose(), tweets_vector)
-    #     error_u += np.mod(users_vector)
-    #     error_t += np.mod(tweets_vector)
-
-    
 def follow_relation_factor_user(userlist, number_of_users, topic):
     print("FOLLOW RELATION FACTOR USER")
     IS_TEST = os.environ.get('IS_TEST')
@@ -423,7 +415,6 @@ def follow_relation_factor_user(userlist, number_of_users, topic):
         client.command(command)
     if IS_TEST:
         return follow_relation_score
-
 
 # Metodo para calcular la relevancia de un usuario a partir de las otras métricas
 def user_relevance_score(userlist, topic):
@@ -528,17 +519,20 @@ def voice_user(userlist, topic):
         sumatorio_tweet_TI = 0
         sumatorio_retweet_TI = 0
         for tweet in tweets_user:
-            tweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=tweet.oRecordData['id'], topic=topic))
-            sumatorio_tweet_TI += float(tweet_metrics[0].oRecordData['influence'])
+            try:
+                tweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=tweet.oRecordData['id'], topic=topic))
+                sumatorio_tweet_TI += float(tweet_metrics[0].oRecordData['influence'])
+            except:
+                pass
 
         for retweet in retweets_user:
             retweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=retweet.oRecordData['id'], topic=topic))
             sumatorio_retweet_TI += float(retweet_metrics[0].oRecordData['influence'])
 
         
-        retweets_user = client.query("select count(*) from (select expand(in('Retweeted_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))
-        voice_t =(1/(len(tweets_user) + sigma)) * sumatorio_tweet_TI
-        voice_r = (1/(retweets_user[0].oRecordData['count'] + sigma)) * sumatorio_retweet_TI
+        #retweets_user = client.query("select count(*) from (select expand(in('Retweeted_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))
+        voice_t = (1/(len(tweets_user) + sigma)) * sumatorio_tweet_TI
+        voice_r = (1/(len(retweets_user) + sigma)) * sumatorio_retweet_TI
 
         voice_t = truncate(voice_t, 12)
         voice_r = truncate(voice_r, 12)
@@ -665,8 +659,9 @@ def preparation_phase(topic):
     follow_relation_factor_user(userlist, number_of_users, topic)
     impact_user(userlist, number_of_tweets, topic)
     voice_user(userlist, topic)
-    #user_relevance_score(userlist, topic)
-    tweet_relevance(number_of_tweets,topic)
+    tweet_relevance(number_of_tweets, topic)
+    user_relevance_score(userlist, topic)
+
     client.command("update Topic set tweet_count = {tweets}, user_count = {users} where name = '{topic}'".format(tweets=number_of_tweets, users=number_of_users, topic=topic))
 
 def truncate(f, n):

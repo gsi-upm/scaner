@@ -21,6 +21,7 @@ from celery.task.control import revoke
 from celery.result import AsyncResult
 from twitter import TwitterHTTPError
 from celery.utils.log import get_task_logger
+from billiard.exceptions import Terminated
 
 logger = get_task_logger(__name__)
 
@@ -53,12 +54,12 @@ client.db_open("mixedemotions", "admin", "admin")
 # client.db_open("mixedemotions", "admin", "admin")
 
 #LISTA DE ATRIBUTOS A ELIMINAR DE LAS PETICIONES A ORIENTDB
-delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic")
+delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic","out_Replied_by","in_Reply","out_Reply")
 
 @celery.task
 def user(user_id):
     try:
-        userRecord = client.query("select from User where id = '{user_id}'".format(user_id=user_id))
+        userRecord = client.query("select from User where id_str = '{user_id}'".format(user_id=user_id))
         user = userRecord[0].oRecordData
         for k in delete_variables:
             if user.get(k):
@@ -70,11 +71,11 @@ def user(user_id):
 #TODO
 @celery.task
 def user_network(user_id):
-    user_followers = client.query("select id from (select expand(in(Follows)) from User where id='{userid}' limit -1)".format(userid=user_id))
+    user_followers = client.query("select id from (select expand(in('Follows')) from User where id='{userid}' limit -1) limit -1".format(userid=user_id))
     user_follower_list=[]
     for user_record in user_followers:
         user = user_record.oRecordData
-        print(user)
+        #print(user)
         user_follower_list.append(user)
     return user_follower_list
 
@@ -163,13 +164,13 @@ def tweet_attributes(tweet_id, attributes):
 
 @celery.task
 def tweet_history(tweet_id):
-    tweet_history = client.query("select from (select from Tweet_metrics where id_str = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
+    tweet_history = client.query("select from (select from Tweet_metrics where id = {tweet_id} limit 10) order by timestamp desc".format(tweet_id=tweet_id))
     tweet_history_list=[]
 
     for tweet_record in tweet_history:
         tweet = tweet_record.oRecordData
         tweet.pop("in_Last_metrics", None)
-        print(tweet)
+        #print(tweet)
         tweet_history_list.append(tweet_record.oRecordData)
     return tweet_history_list
 @celery.task
@@ -345,8 +346,8 @@ def add_tweet(tweetJson):
     # Comprobamos que su usuario esta en la DB, y si no lo creamos, y lo enlazamos
     try:
         user_id = tweetDict['user']['id']
-        logger.info("USER ID: " + str(user_id))
-        logger.info("TWEET ID: " + str(tweetDict['id']))
+        print("USER ID: " + str(user_id))
+        print("TWEET ID: " + str(tweetDict['id']))
         user = []
         try:
             user = client.query("select from User where id = {id}".format(id=user_id))
@@ -579,14 +580,23 @@ def topic(topic_id):
     return topic
 
 @celery.task
-def topic_network(topic_id):
-    pass
+def topic_network(topic_id, entity):
+    topicRecord = client.query("select name from Topic where id = {topic_id}".format(topic_id=topic_id))
+    topic = topicRecord[0].oRecordData['name']
+    print(topic)
+    user_topic = client.query("select id_str from {entity} where topics containstext '{topic}' and id_str is not null limit -1".format(topic=topic, entity=entity))
+    user_topic_list=[]
+    for user_record in user_topic:
+        user = user_record.oRecordData
+        #print(user)
+        user_topic_list.append(user)
+    return user_topic_list
 
 #@periodic_task(run_every=timedelta(days=1))
 #@periodic_task(run_every=timedelta(minutes=1))
-#@periodic_task(run_every=crontab(hour=9, minute=45, day_of_week="mon"))
+#@periodic_task(run_every=crontab(hour=14, minute=9, day_of_week="wed"))
 #@celery.task(base=QueueOnce)
-@celery.task()
+@celery.task(throws=(Terminated,))
 def get_users_from_twitter(pending_users=None):
     print("TAREA PERIODICA")
     n_lim = 2
@@ -595,8 +605,9 @@ def get_users_from_twitter(pending_users=None):
         limit = 1000
         skip = 0
         depth = 1
-
-        number_of_users = client.query("select count(*) from User where pending = True and depth < {depth}".format(depth=depth))[0].oRecordData['count']
+        user_count = client.query("select count(*) from User where pending = True and depth < {depth}".format(depth=depth))
+        print(user_count)
+        number_of_users = user_count[0].oRecordData['count']
         iterations = math.ceil(number_of_users/limit)
         print("numero de iteraciones: {iterations}".format(iterations=iterations))
 
@@ -681,10 +692,11 @@ def get_users_from_twitter(pending_users=None):
             skip += limit
     #get_detailed_users_from_twitter()
     print ("SUCCESS")
+    return "Users updated"
 
 #Tarea periódica que descarga los detalles de los usuarios de twitter incompletos
-@celery.task()
-#@periodic_task(run_every=crontab(hour=8, minute=49, day_of_week="thu"))
+#@celery.task()
+#@periodic_task(run_every=crontab(hour=13, minute=44, day_of_week="wed"))
 #@celery.task(base=QueueOnce)
 #@periodic_task(run_every=timedelta(minutes=20))
 def get_detailed_users_from_twitter(pending_users=None):
@@ -788,11 +800,12 @@ def get_task_status(taskId):
         status = "Finished"
     return status
 
-#@periodic_task(run_every=crontab(hour=10, minute=54, day_of_week="wed"))
-@celery.task
+#@periodic_task(run_every=crontab(hour=10, minute=40, day_of_week="thu"))
+@celery.task(throws=(Terminated,))
 def execute_metrics():
-    logger.info("COMIENZAN LAS METRICAS")
+    print("COMIENZAN LAS METRICAS")
     influence_metrics.execution()
+    return "Metrics calculated"
 
 
 @celery.task

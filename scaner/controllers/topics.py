@@ -18,6 +18,8 @@ def get(topicId, *args, **kwargs):
     get_task = current_app.tasks.topic.delay(topicId)
     return {'topics': get_task.get(timeout = 10)}, 200 
 
-@add_metadata()
-def get_network(*args, **kwargs):
-    pass
+@add_metadata('users')
+def get_network(topicId, entity, *args, **kwargs):
+    get_network_task = current_app.tasks.topic_network.delay(topicId, entity)
+    return{'users': get_network_task.get(timeout = 100)}, 200
+

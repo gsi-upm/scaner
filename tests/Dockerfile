@@ -1,7 +1,8 @@
 FROM python:3.4
 
 ENV REDIS_HOST redis
-ENV ORIENTDB_HOST orientdb
+ENV ORIENTDB_HOST orientdb_test
+ENV IS_TEST True
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -16,9 +17,7 @@ ADD . /usr/src/app
 
 ADD run-web.sh /usr/local/bin/
 ADD run-celery.sh /usr/local/bin/
-ADD run-flower.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/run-web.sh
 RUN chmod +x /usr/local/bin/run-celery.sh
-RUN chmod +x /usr/local/bin/run-flower.sh
 
 CMD ["run-web.sh"]

@@ -1,16 +1,19 @@
 
-Scaner usage: calculating influence in twitter
-==============================================
+Usage
+-----
 
-Department of Telematic Engineering Systems, Universidad Politécnica de
-Madrid, © 2016 Searching for Relevant Tweets and Users
---------------------------------------- Suppose we have 3 twitter users:
+Department of Telematic Engineering Systems, Universidad Politécnica de Madrid, © 2016 
+
+Searching for Relevant Tweets and Users
+=======================================
+
+Suppose we have 3 twitter users:
 **Manu**, **Alberto** and **Rodrigo**. This three users are expressing
 their opinions about a concrete topic in Twitter, i.e about nuclear
 energy. They have published tweets concerning this topics and they
 follow each other as it is shown in the following graph.
 
-.. figure:: files/example_graph.jpg
+.. figure:: example_graph.png
    :alt: 
 
 (This data can easily be loaded in Scaner tool using "populate\_db.py"
