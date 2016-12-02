@@ -318,7 +318,7 @@ def add_tweet(tweetJson):
         client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
         
         relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
-        return ("Tweet already in DB. {relevance} in the topic {topic}".format(topic=tweet_topics[0],relevance=relevance))
+        return ("Tweet already in DB. The tweet relevance is {relevance} in the topic {topic}".format(topic=tweet_topics[0],relevance=relevance))
 
     tweetDict['topics'] = tweet_topics
     logger.warning(tweetDict['topics'])
@@ -516,7 +516,7 @@ def add_tweet(tweetJson):
        
     relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
     print("Tweet added to DB")
-    return ("Tweet added to DB. {relevance} in the topic {topic} ".format(topic=tweet_topics[0],relevance=relevance))
+    return ("Tweet added to DB. The tweet relevance is {relevance} in the topic {topic} ".format(topic=tweet_topics[0],relevance=relevance))
 
 @celery.task
 def delete_tweet(tweet_id):
