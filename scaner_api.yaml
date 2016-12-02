@@ -484,6 +484,19 @@ paths:
           # schema:
           #   $ref: '#/definitions/Tasks'
 
+  /tasks/runmetrics:
+    get:
+      operationId: scaner.controllers.tasks.run_metrics
+      tags:
+      - tasks
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Tasks found and returned
+          # schema:
+          #   $ref: '#/definitions/Tasks'
+
   /tasks/{taskId}:
     get:
       tags:

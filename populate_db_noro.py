@@ -74,18 +74,20 @@ def post_tweet(line, return_response=False, raw=False):
     if 'retweeted_status' in tweet:
         if tweet['retweeted_status'] != None:
             tweet['retweeted_status']['id'] = int(tweet['retweeted_status']['id'])
-            if 'media' in tweet['retweeted_status']['entities']:
-                #tweet['retweeted_status']['entities']['media'][0]['source_status_id'] = int(tweet['retweeted_status']['entities']['media'][0]['source_status_id'])
-                tweet['retweeted_status']['entities']['media'][0]['id'] = int(tweet['retweeted_status']['entities']['media'][0]['id'])
+            if 'entities' in  tweet['retweeted_status']:
+                if 'media' in tweet['retweeted_status']['entities']:
+                    #tweet['retweeted_status']['entities']['media'][0]['source_status_id'] = int(tweet['retweeted_status']['entities']['media'][0]['source_status_id'])
+                    tweet['retweeted_status']['entities']['media'][0]['id'] = int(tweet['retweeted_status']['entities']['media'][0]['id'])
             if 'in_reply_to_status_id' in tweet['retweeted_status']:
                 if tweet['retweeted_status']['in_reply_to_status_id'] != None:
                     tweet['retweeted_status']['in_reply_to_status_id'] = int(tweet['retweeted_status']['in_reply_to_status_id'])
             tweet['retweeted_status']['user']['following'] = None
-    if 'media' in tweet['entities']:
-        tweet['entities']['media'][0]['id'] = int(tweet['entities']['media'][0]['id'])
-        if 'source_status_id' in tweet['entities']['media'][0]:
-            if tweet['entities']['media'][0]['source_status_id'] != None:
-                tweet['entities']['media'][0]['source_status_id'] = int(tweet['entities']['media'][0]['source_status_id'])
+    if 'entities' in tweet:
+        if 'media' in tweet['entities']:
+            tweet['entities']['media'][0]['id'] = int(tweet['entities']['media'][0]['id'])
+            if 'source_status_id' in tweet['entities']['media'][0]:
+                if tweet['entities']['media'][0]['source_status_id'] != None:
+                    tweet['entities']['media'][0]['source_status_id'] = int(tweet['entities']['media'][0]['source_status_id'])
  
     r = requests.post(url, headers = headers, data=json.dumps(tweet))
     if return_response:
