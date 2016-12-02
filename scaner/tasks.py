@@ -304,6 +304,10 @@ def add_tweet(tweetJson):
     print("Tweet recibido")
 
     tweetDict = json.loads(tweetJson)
+    time = tweetDict['created_at']
+    time = datetime.datetime.strptime(time, "%a %b %d %X %z %Y")
+    time = mktime(time.timetuple())
+    tweetDict['timestamp_ms'] = time
 
     tweet_topics = ['default']
     if 'topics' in tweetDict:
@@ -314,7 +318,7 @@ def add_tweet(tweetJson):
         client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
         
         relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
-        return ("Tweet added to DB. {relevance} in the topic {topic}".format(topic=tweet_topics[0],relevance=relevance))
+        return ("Tweet already in DB. {relevance} in the topic {topic}".format(topic=tweet_topics[0],relevance=relevance))
 
     tweetDict['topics'] = tweet_topics
     logger.warning(tweetDict['topics'])

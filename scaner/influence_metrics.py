@@ -280,7 +280,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     Bt = 0
     gc.collect()
 
-    for k in range(1, 15):
+    for k in range(1, 1000):
         tweets_vector = Ba_transpose.dot(users_vector)
         users_vector = Bt_transpose.dot(tweets_vector)
 
@@ -568,10 +568,10 @@ def tweet_relevance(number_of_tweets, topic):
     print("numero de iteraciones: {iterations}".format(iterations=iterations))
 
     for iteration_num in range(0,iterations):
-        tweetlist = client.query("select id_str from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
+        tweetlist = client.query("select from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         for tweet in tweetlist:
-            user_creator_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id_str'], topic=topic))
+            '''user_creator_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id = {id}) where topics containsText '{topic}'".format(id=tweet.oRecordData['id_str'], topic=topic))
             VR_score = 0
             if 'in_reply_to_status_id' in tweet.oRecordData:
                 try:
@@ -594,8 +594,8 @@ def tweet_relevance(number_of_tweets, topic):
             for user_metrics in users_replied_metrics:
                 IR_score += float(user_metrics.oRecordData['impact'])
 
-            tweet_relevance = alpha * VR_score + (1 - alpha) * IR_score
-
+            tweet_relevance = alpha * VR_score + (1 - alpha) * IR_score'''
+            main_phase(tweet.oRecorData,topic)
             if IS_TEST:
                 tweet_relevance_score[tweet.oRecordData['id_str']] = tweet_relevance
             
@@ -676,7 +676,7 @@ def main_phase(tweet, topic):
     print("MAIN PHASE")
     
     #Parámetros predefinidos
-    p = -3.0
+    p = float(-3.0)    
     alpha = 0.4
 
     #Comprobamos si hay métricas existentes para ese topic
@@ -702,14 +702,14 @@ def main_phase(tweet, topic):
 
     # Actualizamos las voces que son 0 siguiendo la formula de Noro de ponerle la minima voz multiplicada por un factor 'p'
 
-    voice_min = client.query("select min(voice) from user_metrics where topic containsText '{topic}'".format(topic=topic))
-    voice_r_min = client.query("select min(voice_r) from user_metrics where topic containsText '{topic}'".format(topic=topic))
+    voice_min = client.query("select min(voice) from user_metrics where lastMetrics = True and topic containsText '{topic}' and voice <> 0 ".format(topic=topic))
+    voice_r_min = client.query("select min(voice_r) from user_metrics where lastMetrics = True and topic containsText '{topic}' and voice_r <> 0".format(topic=topic))
     user_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['id_str'], topic=topic))
     if user_metrics[0].oRecordData['voice'] == 0:
-          new_voice = float(voice_min[0].oRecordData['min']*p)
+          new_voice = float(voice_min[0].oRecordData['min'])*p
           client.command("update user_metrics set voice = {voice} where id = {id}".format(id=user[0].oRecordData['id'],voice=new_voice))
     if user_metrics[0].oRecordData['voice_r'] == 0:
-          new_voice_r = float(voice_r_min[0].oRecordData['min']*p)
+          new_voice_r = float(voice_r_min[0].oRecordData['min'])*p
           client.command("update user_metrics set voice = {voice} where id = {id}".format(id=user[0].oRecordData['id'],voice=new_voice_r))
 
 
@@ -731,8 +731,8 @@ def main_phase(tweet, topic):
     for user_metrics in users_replied_metrics:
         IR_score += float(user_metrics[0].oRecordData['impact'])
 
-    tweet_relevance = alpha * VR_score + (1 - alpha) * IR_score
-
+    tweet_relevance = (alpha * VR_score) + ((1 - alpha) * IR_score)
+    tweet_relevance = truncate(tweet_relevance, 12)
     
     command = "update Tweet_metrics set relevance = {tweet_relevance} where id = {id} and topic = '{topic}'".format(id=tweet['id_str'],tweet_relevance=tweet_relevance, topic = topic)
     client.command(command)
