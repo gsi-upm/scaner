@@ -595,7 +595,7 @@ def tweet_relevance(number_of_tweets, topic):
                 IR_score += float(user_metrics.oRecordData['impact'])
 
             tweet_relevance = alpha * VR_score + (1 - alpha) * IR_score'''
-            main_phase(tweet.oRecorData,topic)
+            tweet_relevance = main_phase(tweet.oRecordData,topic)
             if IS_TEST:
                 tweet_relevance_score[tweet.oRecordData['id_str']] = tweet_relevance
             
@@ -682,7 +682,7 @@ def main_phase(tweet, topic):
     #Comprobamos si hay métricas existentes para ese topic
     metricsInDB = client.query("select from tweet_metrics where topic = '{topic}'".format(topic = topic))
     if not metricsInDB:
-        return "You need to run preparation_phase for the topic {topic}".format(topic=topic)
+        return "Error calculating relevance of tweet: You need to run preparation_phase for the topic {topic}".format(topic=topic)
 
 
     # Comprobamos si el tweet es un reply
@@ -718,7 +718,7 @@ def main_phase(tweet, topic):
     VR_score = 0
     if 'retweeted_status' in tweet:        
         user_original_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['retweeted_status']['id_str'], topic=topic))
-        VR_score = float(user_original_metrics[0].oRecordData['voice'])
+        VR_score = float(user_original_metrics[0].oRecordData['voice_r'])
     else:
         VR_score = float(user_metrics[0].oRecordData['voice'])
 
@@ -737,7 +737,7 @@ def main_phase(tweet, topic):
     command = "update Tweet_metrics set relevance = {tweet_relevance} where id = {id} and topic = '{topic}'".format(id=tweet['id_str'],tweet_relevance=tweet_relevance, topic = topic)
     client.command(command)
 
-    return("Tweet relevance is {relevance}".format(relevance=tweet_relevance))
+    return tweet_relevance
 #EJECUCION
 def execution():
     topics = client.query("select from Topic limit -1")
