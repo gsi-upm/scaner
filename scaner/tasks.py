@@ -218,7 +218,8 @@ def followers_rel():
     pending_users = client.query("select id,friends_ids from User where pending = true limit -1")
     pending_user_list = []
     for user in pending_users:
-        pending_user_list.append({'id':user.oRecordData['id'],'friends_ids':user.oRecordData['friends_ids']})
+        if 'friends_ids' in user.oRecordData:
+            pending_user_list.append({'id':user.oRecordData['id'],'friends_ids':user.oRecordData['friends_ids']})
 
     for user_friends in pending_user_list:
         if user_friends['friends_ids'] == []:
@@ -316,9 +317,14 @@ def add_tweet(tweetJson):
     tweetInDB = client.query("select id_str from Tweet where id_str = {id}".format(id=tweetDict['id_str']))
     if tweetInDB:
         client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
-        
         relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
-        return ("Tweet already in DB. The tweet relevance is {relevance} in the topic {topic}".format(topic=tweet_topics[0],relevance=relevance))
+        msg = ""
+        if relevance:
+            msg = {'status': 'Tweet already in DB','tweet_relevance': '{relevance}'.format(relevance=relevance), 'topic': '{topic}'.format(topic=topic)}
+            return msg
+        print("Tweet already to DB")
+        return ("Tweet already to DB")
+
 
     tweetDict['topics'] = tweet_topics
     logger.warning(tweetDict['topics'])
@@ -523,8 +529,12 @@ def add_tweet(tweetJson):
             client.command(cmd)
        
     relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
+    msg = ""
+    if relevance:
+        msg = {'status': 'Tweet added to DB','tweet_relevance': '{relevance}'.format(relevance=relevance), 'topic': '{topic}'.format(topic=topic)}
+        return msg
     print("Tweet added to DB")
-    return ("Tweet added to DB. The tweet relevance is {relevance} in the topic {topic} ".format(topic=tweet_topics[0],relevance=relevance))
+    return ("Tweet added to DB")
 
 @celery.task
 def delete_tweet(tweet_id):
@@ -819,11 +829,12 @@ def execute_metrics():
     influence_metrics.execution()
     return "Metrics calculated"
 
-
-@celery.task
+@periodic_task(run_every=crontab(hour=11, minute=34))
+#@celery.task
 def execute_communities():
-    logger.info("COMIENZAN LAS METRICAS")
     compute_communities.execution()
+    return "Communities computed"
+
 # @celery.task
 # def get_user_of_tweet(tweetId):
 #     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')

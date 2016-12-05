@@ -3,6 +3,9 @@ import networkx as nx
 import os
 from subprocess import call
 import pyorient
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
 
 ORIENTDB_HOST = os.environ.get('ORIENTDB_HOST')
 
