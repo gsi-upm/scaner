@@ -28,3 +28,8 @@ def update_users(*args, **kwargs):
 @add_metadata()
 def get_tweets_from_twitter(*args, **kwargs):
     return {'status': current_app.tasks.get_tweets_by_id.delay()}, 200 
+
+@add_metadata()
+def compute_communities(*args, **kwargs):
+    compute_communities_task = current_app.tasks.execute_communities.delay()
+    return {'status': 'Task running in background'}, 200 

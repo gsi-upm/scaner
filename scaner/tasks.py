@@ -54,7 +54,7 @@ client.db_open("mixedemotions", "admin", "admin")
 # client.db_open("mixedemotions", "admin", "admin")
 
 #LISTA DE ATRIBUTOS A ELIMINAR DE LAS PETICIONES A ORIENTDB
-delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic","out_Replied_by","in_Reply","out_Reply")
+delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic","out_Replied_by","in_Reply","out_Reply","out_Belongs_to_Community","in_Belongs_to_Community")
 
 @celery.task
 def user(user_id):
@@ -881,3 +881,40 @@ def get_emotions_from_tweets():
         else:    
         	print("Emociones ya calculadas para este tweet")    
     print("Finish Task")
+
+@celery.task
+def get_communities_list():
+    communities = client.query("select from community limit -1")
+    community_list = []
+    for community in communities:
+        community = community.oRecordData
+        community.pop("in_Belongs_to_Community", None)
+        community.pop("out_Belongs_to_topic", None)
+        community_list.append(community)
+    return community_list
+
+@celery.task
+def get_community_network(communityId):
+    user_list = client.query("select expand(in('Belongs_to_Community')) from community where id = {community_id} limit -1".format(community_id=communityId))
+    user_community_list=[]
+    for user_record in user_list:
+        user = user_record.oRecordData
+        for k in delete_variables:
+            if user.get(k):
+                del user[k]
+        #print(user)
+        user_community_list.append(user)
+    return user_community_list
+
+@celery.task
+def get_community(communityId):
+    communityRecord = client.query("select from community where id = {community_id}".format(community_id=communityId))
+    community = communityRecord[0].oRecordData
+    community.pop("in_Belongs_to_Community", None)
+    return community
+
+
+
+
+
+
