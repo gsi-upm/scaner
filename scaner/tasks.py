@@ -673,21 +673,21 @@ def get_users_from_twitter(pending_users=None):
                             follower_user=[]
                             follower_user = client.query("select id from User where id = {id}".format(id=follower))
 
-                            if not follower_user:
-                                user_content ={'id': follower, 'depth': 2, 'pending': False, 'topics': user_topics}
-                                user_content_json = json.dumps(user_content, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-                                cmd = "insert into User content {content}".format(content=user_content_json)
+                            #if not follower_user:
+                            #    user_content ={'id': follower, 'depth': 2, 'pending': False, 'topics': user_topics}
+                            #    user_content_json = json.dumps(user_content, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                            #    cmd = "insert into User content {content}".format(content=user_content_json)
                                 #cmd = "insert into User set id = {id}, depth = {user_depth}, pending = True, topics={topics}".format(id=follower, user_depth = 1, topics=topics_json)
                                 # logger.warning(cmd)
-                                client.command(cmd)
+                            #    client.command(cmd)
                                 #print("user added")
-
-                            cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=follower, user_id=user['id'])
-                            # logger.warning(cmd)
-                            client.command(cmd)
-                            for topic in user_topics:
-                                cmd = "create edge Belongs_to_topic from (select from User where id = {follower_id}) to (select from Topic where name = '{topic}')".format(follower_id=follower, topic=topic)
+                            if follower_user:
+                                cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=follower, user_id=user['id'])
+                                # logger.warning(cmd)
                                 client.command(cmd)
+                            #for topic in user_topics:
+                            #    cmd = "create edge Belongs_to_topic from (select from User where id = {follower_id}) to (select from Topic where name = '{topic}')".format(follower_id=follower, topic=topic)
+                            #    client.command(cmd)
 
 
                         cursor = resp["next_cursor"]
