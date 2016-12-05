@@ -348,7 +348,7 @@ def add_tweet(tweetJson):
 
 
     # Comprobamos que su usuario esta en la DB, y si no lo creamos, y lo enlazamos
-    try:
+    if 'user' in tweetDict: 
         user_id = tweetDict['user']['id']
         print("USER ID: " + str(user_id))
         print("TWEET ID: " + str(tweetDict['id']))
@@ -362,11 +362,14 @@ def add_tweet(tweetJson):
             user_content = tweetDict['user']
             user_content['topics'] = tweet_topics
             user_content['depth'] = 0
-            user_content['screen_name'] = user_content['screen_name']
             if user_content['following'] == None:
                 user_content['following'] = 0
             if user_content['followers_count'] == None:
                 user_content['followers_count'] = 0        
+            if user_content['friends_count'] == None:
+                user_content['friends_count'] = 0
+            if user_content['statuses_count'] == None:
+                user_content['statuses_count'] = 0
             for key, value in user_content.items():
                 if value==None:
                     user_content[key]=""
@@ -388,18 +391,17 @@ def add_tweet(tweetJson):
         cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=user_id, topic=topic)
         client.command(cmd)
 
-        # Creamos una metricas de usuario básicas
-        
-        # ts = tweetDict['created_at']
-        # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))        
-        
-    except:
-        logger.warning("Tweet does not have User defined")    
-    # Planteamos crear el link de last metrics
-
+    # Creamos una metricas de usuario básicas
+    
+    # ts = tweetDict['created_at']
+    # date_ts = time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(tweetDict['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))        
 
     # Comprobamos si el Tweet es un retweet, y lo enlazamos con el original
     if 'retweeted_status' in tweetDict:
+        time = tweetDict['retweeted_status']['created_at']
+        time = datetime.datetime.strptime(time, "%a %b %d %X %z %Y")
+        time = mktime(time.timetuple())
+        tweetDict['retweeted_status']['timestamp_ms'] = time
         print("retweeted_status")
         original_tweet = []
         try:
@@ -433,6 +435,10 @@ def add_tweet(tweetJson):
                     original_user_content['following'] = 0
                 if original_user_content['followers_count'] == None:
                     original_user_content['followers_count'] = 0
+                if original_user_content['friends_count'] == None:
+                    original_user_content['friends_count'] = 0
+                if original_user_content['statuses_count'] == None:
+                    original_user_content['statuses_count'] = 0
                 for key, value in original_user_content.items():
                     if value==None:
                         original_user_content[key]=""
@@ -441,6 +447,8 @@ def add_tweet(tweetJson):
                 cmd = "update User set pending = True, depth = 0 where id = {id}".format(id = original_tweet_dict['user']['id'])
                 client.command(cmd)
                 print("user added")
+                ts = int(tweetDict['retweeted_status']['timestamp_ms'])/1000
+                date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')                
                 client.command("insert into User_metrics set id = {id}, lastMetrics = True, followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=original_tweet_dict['user']['id'],followers=original_tweet_dict['user']['followers_count'],following=original_tweet_dict['user']['friends_count'], date = date_ts, statuses_count=original_tweet_dict['user']['statuses_count']))
             
             client.command("create edge Created_by from (select from Tweet where id = {tweet_id}) to (select from User where id = {user_id})".format(tweet_id=original_tweet_dict['id'],user_id=original_tweet_dict['user']['id']))
@@ -665,21 +673,21 @@ def get_users_from_twitter(pending_users=None):
                             follower_user=[]
                             follower_user = client.query("select id from User where id = {id}".format(id=follower))
 
-                            if not follower_user:
-                                user_content ={'id': follower, 'depth': 2, 'pending': False, 'topics': user_topics}
-                                user_content_json = json.dumps(user_content, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-                                cmd = "insert into User content {content}".format(content=user_content_json)
+                            #if not follower_user:
+                            #    user_content ={'id': follower, 'depth': 2, 'pending': False, 'topics': user_topics}
+                            #    user_content_json = json.dumps(user_content, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                            #    cmd = "insert into User content {content}".format(content=user_content_json)
                                 #cmd = "insert into User set id = {id}, depth = {user_depth}, pending = True, topics={topics}".format(id=follower, user_depth = 1, topics=topics_json)
                                 # logger.warning(cmd)
-                                client.command(cmd)
+                            #    client.command(cmd)
                                 #print("user added")
-
-                            cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=follower, user_id=user['id'])
-                            # logger.warning(cmd)
-                            client.command(cmd)
-                            for topic in user_topics:
-                                cmd = "create edge Belongs_to_topic from (select from User where id = {follower_id}) to (select from Topic where name = '{topic}')".format(follower_id=follower, topic=topic)
+                            if follower_user:
+                                cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=follower, user_id=user['id'])
+                                # logger.warning(cmd)
                                 client.command(cmd)
+                            #for topic in user_topics:
+                            #    cmd = "create edge Belongs_to_topic from (select from User where id = {follower_id}) to (select from Topic where name = '{topic}')".format(follower_id=follower, topic=topic)
+                            #    client.command(cmd)
 
 
                         cursor = resp["next_cursor"]

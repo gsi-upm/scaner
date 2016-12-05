@@ -68,12 +68,29 @@ def post_tweet(line, return_response=False, raw=False):
     tweet['pending'] = True
     tweet['id'] = int(tweet['id'])
     tweet['user']['following'] = None
+
+    if not 'followers_count' in tweet['user']:
+        tweet['user']['followers_count'] = None
+    if not 'friends_count' in tweet['user']:
+        tweet['user']['friends_count'] = None
+    if not 'statuses_count' in tweet['user']:
+        tweet['user']['statuses_count'] = None
     if 'in_reply_to_status_id' in tweet:
         if tweet['in_reply_to_status_id'] != None:
             tweet['in_reply_to_status_id'] = int(tweet['in_reply_to_status_id'])
+   
+    
     if 'retweeted_status' in tweet:
         if tweet['retweeted_status'] != None:
-            tweet['retweeted_status']['id'] = int(tweet['retweeted_status']['id'])
+            tweet['retweeted_status']['user']['following'] = None
+
+            if not 'followers_count' in tweet['retweeted_status']['user']:
+                tweet['retweeted_status']['user']['followers_count'] = None
+            if not 'friends_count' in tweet['retweeted_status']['user']:
+                tweet['retweeted_status']['user']['friends_count'] = None
+            if not 'statuses_count' in tweet['retweeted_status']['user']:
+                tweet['retweeted_status']['user']['statuses_count'] = None
+            
             if 'entities' in  tweet['retweeted_status']:
                 if 'media' in tweet['retweeted_status']['entities']:
                     #tweet['retweeted_status']['entities']['media'][0]['source_status_id'] = int(tweet['retweeted_status']['entities']['media'][0]['source_status_id'])
