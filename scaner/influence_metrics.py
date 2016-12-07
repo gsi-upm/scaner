@@ -673,7 +673,6 @@ def truncate(f, n):
     return '.'.join([i, (d+'0'*n)[:n]])    
 
 def main_phase(tweet, topic):
-    print("MAIN PHASE")
     
     #Parámetros predefinidos
     p = float(-3.0)    
@@ -697,7 +696,10 @@ def main_phase(tweet, topic):
             original_user = client.query("select from user where id = {id}".format(id=tweet['retweeted_status']['user']['id']))
     
     # Comprobamos si tiene user definido en nuestra base de datos
-    user = client.query("select from user where id = {id}".format(id=tweet['user']['id']))
+    user = []
+    if 'user' in tweet:
+        user = client.query("select from user where id = {id}".format(id=tweet['user']['id']))
+    
     if (not user) and (not original_user):
         return ""
 
@@ -720,15 +722,17 @@ def main_phase(tweet, topic):
 
 
     # Tweet relevance calculated for the tweet
-
     VR_score = 0
-    if original_user:        
-        user_original_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = '{id}') where topics containsText '{topic}'".format(id=tweet['retweeted_status']['id_str'], topic=topic))
-        print("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['retweeted_status']['id_str'], topic=topic))
-        print(user_original_metrics)
-        VR_score = float(user_original_metrics[0].oRecordData['voice'])
-    else:
-        VR_score = float(user_metrics[0].oRecordData['voice'])
+    if user_metrics:
+        if original_user:        
+            user_original_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = '{id}') where topics containsText '{topic}'".format(id=tweet['retweeted_status']['id_str'], topic=topic))
+            print("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['retweeted_status']['id_str'], topic=topic))
+            print(user_original_metrics)
+            if user_original_metrics[0].oRecordData['voice'] != None:
+                VR_score = float(user_original_metrics[0].oRecordData['voice'])
+        else:
+            if user_metrics[0].oRecordData['voice'] != None:
+                VR_score = float(user_metrics[0].oRecordData['voice'])
 
     IR_score = 0
     users_retweeted_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Retweeted_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['id_str'], topic=topic))

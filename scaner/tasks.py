@@ -54,7 +54,7 @@ client.db_open("mixedemotions", "admin", "admin")
 # client.db_open("mixedemotions", "admin", "admin")
 
 #LISTA DE ATRIBUTOS A ELIMINAR DE LAS PETICIONES A ORIENTDB
-delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic","out_Replied_by","in_Reply","out_Reply")
+delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic","out_Replied_by","in_Reply","out_Reply","out_Belongs_to_Community","in_Belongs_to_Community")
 
 @celery.task
 def user(user_id):
@@ -317,13 +317,19 @@ def add_tweet(tweetJson):
     tweetInDB = client.query("select id_str from Tweet where id_str = {id}".format(id=tweetDict['id_str']))
     if tweetInDB:
         client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
-        relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
-        msg = ""
-        if relevance:
-            msg = {'status': 'Tweet already in DB','tweet_relevance': '{relevance}'.format(relevance=relevance), 'topic': '{topic}'.format(topic=topic)}
+        relevances = []
+        for topic in tweet_topics:
+            relevance = influence_metrics.main_phase(tweetDict, topic)
+            if relevance:
+                rel_topic = {'relevance': '{relevance}'.format(relevance=relevance), 'topic': '{topic}'.format(topic=topic)}
+                relevances.append(rel_topic)
+        if relevances:
+            msg =  {'status': 'Tweet already in DB','tweet_relevance': relevances }
+            print("Tweet already in DB")
             return msg
-        print("Tweet already to DB")
-        return ("Tweet already to DB")
+        else:
+            print("Tweet already in DB")
+            return("Tweet already in DB")
 
 
     tweetDict['topics'] = tweet_topics
@@ -393,9 +399,11 @@ def add_tweet(tweetJson):
             print("user added")
 
         client.command("create edge Created_by from (select from Tweet where id_str = '{tweet_id}') to (select from User where id = {user_id})".format(tweet_id=tweetDict['id_str'],user_id=user_id))
-        
-        cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=user_id, topic=topic)
-        client.command(cmd)
+        userHasTopic = client.query("select expand(out('Belongs_to_topic')) from User where id = {id}".format(id = user_id))
+        userTopics = [topic.oRecordData['name'] for topic in userHasTopic]
+        if not topic in userTopics:
+            cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=user_id, topic=topic)
+            client.command(cmd)
 
     # Creamos una metricas de usuario básicas
     
@@ -527,14 +535,21 @@ def add_tweet(tweetJson):
             client.command(cmd)
             cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=tweetDict['in_reply_to_user_id'], topic=topic)
             client.command(cmd)
-       
-    relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
-    msg = ""
-    if relevance:
-        msg = {'status': 'Tweet added to DB','tweet_relevance': '{relevance}'.format(relevance=relevance), 'topic': '{topic}'.format(topic=topic)}
+    
+    relevances = []
+    
+    for topic in tweet_topics:
+        relevance = influence_metrics.main_phase(tweetDict, topic)
+        if relevance:
+            rel_topic = {'relevance': '{relevance}'.format(relevance=relevance), 'topic': '{topic}'.format(topic=topic)}
+            relevances.append(rel_topic)
+    if relevances:
+        msg =  {'status': 'Tweet added to DB','tweet_relevance': relevances }
+        print("Tweet added to DB")
         return msg
-    print("Tweet added to DB")
-    return ("Tweet added to DB")
+    else:
+        print("Tweet added to DB")
+        return ("Tweet added to DB")
 
 @celery.task
 def delete_tweet(tweet_id):
