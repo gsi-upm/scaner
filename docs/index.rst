@@ -11,8 +11,9 @@ Contents:
 .. toctree::
    scaner
    installation
-   usage
    api
+   apiUsage
    metrics
+   usage
    demo
    :maxdepth: 2

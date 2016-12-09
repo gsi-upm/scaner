@@ -1,4 +1,4 @@
-SCANER API
+API Schema
 ==========
 
 Base URL: /api/v1, Version: 1.0.0
