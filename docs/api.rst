@@ -76,4 +76,20 @@ Tag: tasks
 | GET /tasks/{taskId}                         | Obtain the status of a particular task   |
 +---------------------------------------------+------------------------------------------+
 
+Tag: communities
+~~~~~~~~~~~~~~~~
+
++---------------------------------------------+----------------------------------------------+
+| API call                                    | Description                                  |
++=============================================+==============================================+
+| GET /communities/{communityId}              | Obtain information of a particular community |
++---------------------------------------------+----------------------------------------------+
+| GET /communities/{communityId}/emotion      | Obtain the emotion of a community            |
++---------------------------------------------+----------------------------------------------+
+| GET /communities/{communityId}/sentiment    | Obtain the sentiment of a community          |
++---------------------------------------------+----------------------------------------------+
+| GET /communities                            | Obtain list of available communities         |
++---------------------------------------------+----------------------------------------------+
+| GET /communities/{communityId}/users        | Obtain users that conforms a community       |
++---------------------------------------------+----------------------------------------------+
 
