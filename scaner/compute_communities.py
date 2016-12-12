@@ -47,6 +47,8 @@ def execution():
 	#                            node_color = str(count / size))
 	#nx.draw_networkx_edges(G,pos, alpha=0.5)
 
+	client.command("delete edge Belongs_to_Community from (select from User) to (select from Community)")
+	client.command("delete from Community UNSAFE")
 	reg = []
 	for item in partition:
 	    if partition[item] not in reg:
