@@ -913,7 +913,24 @@ def get_community(communityId):
     community.pop("in_Belongs_to_Community", None)
     return community
 
+@celery.task
+def get_sentiments_from_tweets():
+    tweets = client.command("select from tweet where polarityValue is null limit -1")
+    for tweet_record in tweets:
+        tweet = tweet_record.oRecordData
+        r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiText&lang={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
+        response = r.content.decode('utf-8')
+        response_json = json.loads(response)
+        polarity = response_json["entries"][0]["sentiments"][0]["marl:polarityValue"] 
+        try:
+            client.command('update Tweet set polarityValue={polarity} where id={id}'.format(polarity=polarity, id=tweet['id']))
+        except:
+            print("No se ha podido calcular el sentimento del tweet")    
+    print("Finish Task")
 
+#@celery.task
+#def get_user_sentiment():
+#    users
 
 
 

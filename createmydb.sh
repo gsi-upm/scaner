@@ -67,6 +67,7 @@ create property User.name                                   STRING
 create property User.geo_enabled                            STRING
 # Debajo podría ser BOOLEAN
 create property User.default_profile_image                  STRING
+create property User.polarityValue							INTEGER
 create property User.pending                                BOOLEAN
 create property User.depth                                  INTEGER
 create property User.topics                                 EMBEDDEDLIST
@@ -98,6 +99,7 @@ create property Tweet.withheld_copyright            STRING
 create property Tweet.in_reply_to_status_id_str     STRING
 create property Tweet.id_str                        STRING
 create property Tweet.source                        STRING
+create property Tweet.polarityValue					INTEGER
 create property Tweet.in_reply_to_user_id           INTEGER
 create property Tweet.in_reply_to_user_id_str       STRING
 create property Tweet.favorite_count                INTEGER
