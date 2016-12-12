@@ -923,15 +923,27 @@ def get_sentiments_from_tweets():
         response_json = json.loads(response)
         polarity = response_json["entries"][0]["sentiments"][0]["marl:polarityValue"] 
         try:
-            client.command('update Tweet set polarityValue={polarity} where id={id}'.format(polarity=polarity, id=tweet['id']))
+            client.command('update Tweet set polarityValue={polarity} where id={id}'.format(polarity=polarity, id=tweet['id_str']))
         except:
             print("No se ha podido calcular el sentimento del tweet")    
     print("Finish Task")
 
-#@celery.task
-#def get_user_sentiment():
-#    users
-
+@celery.task
+def calculate_user_sentiment():
+    users = client.command("select from user where polarityValue is null limit -1")
+    for user_record in users:
+        user = user_record.oRecordData
+        polarities = client.query("select polarityValue from (select expand(in('Created_by')) from user where id = {userId} limit -1) limit -1".format(userId=user['id_str']))
+        sum_polarity = 0
+        for polarity in polarities:
+            #print(polarity.oRecordData)
+            sum_polarity += polarity.oRecordData['polarityValue']
+        med_polarity = sum_polarity/len(polarities)
+        try:
+            client.command("update User set polarityValue = {polarity} where id={id}".format(polarity=med_polarity, id=user['id_str']))
+        except:
+            print("No se ha podido calcular el sentimiento para el usuario")
+    print("Task Finished")
 
 
 
