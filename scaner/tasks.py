@@ -950,6 +950,8 @@ def calculate_user_sentiment():
 
 @celery.task
 def calculate_community_sentiment():
+    get_sentiments_from_tweets()
+    calculate_user_sentiment()
     communities = client.command("select from community where polarityValue is null limit -1")
     for community_record in communities:
         community = community_record.oRecordData
