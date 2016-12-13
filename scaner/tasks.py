@@ -560,8 +560,8 @@ def get_tweet_emotion(tweet_id):
 
 @celery.task
 def get_tweet_sentiment(tweet_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
-    return emotionRecord[0].oRecordData
+    sentimentRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
+    return sentimentRecord[0].oRecordData
 
 @celery.task
 def get_tweet_metrics(tweet_id):
@@ -936,8 +936,11 @@ def calculate_user_sentiment():
         polarities = client.query("select polarityValue from (select expand(in('Created_by')) from user where id = {userId} limit -1) limit -1".format(userId=user['id_str']))
         sum_polarity = 0
         for polarity in polarities:
-            #print(polarity.oRecordData)
-            sum_polarity += polarity.oRecordData['polarityValue']
+            try:
+                #print(polarity.oRecordData)
+                sum_polarity += polarity.oRecordData['polarityValue']
+            except:
+                print("El tweet no tiene sentimiento calculado")
         med_polarity = sum_polarity/len(polarities)
         try:
             client.command("update User set polarityValue = {polarity} where id={id}".format(polarity=med_polarity, id=user['id_str']))
@@ -945,5 +948,39 @@ def calculate_user_sentiment():
             print("No se ha podido calcular el sentimiento para el usuario")
     print("Task Finished")
 
+@celery.task
+def calculate_community_sentiment():
+    communities = client.command("select from community where polarityValue is null limit -1")
+    for community_record in communities:
+        community = community_record.oRecordData
+        polarities = client.query("select polarityValue from (select expand(in('Belongs_to_community')) from community where id = {communityid} limit -1) limit -1".format(communityid=community['id']))
+        sum_polarity = 0
+        for polarity in polarities:
+            try:
+                sum_polarity += polarity.oRecordData['polarityValue']
+                print(polarity.oRecordData)
+            except:
+                print("El usuario de la comunidad no tiene sentimiento calculado")
+        print(sum_polarity)
+        med_polarity = sum_polarity/len(polarities)
+        print(med_polarity)
+        try:
+            client.command("update community set polarityValue = {polarity} where id={id}".format(polarity=med_polarity, id=community['id']))
+        except:
+            print("No se ha podido calcular el sentimiento para la community")
+    print("Task Finished")
+
+@celery.task
+def get_community_sentiment(communityId):
+    communityRecord = client.query("select from community where id = {community_id}".format(community_id=communityId))
+    community = communityRecord[0].oRecordData
+    community.pop("in_Belongs_to_Community", None)
+    if community['polarityValue'] > 0.25:
+        community['polarity'] = "positive"
+    if community['polarityValue'] < -0.25:
+        community['polarity'] = "negative"
+    if community['polarityValue'] < 0.25 and community['polarityValue'] > -0.25:
+        community['polarity'] = "neutral"
+    return community
 
 
