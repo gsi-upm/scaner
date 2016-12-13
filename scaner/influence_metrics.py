@@ -280,7 +280,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
     Bt = 0
     gc.collect()
 
-    for k in range(1, 15):
+    for k in range(1, 13):
         tweets_vector = Ba_transpose.dot(users_vector)
         users_vector = Bt_transpose.dot(tweets_vector)
 
@@ -599,8 +599,8 @@ def tweet_relevance(number_of_tweets, topic):
             if IS_TEST:
                 tweet_relevance_score[tweet.oRecordData['id_str']] = tweet_relevance
             
-            command = "update Tweet_metrics set relevance = {tweet_relevance} where id = {id} and topic = '{topic}'".format(id=tweet.oRecordData['id_str'],tweet_relevance=tweet_relevance, topic = topic)
-            client.command(command)
+            #command = "update Tweet_metrics set relevance = {tweet_relevance} where id = {id} and topic = '{topic}'".format(id=tweet.oRecordData['id_str'],tweet_relevance=tweet_relevance, topic = topic)
+            #client.command(command)
 
         iterationRID = tweet._rid
         if IS_TEST:
