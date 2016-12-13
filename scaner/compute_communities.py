@@ -43,9 +43,11 @@ def execution():
 	#    nx.draw_networkx_nodes(G, pos, list_nodes, node_size = 20,
 	#                            node_color = str(count / size))
 	#nx.draw_networkx_edges(G,pos, alpha=0.5)
-
-	client.command("delete edge Belongs_to_Community from (select from User) to (select from Community)")
-	client.command("delete from Community UNSAFE")
+	try:
+		client.command("delete edge Belongs_to_Community from (select from User) to (select from Community)")
+		client.command("delete from Community UNSAFE")
+	except:
+		print("First time community calculation")
 
 	reg = []
 	for item in partition:

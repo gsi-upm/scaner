@@ -968,6 +968,9 @@ def calculate_community_sentiment():
         print(med_polarity)
         try:
             client.command("update community set polarityValue = {polarity} where id={id}".format(polarity=med_polarity, id=community['id']))
+            client.command("update community set polarity = 'Negative' where polarityValue < -0.25 ")
+            client.command("update community set polarity = 'Positive' where polarityValue > 0.25 ")
+            client.command("update community set polarity = 'Neutral' where polarityValue > -0.25 and polarityValue < 0.25")
         except:
             print("No se ha podido calcular el sentimiento para la community")
     print("Task Finished")
