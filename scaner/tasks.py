@@ -107,13 +107,22 @@ def user_search(attributes, limit, topic, sort_by):
 
 @celery.task
 def get_user_emotion(user_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
-    return emotionRecord[0].oRecordData
+    #emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
+    return "Work in progress"
 
 @celery.task
 def get_user_sentiment(user_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
-    return emotionRecord[0].oRecordData
+    try:
+        polarityRecord = client.query("select polarityValue,polarity,id from User where id = '{user_id}'".format(user_id=user_id))
+        if polarityRecord[0].oRecordData['polarityValue'] > 0.25:
+            polarityRecord[0].oRecordData['polarity'] = "positive"
+        if polarityRecord[0].oRecordData['polarityValue'] < -0.25:
+            polarityRecord[0].oRecordData['polarity'] = "negative"
+        if polarityRecord[0].oRecordData['polarityValue'] < 0.25 and polarityRecord[0].oRecordData['polarityValue'] > -0.25:
+            polarityRecord[0].oRecordData['polarity'] = "neutral"    
+        return polarityRecord[0].oRecordData
+    except:
+        print ("user not found or doesn't have sentiment calculated")
 
 @celery.task
 def get_user_metrics(user_id):
@@ -560,7 +569,13 @@ def get_tweet_emotion(tweet_id):
 
 @celery.task
 def get_tweet_sentiment(tweet_id):
-    sentimentRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
+    sentimentRecord = client.query("select polarityValue from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))
+    if sentimentRecord[0].oRecordData['polarityValue'] > 0.25:
+        sentimentRecord[0].oRecordData['polarity'] = "positive"
+    if sentimentRecord[0].oRecordData['polarityValue'] < -0.25:
+        sentimentRecord[0].oRecordData['polarity'] = "negative"
+    if sentimentRecord[0].oRecordData['polarityValue'] < 0.25 and sentimentRecord[0].oRecordData['polarityValue'] > -0.25:
+        sentimentRecord[0].oRecordData['polarity'] = "neutral"   
     return sentimentRecord[0].oRecordData
 
 @celery.task
