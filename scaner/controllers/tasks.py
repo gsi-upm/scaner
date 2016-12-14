@@ -16,6 +16,21 @@ def get_emotions_from_twitter(*args, **kwargs):
     return {'status': current_app.tasks.get_emotions_from_tweets()}, 200 
 
 @add_metadata()
+def get_sentiments_from_twitter(*args, **kwargs):
+    sentiment_task = current_app.tasks.get_sentiments_from_tweets.delay()
+    return {'status': 'Task running in background'}, 200 
+
+@add_metadata()
+def get_user_sentiment(*args, **kwargs):
+    sentiment_task = current_app.tasks.calculate_user_sentiment.delay()
+    return {'status': 'Task running in background' }, 200 
+
+@add_metadata()
+def get_community_sentiment(*args, **kwargs):
+    sentiment_task = current_app.tasks.calculate_community_sentiment.delay()
+    return {'status': 'Task running in background' }, 200 
+
+@add_metadata()
 def run_metrics(*args, **kwargs):
     metrics_task = current_app.tasks.execute_metrics.delay()
     return {'status': 'Task running in background'}, 200 

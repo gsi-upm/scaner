@@ -107,13 +107,22 @@ def user_search(attributes, limit, topic, sort_by):
 
 @celery.task
 def get_user_emotion(user_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
-    return emotionRecord[0].oRecordData
+    #emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
+    return "Work in progress"
 
 @celery.task
 def get_user_sentiment(user_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
-    return emotionRecord[0].oRecordData
+    try:
+        polarityRecord = client.query("select polarityValue,polarity,id from User where id = '{user_id}'".format(user_id=user_id))
+        if polarityRecord[0].oRecordData['polarityValue'] > 0.25:
+            polarityRecord[0].oRecordData['polarity'] = "positive"
+        if polarityRecord[0].oRecordData['polarityValue'] < -0.25:
+            polarityRecord[0].oRecordData['polarity'] = "negative"
+        if polarityRecord[0].oRecordData['polarityValue'] < 0.25 and polarityRecord[0].oRecordData['polarityValue'] > -0.25:
+            polarityRecord[0].oRecordData['polarity'] = "neutral"    
+        return polarityRecord[0].oRecordData
+    except:
+        print ("user not found or doesn't have sentiment calculated")
 
 @celery.task
 def get_user_metrics(user_id):
@@ -560,8 +569,14 @@ def get_tweet_emotion(tweet_id):
 
 @celery.task
 def get_tweet_sentiment(tweet_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
-    return emotionRecord[0].oRecordData
+    sentimentRecord = client.query("select polarityValue from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))
+    if sentimentRecord[0].oRecordData['polarityValue'] > 0.25:
+        sentimentRecord[0].oRecordData['polarity'] = "positive"
+    if sentimentRecord[0].oRecordData['polarityValue'] < -0.25:
+        sentimentRecord[0].oRecordData['polarity'] = "negative"
+    if sentimentRecord[0].oRecordData['polarityValue'] < 0.25 and sentimentRecord[0].oRecordData['polarityValue'] > -0.25:
+        sentimentRecord[0].oRecordData['polarity'] = "neutral"   
+    return sentimentRecord[0].oRecordData
 
 @celery.task
 def get_tweet_metrics(tweet_id):
@@ -913,8 +928,79 @@ def get_community(communityId):
     community.pop("in_Belongs_to_Community", None)
     return community
 
+@celery.task
+def get_sentiments_from_tweets():
+    tweets = client.command("select from tweet where polarityValue is null limit -1")
+    for tweet_record in tweets:
+        tweet = tweet_record.oRecordData
+        r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiText&lang={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
+        response = r.content.decode('utf-8')
+        response_json = json.loads(response)
+        polarity = response_json["entries"][0]["sentiments"][0]["marl:polarityValue"] 
+        try:
+            client.command('update Tweet set polarityValue={polarity} where id={id}'.format(polarity=polarity, id=tweet['id_str']))
+        except:
+            print("No se ha podido calcular el sentimento del tweet")    
+    print("Finish Task")
 
+@celery.task
+def calculate_user_sentiment():
+    users = client.command("select from user where polarityValue is null limit -1")
+    for user_record in users:
+        user = user_record.oRecordData
+        polarities = client.query("select polarityValue from (select expand(in('Created_by')) from user where id = {userId} limit -1) limit -1".format(userId=user['id_str']))
+        sum_polarity = 0
+        for polarity in polarities:
+            try:
+                #print(polarity.oRecordData)
+                sum_polarity += polarity.oRecordData['polarityValue']
+            except:
+                print("El tweet no tiene sentimiento calculado")
+        med_polarity = sum_polarity/len(polarities)
+        try:
+            client.command("update User set polarityValue = {polarity} where id={id}".format(polarity=med_polarity, id=user['id_str']))
+        except:
+            print("No se ha podido calcular el sentimiento para el usuario")
+    print("Task Finished")
 
+@celery.task
+def calculate_community_sentiment():
+    get_sentiments_from_tweets()
+    calculate_user_sentiment()
+    communities = client.command("select from community where polarityValue is null limit -1")
+    for community_record in communities:
+        community = community_record.oRecordData
+        polarities = client.query("select polarityValue from (select expand(in('Belongs_to_community')) from community where id = {communityid} limit -1) limit -1".format(communityid=community['id']))
+        sum_polarity = 0
+        for polarity in polarities:
+            try:
+                sum_polarity += polarity.oRecordData['polarityValue']
+                print(polarity.oRecordData)
+            except:
+                print("El usuario de la comunidad no tiene sentimiento calculado")
+        print(sum_polarity)
+        med_polarity = sum_polarity/len(polarities)
+        print(med_polarity)
+        try:
+            client.command("update community set polarityValue = {polarity} where id={id}".format(polarity=med_polarity, id=community['id']))
+            client.command("update community set polarity = 'Negative' where polarityValue < -0.25 ")
+            client.command("update community set polarity = 'Positive' where polarityValue > 0.25 ")
+            client.command("update community set polarity = 'Neutral' where polarityValue > -0.25 and polarityValue < 0.25")
+        except:
+            print("No se ha podido calcular el sentimiento para la community")
+    print("Task Finished")
 
+@celery.task
+def get_community_sentiment(communityId):
+    communityRecord = client.query("select from community where id = {community_id}".format(community_id=communityId))
+    community = communityRecord[0].oRecordData
+    community.pop("in_Belongs_to_Community", None)
+    if community['polarityValue'] > 0.25:
+        community['polarity'] = "positive"
+    if community['polarityValue'] < -0.25:
+        community['polarity'] = "negative"
+    if community['polarityValue'] < 0.25 and community['polarityValue'] > -0.25:
+        community['polarity'] = "neutral"
+    return community
 
 

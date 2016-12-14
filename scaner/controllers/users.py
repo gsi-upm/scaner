@@ -44,11 +44,12 @@ def put(*args, **kwargs):
 
 @add_metadata()
 def get_emotion(*args, **kwargs):
-    return {'result': current_app.tasks.get_user(userId)}, 200
+    return {'result': current_app.tasks.get_user.delay(userId)}, 200
 
 @add_metadata()
-def get_sentiment(*args, **kwargs):
-    return {'result': current_app.tasks.get_user(userId)}, 200
+def get_sentiment(userId, *args, **kwargs):
+    sentiment_task = current_app.tasks.get_user_sentiment.delay(userId)
+    return {'result': sentiment_task.get(timeout=10)}, 200
 
 @add_metadata()
 def get_metrics(userId, *args, **kwargs):

@@ -45,7 +45,7 @@ def get_emotion(tweetId, *args, **kwargs):
 
 @add_metadata()
 def get_sentiment(tweetId, *args, **kwargs):
-    get_tweet_sentiment_task = current_app.tasks.get_tweet_sentiment(tweetId)
+    get_tweet_sentiment_task = current_app.tasks.get_tweet_sentiment.delay(tweetId)
     return {'result': get_tweet_sentiment_task.get(timeout=10)}, 200
 
 
