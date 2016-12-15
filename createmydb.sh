@@ -203,6 +203,9 @@ create index Tweet_metrics.topic                    NOTUNIQUE
 
 create class EmotionSet extends V
 create class Emotion extends V
+create property Emotion.id 							LONG
+
+create index Emotion.id 							NOTUNIQUE
 
 create class Community extends V
 create property Community.id                    	LONG
