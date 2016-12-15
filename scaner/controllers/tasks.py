@@ -13,7 +13,8 @@ def get(taskId, *args, **kwargs):
 
 @add_metadata()
 def get_emotions_from_twitter(*args, **kwargs):
-    return {'status': current_app.tasks.get_emotions_from_tweets()}, 200 
+    emotiontask = current_app.tasks.get_emotions_from_tweets.delay()
+    return {'status': 'Task running in background'}, 200 
 
 @add_metadata()
 def get_sentiments_from_twitter(*args, **kwargs):
