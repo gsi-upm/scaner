@@ -27,6 +27,16 @@ def get_user_sentiment(*args, **kwargs):
     return {'status': 'Task running in background' }, 200 
 
 @add_metadata()
+def get_user_emotion(*args, **kwargs):
+    emotion_task = current_app.tasks.calculate_user_emotion.delay()
+    return {'status': 'Task running in background' }, 200 
+
+@add_metadata()
+def get_community_emotion(*args, **kwargs):
+    sentiment_task = current_app.tasks.calculate_community_emotion.delay()
+    return {'status': 'Task running in background' }, 200 
+
+@add_metadata()
 def get_community_sentiment(*args, **kwargs):
     sentiment_task = current_app.tasks.calculate_community_sentiment.delay()
     return {'status': 'Task running in background' }, 200 

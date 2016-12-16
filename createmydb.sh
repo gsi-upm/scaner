@@ -70,10 +70,12 @@ create property User.default_profile_image                  STRING
 create property User.polarityValue							INTEGER
 create property User.pending                                BOOLEAN
 create property User.depth                                  INTEGER
+create property User.community                              INTEGER
 create property User.topics                                 EMBEDDEDLIST
 
 create index User.id                                        UNIQUE
 create index User.pending                                   NOTUNIQUE_HASH_INDEX
+create index User.community 								NOTUNIQUE
 
 
 
@@ -211,6 +213,7 @@ create class Community extends V
 create property Community.id                    	LONG
 create property Community.user_count				INTEGER
 create index Community.id                           UNIQUE
+create index Community.user_count					NOTUNIQUE
 
 
 # Create Edges classes
