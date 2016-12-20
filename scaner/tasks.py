@@ -230,7 +230,8 @@ def followers_rel():
     pending_users = client.query("select id,friends_ids from User where pending = true limit -1")
     pending_user_list = []
     for user in pending_users:
-        pending_user_list.append({'id':user.oRecordData['id'],'friends_ids':user.oRecordData['friends_ids']})
+        if 'friends_ids' in user.oRecordData:
+            pending_user_list.append({'id':user.oRecordData['id'],'friends_ids':user.oRecordData['friends_ids']})
 
     for user_friends in pending_user_list:
         if user_friends['friends_ids'] == []:
@@ -328,9 +329,20 @@ def add_tweet(tweetJson):
     tweetInDB = client.query("select id_str from Tweet where id_str = {id}".format(id=tweetDict['id_str']))
     if tweetInDB:
         client.command("update User set depth = 0 where id = {id}".format( id=tweetDict['user']['id']))
-        
-        relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
-        return ("Tweet already in DB. The tweet relevance is {relevance} in the topic {topic}".format(topic=tweet_topics[0],relevance=relevance))
+        relevances = []
+        for topic in tweet_topics:
+            relevance = influence_metrics.main_phase(tweetDict, topic)
+            if relevance:
+                rel_topic = {'relevance': '{relevance}'.format(relevance=relevance), 'topic': '{topic}'.format(topic=topic)}
+                relevances.append(rel_topic)
+        if relevances:
+            msg =  {'status': 'Tweet already in DB','tweet_relevance': relevances }
+            print("Tweet already in DB")
+            return msg
+        else:
+            print("Tweet already in DB")
+            return("Tweet already in DB")
+
 
     tweetDict['topics'] = tweet_topics
     logger.warning(tweetDict['topics'])
@@ -399,9 +411,11 @@ def add_tweet(tweetJson):
             print("user added")
 
         client.command("create edge Created_by from (select from Tweet where id_str = '{tweet_id}') to (select from User where id = {user_id})".format(tweet_id=tweetDict['id_str'],user_id=user_id))
-        
-        cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=user_id, topic=topic)
-        client.command(cmd)
+        userHasTopic = client.query("select expand(out('Belongs_to_topic')) from User where id = {id}".format(id = user_id))
+        userTopics = [topic.oRecordData['name'] for topic in userHasTopic]
+        if not topic in userTopics:
+            cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=user_id, topic=topic)
+            client.command(cmd)
 
     # Creamos una metricas de usuario básicas
     
@@ -533,10 +547,21 @@ def add_tweet(tweetJson):
             client.command(cmd)
             cmd = "create edge Belongs_to_topic from (select from User where id = {user_id}) to (select from Topic where name = '{topic}')".format(user_id=tweetDict['in_reply_to_user_id'], topic=topic)
             client.command(cmd)
-       
-    relevance = influence_metrics.main_phase(tweetDict, tweet_topics[0])
-    print("Tweet added to DB")
-    return ("Tweet added to DB. The tweet relevance is {relevance} in the topic {topic} ".format(topic=tweet_topics[0],relevance=relevance))
+    
+    relevances = []
+    
+    for topic in tweet_topics:
+        relevance = influence_metrics.main_phase(tweetDict, topic)
+        if relevance:
+            rel_topic = {'relevance': '{relevance}'.format(relevance=relevance), 'topic': '{topic}'.format(topic=topic)}
+            relevances.append(rel_topic)
+    if relevances:
+        msg =  {'status': 'Tweet added to DB','tweet_relevance': relevances }
+        print("Tweet added to DB")
+        return msg
+    else:
+        print("Tweet added to DB")
+        return ("Tweet added to DB")
 
 @celery.task
 def delete_tweet(tweet_id):
@@ -630,7 +655,7 @@ def topic_network(topic_id, entity):
 
 #@periodic_task(run_every=timedelta(days=1))
 #@periodic_task(run_every=timedelta(minutes=1))
-#@periodic_task(run_every=crontab(hour=14, minute=9, day_of_week="wed"))
+#@periodic_task(run_every=crontab(hour=16, minute=00, day_of_week="wed"))
 #@celery.task(base=QueueOnce)
 @celery.task(throws=(Terminated,))
 def get_users_from_twitter(pending_users=None):
@@ -836,18 +861,20 @@ def get_task_status(taskId):
         status = "Finished"
     return status
 
-#@periodic_task(run_every=crontab(hour=10, minute=40, day_of_week="thu"))
+#@periodic_task(run_every=crontab(hour=3, minute=00))
 @celery.task(throws=(Terminated,))
 def execute_metrics():
     print("COMIENZAN LAS METRICAS")
     influence_metrics.execution()
     return "Metrics calculated"
 
-
+#periodic_task(run_every=crontab(hour=11, minute=34))
 @celery.task
 def execute_communities():
-    logger.info("COMIENZAN LAS METRICAS")
+
     compute_communities.execution()
+    return "Communities computed"
+
 # @celery.task
 # def get_user_of_tweet(tweetId):
 #     wq = bitter.crawlers.TwitterQueue.from_credentials('credentials.json')
