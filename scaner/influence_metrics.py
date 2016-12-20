@@ -178,7 +178,6 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
             # As[n,index_start:index] = user_user_As
 
             arrayindex = index_start
-
             if arrayindex < (number_of_tweets-(limit+5000)):
                 for element in user_tweet_At:                
                     At[arrayindex,n] = element
@@ -195,19 +194,19 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
                 for element in user_tweet_At:                
                     At[arrayindex,n] = element
                     arrayindex +=1
-                    if arrayindex > number_of_tweets:
+                    if arrayindex >= (number_of_tweets):
                         break
                 arrayindex = index_start
                 for element in tweet_user_Ar:                
                     Ar[n,arrayindex] = element
                     arrayindex +=1
-                    if arrayindex > number_of_tweets:
+                    if arrayindex >= (number_of_tweets):
                         break
                 arrayindex = index_start
                 for element in user_user_As:
                     As[n,arrayindex] = element
                     arrayindex +=1
-                    if arrayindex > number_of_tweets:
+                    if arrayindex >= (number_of_tweets):
                         break
 
 
@@ -324,8 +323,10 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         tweetlist = client.query("select id from Tweet where @rid > {iterationRID} and topics containsText '{topic}' and retweeted_status is null limit {limit}".format(iterationRID=iterationRID, topic=topic, limit=limit))
 
         for n,tweet in enumerate(tweetlist):
-
             # CREAMOS EL OBJETO DE METRICAS TWEET Y LO RELLENAMOS
+            if n >= (number_of_tweets - newindex):
+                break
+            
             tweet_metrics_object_creation(tweet, topic)
             TI_score = TI_vector[n+newindex]
             TI_score = truncate(TI_score, 12)
@@ -337,6 +338,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
 
             command = "update Tweet_metrics set influence = {TI_score} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=tweet.oRecordData['id'], TI_score=TI_score, topic=topic)
             client.command(command)
+
         newindex += 10000 
         iterationRID = tweet._rid
     if IS_TEST:
@@ -527,7 +529,10 @@ def voice_user(userlist, topic):
 
         for retweet in retweets_user:
             retweet_metrics = client.query("select from Tweet_metrics where id = {id} and topic = '{topic}' and lastMetrics = True limit 1".format(id=retweet.oRecordData['id'], topic=topic))
-            sumatorio_retweet_TI += float(retweet_metrics[0].oRecordData['influence'])
+            try:
+                sumatorio_retweet_TI += float(retweet_metrics[0].oRecordData['influence'])
+            except:
+                pass
 
         
         #retweets_user = client.query("select count(*) from (select expand(in('Retweeted_by')) from User where id = {id}) where topics containsText '{topic}'".format(id=user.oRecordData['id'], topic=topic))

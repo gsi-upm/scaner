@@ -631,7 +631,7 @@ def topic_network(topic_id, entity):
 
 #@periodic_task(run_every=timedelta(days=1))
 #@periodic_task(run_every=timedelta(minutes=1))
-#@periodic_task(run_every=crontab(hour=14, minute=9, day_of_week="wed"))
+#@periodic_task(run_every=crontab(hour=16, minute=00, day_of_week="wed"))
 #@celery.task(base=QueueOnce)
 @celery.task(throws=(Terminated,))
 def get_users_from_twitter(pending_users=None):
@@ -837,16 +837,17 @@ def get_task_status(taskId):
         status = "Finished"
     return status
 
-#@periodic_task(run_every=crontab(hour=10, minute=40, day_of_week="thu"))
+#@periodic_task(run_every=crontab(hour=3, minute=00))
 @celery.task(throws=(Terminated,))
 def execute_metrics():
     print("COMIENZAN LAS METRICAS")
     influence_metrics.execution()
     return "Metrics calculated"
 
-@periodic_task(run_every=crontab(hour=11, minute=34))
-#@celery.task
+#periodic_task(run_every=crontab(hour=11, minute=34))
+@celery.task
 def execute_communities():
+
     compute_communities.execution()
     return "Communities computed"
 
