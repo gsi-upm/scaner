@@ -26,7 +26,8 @@ def search(*args, **kwargs):
 
 @add_metadata()
 def get_emotion(communityId, *args, **kwargs):
-    return {'result': {"id": 0, "emotion": "negative-fear"}}, 200
+    emotion_task = current_app.tasks.get_community_emotion.delay(communityId)
+    return {'result': emotion_task.get(timeout = 100)}, 200
 
 @add_metadata()
 def get_sentiment(communityId, *args, **kwargs):

@@ -43,8 +43,9 @@ def put(*args, **kwargs):
     pass
 
 @add_metadata()
-def get_emotion(*args, **kwargs):
-    return {'result': current_app.tasks.get_user.delay(userId)}, 200
+def get_emotion(userId, *args, **kwargs):
+    emotion_task = current_app.tasks.get_user_emotion.delay(userId)
+    return {'result': emotion_task.get(timeout=10)}, 200
 
 @add_metadata()
 def get_sentiment(userId, *args, **kwargs):

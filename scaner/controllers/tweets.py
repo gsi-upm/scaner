@@ -39,7 +39,7 @@ def get_history(tweetId, *args, **kwargs):
 
 @add_metadata()
 def get_emotion(tweetId, *args, **kwargs):
-    get_tweet_emotion_task = current_app.tasks.get_tweet_emotion(tweetId)
+    get_tweet_emotion_task = current_app.tasks.get_tweet_emotion.delay(tweetId)
     return {'result': get_tweet_emotion_task.get(timeout=10)}, 200
 
 

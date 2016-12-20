@@ -54,7 +54,7 @@ client.db_open("mixedemotions", "admin", "admin")
 # client.db_open("mixedemotions", "admin", "admin")
 
 #LISTA DE ATRIBUTOS A ELIMINAR DE LAS PETICIONES A ORIENTDB
-delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic","out_Replied_by","in_Reply","out_Reply","out_Belongs_to_Community","in_Belongs_to_Community")
+delete_variables = ("in_Created_by","in_Follows","out_Follows","in_Retweeted_by","pending","out_Last_metrics","out_Created_by","in_Retweet","out_Retweet","out_Retweeted_by","out_Belongs_to_topic","out_Replied_by","in_Reply","out_Reply","out_Belongs_to_Community","in_Belongs_to_Community","in_hasEmotion","out_hasEmotion","out_hasEmotionSet")
 
 @celery.task
 def user(user_id):
@@ -106,11 +106,6 @@ def user_search(attributes, limit, topic, sort_by):
     return user_list
 
 @celery.task
-def get_user_emotion(user_id):
-    #emotionRecord = client.query("select expand(out('hasEmotionSet')) from User where id = '{user_id}'".format(user_id=user_id))   
-    return "Work in progress"
-
-@celery.task
 def get_user_sentiment(user_id):
     try:
         polarityRecord = client.query("select polarityValue,polarity,id from User where id = '{user_id}'".format(user_id=user_id))
@@ -122,7 +117,15 @@ def get_user_sentiment(user_id):
             polarityRecord[0].oRecordData['polarity'] = "neutral"    
         return polarityRecord[0].oRecordData
     except:
-        print ("user not found or doesn't have sentiment calculated")
+        return ("user not found or doesn't have sentiment calculated")
+
+@celery.task
+def get_user_emotion(user_id):
+    try:
+        emotionRecord = client.query("select emotion from (select expand(out('hasEmotion')) from User where id = '{user_id}')".format(user_id=user_id))
+        return {"id": user_id, "emotion": emotionRecord[0].oRecordData}
+    except:
+        return ("user not found or doesn't have emotion calculated")
 
 @celery.task
 def get_user_metrics(user_id):
@@ -564,19 +567,25 @@ def tweet_search(attributes, limit, topic, sort_by):
 
 @celery.task
 def get_tweet_emotion(tweet_id):
-    emotionRecord = client.query("select expand(out('hasEmotionSet')) from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
-    return emotionRecord[0].oRecordData
+    try:
+        emotionRecord = client.query("select emotion,id_str from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))   
+        return emotionRecord[0].oRecordData
+    except:
+        return ("tweet not found or doesn't have emotion calculated")
 
 @celery.task
 def get_tweet_sentiment(tweet_id):
-    sentimentRecord = client.query("select polarityValue from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))
-    if sentimentRecord[0].oRecordData['polarityValue'] > 0.25:
-        sentimentRecord[0].oRecordData['polarity'] = "positive"
-    if sentimentRecord[0].oRecordData['polarityValue'] < -0.25:
-        sentimentRecord[0].oRecordData['polarity'] = "negative"
-    if sentimentRecord[0].oRecordData['polarityValue'] < 0.25 and sentimentRecord[0].oRecordData['polarityValue'] > -0.25:
-        sentimentRecord[0].oRecordData['polarity'] = "neutral"   
-    return sentimentRecord[0].oRecordData
+    try:
+        sentimentRecord = client.query("select polarityValue, id_str from Tweet where id_str = '{tweet_id}'".format(tweet_id=tweet_id))
+        if sentimentRecord[0].oRecordData['polarityValue'] > 0.25:
+            sentimentRecord[0].oRecordData['polarity'] = "positive"
+        if sentimentRecord[0].oRecordData['polarityValue'] < -0.25:
+            sentimentRecord[0].oRecordData['polarity'] = "negative"
+        if sentimentRecord[0].oRecordData['polarityValue'] < 0.25 and sentimentRecord[0].oRecordData['polarityValue'] > -0.25:
+            sentimentRecord[0].oRecordData['polarity'] = "neutral"   
+        return sentimentRecord[0].oRecordData
+    except:
+        return ("tweet not found or doesn't have sentiment calculated")
 
 @celery.task
 def get_tweet_metrics(tweet_id):
@@ -871,6 +880,7 @@ def get_communities_list():
         community = community.oRecordData
         community.pop("in_Belongs_to_Community", None)
         community.pop("out_Belongs_to_topic", None)
+        community.pop("out_hasEmotion", None)
         community_list.append(community)
     return community_list
 
@@ -892,6 +902,7 @@ def get_community(communityId):
     communityRecord = client.query("select from community where id = {community_id}".format(community_id=communityId))
     community = communityRecord[0].oRecordData
     community.pop("in_Belongs_to_Community", None)
+    community.pop("out_hasEmotion", None)
     return community
 
 @celery.task
@@ -961,16 +972,34 @@ def calculate_community_sentiment():
 
 @celery.task
 def get_community_sentiment(communityId):
-    communityRecord = client.query("select from community where id = {community_id}".format(community_id=communityId))
-    community = communityRecord[0].oRecordData
-    community.pop("in_Belongs_to_Community", None)
-    if community['polarityValue'] > 0.25:
-        community['polarity'] = "positive"
-    if community['polarityValue'] < -0.25:
-        community['polarity'] = "negative"
-    if community['polarityValue'] < 0.25 and community['polarityValue'] > -0.25:
-        community['polarity'] = "neutral"
-    return community
+    try:
+        communityRecord = client.query("select from user_count, id community where id = {community_id}".format(community_id=communityId))
+        community = communityRecord[0].oRecordData
+        community.pop("in_Belongs_to_Community", None)
+        community.pop("out_hasEmotion", None)
+        if community['polarityValue'] > 0.25:
+            community['polarity'] = "positive"
+        if community['polarityValue'] < -0.25:
+            community['polarity'] = "negative"
+        if community['polarityValue'] < 0.25 and community['polarityValue'] > -0.25:
+            community['polarity'] = "neutral"
+        return community
+    except:
+        return ("community not found or doesn't have sentiment calculated")
+
+@celery.task
+def get_community_emotion(communityId):
+    try:
+        communityRecord = client.query("select from user_count, id community where id = {community_id}".format(community_id=communityId))
+        emotionRecord = client.query("select emotion from (select expand(out('hasEmotion')) from community where id = {community_id})".format(community_id=communityId))
+        emotion = emotionRecord[0].oRecordData
+        community = communityRecord[0].oRecordData
+        community.pop("in_Belongs_to_Community", None)
+        community.pop("out_hasEmotion", None)
+        community['emotion'] = emotion
+        return community
+    except:
+        return ("community not found or doesn't have emotion calculated")
 
 @celery.task
 def get_emotions_from_tweets():
@@ -1086,8 +1115,8 @@ def calculate_user_emotion():
 
 @celery.task
 def calculate_community_emotion():
-    #get_sentiments_from_tweets()
-    #calculate_user_sentiment()
+    get_emotions_from_tweets()
+    calculate_user_emotion()
     while client.command("select from community where centroids is null"):
         communities = client.command("select from community where centroids is null limit 1000")
         emotions = client.query("select from emotion")
