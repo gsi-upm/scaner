@@ -1,14 +1,11 @@
 What is Scaner?
 --------------
 
-SCANER: Social Context Analysis aNd Emotion Recognition is a platform to collect and analyse social context, i.e context of users and content in social media. In particular, Scaner detects possible influencers and assess their relevance and impact capabilities in a given topic.
+SCANER: Social Context Analysis aNd Emotion Recognition is a platform to collect and analyse social context, i.e context of users and content in social media. 
 
 The platform is able to extract and process social media information data from Twitter, allowing us to analyse and process different metrics from tweets and users. To perform the test of the platform, it includes models of users and tweets. It creates the appropriate relationships between users and their related tweets, it calculates their influences and makes this information available through a REST API.
 
-Social Context
-==============
 
-There are two main components in social context: users and content. Any information from the social network that is not present in the bare textual content could be considered part of its social context. Scaner calculates metrics to include richer aspects from the social network, exploiting he graph of relationships and interactions between users and content. Some of these aspects, the more general ones, are already provided by the social network site through its API, such as the number of mentions, favourites or replies. More specific or intensive metrics need to be computed by third parties.
 
 
 Architecture
@@ -26,3 +23,27 @@ The modular architecture of Scaner allows retrieving, storing and processing lar
   :width: 800px
   :scale: 100 %
   :align: center
+
+
+More
+====
+
+For more information visit http://scaner.readthedocs.io/en/latest/
+
+Acknowledgement
+...............
+
+This development has been partially funded by the European Union through the MixedEmotions Project (project number H2020 655632), as part of the `RIA ICT 15 Big data and Open Data Innovation and take-up` programme.
+
+.. image:: ../img/me.png
+   :target: http://mixedemotions-project.eu
+   :height: 100px
+   :alt: MixedEmotions Logo
+
+.. image:: ../img/eu-flag.jpg
+   :height: 100px
+   :target: http://ec.europa.eu/research/participants/portal/desktop/en/opportunities/index.html
+
+.. image:: ../http://vps161.cesvima.upm.es/images/stories/logos/gsi.png
+   :alt: GSI Logo
+   
