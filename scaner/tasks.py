@@ -934,7 +934,7 @@ def get_community(communityId):
 
 @celery.task
 def get_sentiments_from_tweets():
-    while client.command("select from tweet where polarityValue is null"):
+    while client.command("select from tweet where polarityValue is null limit 1"):
         tweets = client.command("select from tweet where polarityValue is null limit 1000")
         for tweet_record in tweets:
             tweet = tweet_record.oRecordData
@@ -950,7 +950,7 @@ def get_sentiments_from_tweets():
 
 @celery.task
 def calculate_user_sentiment():
-    while client.command("select from user where polarityValue is null"):
+    while client.command("select from user where polarityValue is null limit 1"):
         users = client.command("select from user where polarityValue is null limit 1000")
         for user_record in users:
             user = user_record.oRecordData
@@ -973,7 +973,7 @@ def calculate_user_sentiment():
 def calculate_community_sentiment():
     get_sentiments_from_tweets()
     calculate_user_sentiment()
-    while client.command("select from community where polarityValue is null"):
+    while client.command("select from community where polarityValue is null limit 1"):
         communities = client.command("select from community where polarityValue is null limit 1000")
         for community_record in communities:
             community = community_record.oRecordData
@@ -1030,61 +1030,62 @@ def get_community_emotion(communityId):
 
 @celery.task
 def get_emotions_from_tweets():
-    while client.command("select from tweet where emotion is null"):
+    while client.command("select from tweet where emotion is null limit 1"):
         tweets = client.command("select from tweet where emotion is null limit 1000")
         # Adding emotions to DB 
         for tweet_record in tweets:
             tweet = tweet_record.oRecordData
-            r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=EmoTextANEW&l={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
-            response = r.content.decode('utf-8')
-            response_json = json.loads(response)
-            text = response_json["entries"][0]["nif:isString"].replace("'","\"")
-            arousal = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal"]
-            dominance = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance"]
-            valence = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence"]
-            hasEmotionCategory = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["onyx:hasEmotionCategory"]
-            #add_new_emotion(hasEmotionCategory)
-            emo_id = int(response_json["entries"][0]["@id"].split("_")[-1].replace(".",""))
-            onyx_hasEmotion = {"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#arousal":arousal,"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#dominance":dominance,"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#valence":valence,"onyx:hasEmotionCategory":hasEmotionCategory}
-            onyx_hasEmotion_json = json.dumps(onyx_hasEmotion, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-            centroids = response_json['analysis'][0]['centroids']
-            print(onyx_hasEmotion_json)
-            print(emo_id)
-            jsonemociones = {"neutral": 0, "joy": 1, "fear": 2, "anger": 3, "disgust": 4, "sadness": 5 }
-            emotiontext = hasEmotionCategory.split('#')[1]
-            if emotiontext == "neutral-emotion":
-                emotiontext = emotiontext.split("-")[0]
-                centroids['neutral'] = {"A": 0,"D": 0,"V": 0}
-            if emotiontext == "negative-fear":
-                emotiontext = emotiontext.split("-")[1]
-            print(text)
-            print(emotiontext)
-            client.command("update tweet set emotion = '{emotion}' where id = {id_tweet}".format(emotion=emotiontext,id_tweet=tweet['id_str']))
-            emoinDB = client.query("select from emotion where emotion = '{emotion}'".format(emotion=emotiontext))
-            if not emoinDB:
-                comm = "insert into Emotion set emotion = '{emotion}', id = {id}, centroids = {centroids}".format(emotion=emotiontext, id=jsonemociones[emotiontext], centroids=centroids[emotiontext])
-                print(comm)
-                client.command(comm) 
-            try:
-                cmd = "insert into EmotionSet set nif__isString = '{text}', id = {id}, onyx__hasEmotion = {onyx}".format(text=text, id=emo_id, onyx=onyx_hasEmotion_json)
-                logger.warning(cmd)
-                client.command(cmd)
-            except:
-                print("Tweet inválido para analizar emociones")
-            try:
-                cmd = "create Edge hasEmotionSet from (select from Tweet where id_str = '{tweet_id}') to (select from EmotionSet where id = '{emotion_id}')".format(tweet_id = tweet['id_str'],emotion_id = emo_id)
-                logger.warning(cmd)
-                client.command(cmd)
-                client.command("create Edge hasEmotion from (select from EmotionSet where id = '{emotion_id}') to (select from Emotion where emotion = '{emotion}')".format(emotion_id = emo_id, emotion=emotiontext))
-            except:
-                print("No se ha podido enlazar la emocion con el tweet")
+            if tweet['text']:
+                r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=EmoTextANEW&l={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
+                response = r.content.decode('utf-8')
+                response_json = json.loads(response)
+                text = response_json["entries"][0]["nif:isString"].replace("'","\"")
+                arousal = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#arousal"]
+                dominance = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#dominance"]
+                valence = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/anew/ns#valence"]
+                hasEmotionCategory = response_json["entries"][0]["emotions"][0]["onyx:hasEmotion"][0]["onyx:hasEmotionCategory"]
+                #add_new_emotion(hasEmotionCategory)
+                emo_id = int(response_json["entries"][0]["@id"].split("_")[-1].replace(".",""))
+                onyx_hasEmotion = {"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#arousal":arousal,"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#dominance":dominance,"http://www.gsi.dit.upm.es/ontologies/onyx/vocabularies/emotionml/ns#valence":valence,"onyx:hasEmotionCategory":hasEmotionCategory}
+                onyx_hasEmotion_json = json.dumps(onyx_hasEmotion, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                centroids = response_json['analysis'][0]['centroids']
+                print(onyx_hasEmotion_json)
+                print(emo_id)
+                jsonemociones = {"neutral": 0, "joy": 1, "fear": 2, "anger": 3, "disgust": 4, "sadness": 5 }
+                emotiontext = hasEmotionCategory.split('#')[1]
+                if emotiontext == "neutral-emotion":
+                    emotiontext = emotiontext.split("-")[0]
+                    centroids['neutral'] = {"A": 0,"D": 0,"V": 0}
+                if emotiontext == "negative-fear":
+                    emotiontext = emotiontext.split("-")[1]
+                print(text)
+                print(emotiontext)
+                client.command("update tweet set emotion = '{emotion}' where id = {id_tweet}".format(emotion=emotiontext,id_tweet=tweet['id_str']))
+                emoinDB = client.query("select from emotion where emotion = '{emotion}'".format(emotion=emotiontext))
+                if not emoinDB:
+                    comm = "insert into Emotion set emotion = '{emotion}', id = {id}, centroids = {centroids}".format(emotion=emotiontext, id=jsonemociones[emotiontext], centroids=centroids[emotiontext])
+                    print(comm)
+                    client.command(comm) 
+                try:
+                    cmd = "insert into EmotionSet set nif__isString = '{text}', id = {id}, onyx__hasEmotion = {onyx}".format(text=text, id=emo_id, onyx=onyx_hasEmotion_json)
+                    logger.warning(cmd)
+                    client.command(cmd)
+                except:
+                    print("Tweet inválido para analizar emociones")
+                try:
+                    cmd = "create Edge hasEmotionSet from (select from Tweet where id_str = '{tweet_id}') to (select from EmotionSet where id = '{emotion_id}')".format(tweet_id = tweet['id_str'],emotion_id = emo_id)
+                    logger.warning(cmd)
+                    client.command(cmd)
+                    client.command("create Edge hasEmotion from (select from EmotionSet where id = '{emotion_id}') to (select from Emotion where emotion = '{emotion}')".format(emotion_id = emo_id, emotion=emotiontext))
+                except:
+                    print("No se ha podido enlazar la emocion con el tweet")
 
     print("Finish Task")
 
 @celery.task
 def calculate_user_emotion():
     iterations = 0
-    while client.command("select from user where centroids is null"):
+    while client.command("select from user where centroids is null limit 1"):
         iterations += 1
         users = client.command("select from user where centroids is null limit 1000")
         emotions = client.query("select from emotion")
@@ -1096,27 +1097,30 @@ def calculate_user_emotion():
             sum_dominance = 0
             sum_arousal = 0
             sum_valence = 0
-            for dominance in dominances:
-                #print(dominance.oRecordData)
-                try:
+            med_arousal = 0
+            med_valence = 0
+            med_dominance = 0
+            try:
+                for dominance in dominances:
+                    #print(dominance.oRecordData)
                     sum_dominance += dominance.oRecordData["onyx__hasEmotion"]
-                except:
-                    print("El tweet no tiene emotion calculada")
-            med_dominance = sum_dominance/len(dominances)
-            for arousal in arousals:
-                try:
-                    #print(polarity.oRecordData)
+                med_dominance = sum_dominance/len(dominances)
+            except:
+                print("El tweet no tiene emotion calculada")
+            try:
+                for arousal in arousals:
+                    #print(arousal.oRecordData)
                     sum_arousal += arousal.oRecordData["onyx__hasEmotion"]
-                except:
-                    print("El tweet no tiene emotion calculada")
-            med_arousal = sum_arousal/len(arousals)
-            for valence in valences:
-                try:
-                    #print(polarity.oRecordData)
+                med_arousal = sum_arousal/len(arousals)
+            except:
+                print("El tweet no tiene emotion calculada")
+            try:
+                for valence in valences:
+                    #print(valence.oRecordData)
                     sum_valence += valence.oRecordData["onyx__hasEmotion"]
-                except:
-                    print("El tweet no tiene emotion calculada")
-            med_valence = sum_valence/len(valences)
+                med_valence = sum_valence/len(valences)
+            except:
+                print("El tweet no tiene emotion calculada")
             try:
                 client.command("update User set centroids = {centroids} where id={id}".format(centroids={"A": med_arousal, "D": med_dominance, "V": med_valence}, id=user['id_str']))
             except:
@@ -1168,9 +1172,12 @@ def calculate_community_emotion():
                     sum_valence += centroid.oRecordData["centroids"]["V"]
                 except:
                     print("El tweet no tiene emotion calculada")
-            med_dominance = sum_dominance/len(centroids)
-            med_arousal = sum_arousal/len(centroids)
-            med_valence = sum_valence/len(centroids)
+            try:
+                med_dominance = sum_dominance/len(centroids)
+                med_arousal = sum_arousal/len(centroids)
+                med_valence = sum_valence/len(centroids)
+            except:
+                print("El tweet no tiene emotion calculada")
             try:
                 client.command("update community set centroids = {centroids} where id={id}".format(centroids={"A": med_arousal, "D": med_dominance, "V": med_valence}, id=community['id']))
             except:
