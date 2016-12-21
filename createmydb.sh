@@ -124,6 +124,7 @@ create property Tweet.created_at                    STRING
 
 create index Tweet.id                               UNIQUE
 create index Tweet.id_str                           UNIQUE
+create index Tweet.polarityValue					NOTUNIQUE
 # create index Tweet.topic                            NOTUNIQUE
 
 create class Topic extends V
