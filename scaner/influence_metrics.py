@@ -728,6 +728,8 @@ def main_phase(tweet, topic):
 
     # Tweet relevance calculated for the tweet
     VR_score = 0
+    IR_score = 0
+
     if user_metrics:
         if original_user:        
             user_original_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Created_by')) from Tweet where id_str = '{id}') where topics containsText '{topic}'".format(id=tweet['retweeted_status']['id_str'], topic=topic))
@@ -739,14 +741,19 @@ def main_phase(tweet, topic):
             if user_metrics[0].oRecordData['voice'] != None:
                 VR_score = float(user_metrics[0].oRecordData['voice'])
 
-    IR_score = 0
     users_retweeted_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Retweeted_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['id_str'], topic=topic))
     users_replied_metrics = client.query("select expand(out('Last_metrics')) from (select expand(out('Replied_by')) from Tweet where id_str = {id}) where topics containsText '{topic}'".format(id=tweet['id_str'], topic=topic))
     
     for user_metrics in users_retweeted_metrics:
-        IR_score += float(user_metrics.oRecordData['impact'])
+        try:
+            IR_score += float(user_metrics.oRecordData['impact'])
+        except:
+            print("Retweet without impact")
     for user_metrics in users_replied_metrics:
-        IR_score += float(user_metrics.oRecordData['impact'])
+        try:
+            IR_score += float(user_metrics.oRecordData['impact'])
+        except:
+            print("Reply without impact")
 
     tweet_relevance = (alpha * VR_score) + ((1 - alpha) * IR_score)
     tweet_relevance = truncate(tweet_relevance, 12)

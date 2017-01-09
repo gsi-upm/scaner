@@ -677,79 +677,81 @@ def get_users_from_twitter(pending_users=None):
             pending_user_list = []
             for user in pending_users:
                 pending_user_list.append(str(user.oRecordData['id']))
-            for user in bitter.utils.get_users(wq,pending_user_list):
-                
-                user_topics = client.query("select topics from User where id = {id}".format(id=user['id']))[0].oRecordData['topics'] 
-                user['topics'] = user_topics
-                user_final = json.dumps(user, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-                logger.warning(user['id'])
+            try:
+                for user in bitter.utils.get_users(wq,pending_user_list):
+                    
+                    user_topics = client.query("select topics from User where id = {id}".format(id=user['id']))[0].oRecordData['topics'] 
+                    user['topics'] = user_topics
+                    user_final = json.dumps(user, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                    logger.warning(user['id'])
 
-                cmd = "update User content {user} where id = {id}".format(user=user_final, id=user['id'])
-                # logger.warning(cmd)
-                client.command(cmd)
-                client.command("update User set pending = False, depth = 0 where id = {id}".format(id=user['id']))
-                print("Usuario actualizado")
+                    cmd = "update User content {user} where id = {id}".format(user=user_final, id=user['id'])
+                    # logger.warning(cmd)
+                    client.command(cmd)
+                    client.command("update User set pending = False, depth = 0 where id = {id}".format(id=user['id']))
+                    print("Usuario actualizado")
 
-                #Creamos una metrica nueva
-                ts = time.time()
-                date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-                for topic in user_topics:
-                    client.command("insert into User_metrics set id = {id}, lastMetrics = True, topic = '{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user['id'],followers=user['followers_count'],following=user['friends_count'], topic= topic, date = date_ts, timestamp = ts, statuses_count = user['statuses_count']))    
-                
-                # RELACION FOLLOW
-                pending = True
-                cursor = -1
-                limitator = 0
-                print("Empieza la descarga de usuarios de {id}".format(id=user['id']))
-                while pending:
-                    try:
-                        resp = wq.followers.ids(user_id=user['id'], cursor=cursor)
-                    except TwitterHTTPError as ex:
-                        # if ex.e.code in (401, ):
-                        break
-                    except:
-                        print ("Exception")
-                        #logger.info('Not authorized for user: {}'.format(user['id']))
-                        break
-                        #resp = {}
-                    # logger.warning(resp)
-                    print("Usuarios descargados")
+                    #Creamos una metrica nueva
+                    ts = time.time()
+                    date_ts = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                    for topic in user_topics:
+                        client.command("insert into User_metrics set id = {id}, lastMetrics = True, topic = '{topic}', followers = {followers}, following = {following}, date = '{date}', statuses_count = {statuses_count}, timestamp = {timestamp}, tweetRatio = 0, influence = 0, influenceUnnormalized = 0, voice = 0, voice_r = 0, impact = 0, relevance = 0, complete = False".format(id=user['id'],followers=user['followers_count'],following=user['friends_count'], topic= topic, date = date_ts, timestamp = ts, statuses_count = user['statuses_count']))    
+                    
+                    # RELACION FOLLOW
+                    pending = True
+                    cursor = -1
+                    limitator = 0
+                    print("Empieza la descarga de usuarios de {id}".format(id=user['id']))
+                    while pending:
+                        try:
+                            resp = wq.followers.ids(user_id=user['id'], cursor=cursor)
+                        except TwitterHTTPError as ex:
+                            # if ex.e.code in (401, ):
+                            break
+                        except:
+                            print ("Exception")
+                            #logger.info('Not authorized for user: {}'.format(user['id']))
+                            break
+                            #resp = {}
+                        # logger.warning(resp)
+                        print("Usuarios descargados")
 
-                    if 'ids' in resp:
-                        limitator +=1
-                        for follower in resp['ids']:
-                            #print ("esto es lo que da problemas: {follower}".format(follower=follower))
-                            follower_user=[]
-                            follower_user = client.query("select id from User where id = {id}".format(id=follower))
+                        if 'ids' in resp:
+                            limitator +=1
+                            for follower in resp['ids']:
+                                #print ("esto es lo que da problemas: {follower}".format(follower=follower))
+                                follower_user=[]
+                                follower_user = client.query("select id from User where id = {id}".format(id=follower))
 
-                            #if not follower_user:
-                            #    user_content ={'id': follower, 'depth': 2, 'pending': False, 'topics': user_topics}
-                            #    user_content_json = json.dumps(user_content, ensure_ascii=False).encode().decode('ascii', errors='ignore')
-                            #    cmd = "insert into User content {content}".format(content=user_content_json)
-                                #cmd = "insert into User set id = {id}, depth = {user_depth}, pending = True, topics={topics}".format(id=follower, user_depth = 1, topics=topics_json)
-                                # logger.warning(cmd)
-                            #    client.command(cmd)
-                                #print("user added")
-                            if follower_user:
-                                cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=follower, user_id=user['id'])
-                                # logger.warning(cmd)
-                                client.command(cmd)
-                            #for topic in user_topics:
-                            #    cmd = "create edge Belongs_to_topic from (select from User where id = {follower_id}) to (select from Topic where name = '{topic}')".format(follower_id=follower, topic=topic)
-                            #    client.command(cmd)
+                                #if not follower_user:
+                                #    user_content ={'id': follower, 'depth': 2, 'pending': False, 'topics': user_topics}
+                                #    user_content_json = json.dumps(user_content, ensure_ascii=False).encode().decode('ascii', errors='ignore')
+                                #    cmd = "insert into User content {content}".format(content=user_content_json)
+                                    #cmd = "insert into User set id = {id}, depth = {user_depth}, pending = True, topics={topics}".format(id=follower, user_depth = 1, topics=topics_json)
+                                    # logger.warning(cmd)
+                                #    client.command(cmd)
+                                    #print("user added")
+                                if follower_user:
+                                    cmd = "create edge Follows from (select from User where id = {follower_id}) to (select from User where id = {user_id})".format(follower_id=follower, user_id=user['id'])
+                                    # logger.warning(cmd)
+                                    client.command(cmd)
+                                #for topic in user_topics:
+                                #    cmd = "create edge Belongs_to_topic from (select from User where id = {follower_id}) to (select from Topic where name = '{topic}')".format(follower_id=follower, topic=topic)
+                                #    client.command(cmd)
 
 
-                        cursor = resp["next_cursor"]
-                        print ("Cursor: {cursor}".format(cursor=cursor))
-                        if cursor > 0 and limitator < n_lim:
-                            logger.info("Getting more followers for %s" % user['id'])
+                            cursor = resp["next_cursor"]
+                            print ("Cursor: {cursor}".format(cursor=cursor))
+                            if cursor > 0 and limitator < n_lim:
+                                logger.info("Getting more followers for %s" % user['id'])
+                            else:
+                                logger.info("Done getting followers for %s" % user['id'])
+                                cursor = -1
+                                pending = False
                         else:
-                            logger.info("Done getting followers for %s" % user['id'])
-                            cursor = -1
-                            pending = False
-                    else:
-                        pass
-
+                            pass
+            except:
+                print("User incompleto")
             skip += limit
     #get_detailed_users_from_twitter()
     print ("SUCCESS")
@@ -938,14 +940,15 @@ def get_sentiments_from_tweets():
         tweets = client.command("select from tweet where polarityValue is null limit 1000")
         for tweet_record in tweets:
             tweet = tweet_record.oRecordData
-            r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiText&lang={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
-            response = r.content.decode('utf-8')
-            response_json = json.loads(response)
-            polarity = response_json["entries"][0]["sentiments"][0]["marl:polarityValue"] 
-            try:
-                client.command('update Tweet set polarityValue={polarity} where id={id}'.format(polarity=polarity, id=tweet['id_str']))
-            except:
-                print("No se ha podido calcular el sentimento del tweet")    
+            if 'text' in tweet:
+                r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiText&lang={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
+                response = r.content.decode('utf-8')
+                response_json = json.loads(response)
+                polarity = response_json["entries"][0]["sentiments"][0]["marl:polarityValue"] 
+                try:
+                    client.command('update Tweet set polarityValue={polarity} where id={id}'.format(polarity=polarity, id=tweet['id_str']))
+                except:
+                    print("No se ha podido calcular el sentimento del tweet")    
     print("Finish Task")
 
 @celery.task
@@ -1000,7 +1003,7 @@ def calculate_community_sentiment():
 @celery.task
 def get_community_sentiment(communityId):
     try:
-        communityRecord = client.query("select from user_count, id community where id = {community_id}".format(community_id=communityId))
+        communityRecord = client.query("select user_count, id, polarityValue from community where id = {community_id}".format(community_id=communityId))
         community = communityRecord[0].oRecordData
         community.pop("in_Belongs_to_Community", None)
         community.pop("out_hasEmotion", None)
@@ -1017,7 +1020,7 @@ def get_community_sentiment(communityId):
 @celery.task
 def get_community_emotion(communityId):
     try:
-        communityRecord = client.query("select from user_count, id community where id = {community_id}".format(community_id=communityId))
+        communityRecord = client.query("select user_count, id from community where id = {community_id}".format(community_id=communityId))
         emotionRecord = client.query("select emotion from (select expand(out('hasEmotion')) from community where id = {community_id})".format(community_id=communityId))
         emotion = emotionRecord[0].oRecordData
         community = communityRecord[0].oRecordData
@@ -1035,7 +1038,7 @@ def get_emotions_from_tweets():
         # Adding emotions to DB 
         for tweet_record in tweets:
             tweet = tweet_record.oRecordData
-            if tweet['text']:
+            if 'text' in tweet:
                 r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=EmoTextANEW&l={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
                 response = r.content.decode('utf-8')
                 response_json = json.loads(response)

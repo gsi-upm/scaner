@@ -44,6 +44,6 @@ This development has been partially funded by the European Union through the Mix
    :height: 100px
    :target: http://ec.europa.eu/research/participants/portal/desktop/en/opportunities/index.html
 
-.. image:: ../http://vps161.cesvima.upm.es/images/stories/logos/gsi.png
+.. image:: http://vps161.cesvima.upm.es/images/stories/logos/gsi.png
    :alt: GSI Logo
    
