@@ -2,8 +2,6 @@
 Metrics Usage
 -------------
 
-Department of Telematic Engineering Systems, Universidad Politécnica de Madrid, © 2016 
-
 Searching for Relevant Tweets and Users
 =======================================
 
