@@ -311,7 +311,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
         #     UI = 0.0001
         if IS_TEST:
             screen_name = client.query("select screen_name from user where id = {id}".format(id=user.oRecordData['id']))
-            influence_score[screen_name[0].oRecordData['screen_name']] = UI_unnormalized
+            influence_score[screen_name[0].oRecordData['screen_name']] = UI
 
         command = "update User_metrics set influence={UI_score}, influenceUnnormalized={UI_unnormalized} where id={user_id} and lastMetrics = True and topic = '{topic}'".format(user_id=user.oRecordData['id'], UI_score=UI, UI_unnormalized=UI_unnormalized, topic=topic)
         #print (command)
@@ -334,7 +334,7 @@ def influence_score(userlist, number_of_users, number_of_tweets, topic):
             # if TI_score < 0.0000999:
             #     TI_score = 0.0001
             if IS_TEST:
-                influence_score[tweet.oRecordData['id']] = TI_score
+                influence_score[str(tweet.oRecordData['id'])] = TI_score
 
             command = "update Tweet_metrics set influence = {TI_score} where id = {id} and lastMetrics = True and topic = '{topic}'".format(id=tweet.oRecordData['id'], TI_score=TI_score, topic=topic)
             client.command(command)

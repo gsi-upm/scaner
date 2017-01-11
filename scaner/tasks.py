@@ -903,7 +903,7 @@ def execute_communities():
 
 @celery.task
 def get_communities_list():
-    communities = client.query("select from community limit -1")
+    communities = client.query("select from community")
     community_list = []
     for community in communities:
         community = community.oRecordData
@@ -941,7 +941,10 @@ def get_sentiments_from_tweets():
         for tweet_record in tweets:
             tweet = tweet_record.oRecordData
             if 'text' in tweet:
-                r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiText&lang={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
+                if (tweet["lang"] == "es") or (tweet["lang"] == "en"): 
+                    r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiText&lang={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
+                else:
+                    r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=sentiText&lang=en&i={text}'.format(text=tweet["text"]))
                 response = r.content.decode('utf-8')
                 response_json = json.loads(response)
                 polarity = response_json["entries"][0]["sentiments"][0]["marl:polarityValue"] 
@@ -1039,7 +1042,10 @@ def get_emotions_from_tweets():
         for tweet_record in tweets:
             tweet = tweet_record.oRecordData
             if 'text' in tweet:
-                r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=EmoTextANEW&l={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
+                if (tweet["lang"] == "es") or (tweet["lang"] == "en"): 
+                    r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=EmoTextANEW&l={lang}&i={text}'.format(text=tweet["text"], lang=tweet["lang"]))
+                else:
+                    r = requests.get('http://senpy.cluster.gsi.dit.upm.es/api/?algo=EmoTextANEW&l=en&i={text}'.format(text=tweet["text"]))
                 response = r.content.decode('utf-8')
                 response_json = json.loads(response)
                 text = response_json["entries"][0]["nif:isString"].replace("'","\"")
