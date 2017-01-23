@@ -936,8 +936,8 @@ def get_community(communityId):
 
 @celery.task
 def get_sentiments_from_tweets():
-    while client.command("select from tweet where polarityValue is null limit 1"):
-        tweets = client.command("select from tweet where polarityValue is null limit 1000")
+    while client.command("select from tweet where polarityValue is null and text is not null limit 1"):
+        tweets = client.command("select from tweet where polarityValue is null and text is not null limit 1000")
         for tweet_record in tweets:
             tweet = tweet_record.oRecordData
             if 'text' in tweet:
@@ -956,19 +956,22 @@ def get_sentiments_from_tweets():
 
 @celery.task
 def calculate_user_sentiment():
-    while client.command("select from user where polarityValue is null limit 1"):
-        users = client.command("select from user where polarityValue is null limit 1000")
+    while client.command("select from user where polarityValue is null and screen_name is not null limit 1"):
+        users = client.command("select from user where polarityValue is null and screen_name is not null limit 1000")
         for user_record in users:
             user = user_record.oRecordData
             polarities = client.query("select polarityValue from (select expand(in('Created_by')) from user where id = {userId} limit -1) limit -1".format(userId=user['id_str']))
             sum_polarity = 0
-            for polarity in polarities:
-                try:
-                    #print(polarity.oRecordData)
-                    sum_polarity += polarity.oRecordData['polarityValue']
-                except:
-                    print("El tweet no tiene sentimiento calculado")
-            med_polarity = sum_polarity/len(polarities)
+            if len(polarities) == 0:
+                med_polarity = 0
+            else:
+                for polarity in polarities:
+                    try:
+                        #print(polarity.oRecordData)
+                        sum_polarity += polarity.oRecordData['polarityValue']
+                    except:
+                        print("El tweet no tiene sentimiento calculado")
+                med_polarity = sum_polarity/len(polarities)
             try:
                 client.command("update User set polarityValue = {polarity} where id={id}".format(polarity=med_polarity, id=user['id_str']))
             except:
@@ -985,15 +988,18 @@ def calculate_community_sentiment():
             community = community_record.oRecordData
             polarities = client.query("select polarityValue from (select expand(in('Belongs_to_community')) from community where id = {communityid} limit -1) limit -1".format(communityid=community['id']))
             sum_polarity = 0
-            for polarity in polarities:
-                try:
-                    sum_polarity += polarity.oRecordData['polarityValue']
-                    print(polarity.oRecordData)
-                except:
-                    print("El usuario de la comunidad no tiene sentimiento calculado")
-            print(sum_polarity)
-            med_polarity = sum_polarity/len(polarities)
-            print(med_polarity)
+            if len(polarities) == 0:
+                med_polarity = 0
+            else:
+                for polarity in polarities:
+                    try:
+                        sum_polarity += polarity.oRecordData['polarityValue']
+                        print(polarity.oRecordData)
+                    except:
+                        print("El usuario de la comunidad no tiene sentimiento calculado")
+                print(sum_polarity)
+                med_polarity = sum_polarity/len(polarities)
+                print(med_polarity)
             try:
                 client.command("update community set polarityValue = {polarity} where id={id}".format(polarity=med_polarity, id=community['id']))
                 client.command("update community set polarity = 'Negative' where polarityValue < -0.25 ")
@@ -1036,8 +1042,8 @@ def get_community_emotion(communityId):
 
 @celery.task
 def get_emotions_from_tweets():
-    while client.command("select from tweet where emotion is null limit 1"):
-        tweets = client.command("select from tweet where emotion is null limit 1000")
+    while client.command("select from tweet where emotion is null and text is not null limit 1"):
+        tweets = client.command("select from tweet where emotion is null and text is not null limit 1000")
         # Adding emotions to DB 
         for tweet_record in tweets:
             tweet = tweet_record.oRecordData
@@ -1094,9 +1100,9 @@ def get_emotions_from_tweets():
 @celery.task
 def calculate_user_emotion():
     iterations = 0
-    while client.command("select from user where centroids is null limit 1"):
+    while client.command("select from user where centroids is null and screen_name is not null limit 1"):
         iterations += 1
-        users = client.command("select from user where centroids is null limit 1000")
+        users = client.command("select from user where centroids is null and screen_name is not null limit 1000")
         emotions = client.query("select from emotion")
         for user_record in users:
             user = user_record.oRecordData
@@ -1157,7 +1163,7 @@ def calculate_user_emotion():
 def calculate_community_emotion():
     get_emotions_from_tweets()
     calculate_user_emotion()
-    while client.command("select from community where centroids is null"):
+    while client.command("select from community where centroids is null limit 1"):
         communities = client.command("select from community where centroids is null limit 1000")
         emotions = client.query("select from emotion")
         for community_record in communities:
