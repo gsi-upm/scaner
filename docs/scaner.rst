@@ -14,7 +14,7 @@ Architecture
 The modular architecture of Scaner allows retrieving, storing and processing large amounts of information. The independent task system and API further contribute to decouple the modules in the platform. 
 
 * OrientDB stores all the amount of data that we needed and easily edges the information to create graphs.
-* The crawler has been able to extract the necessarry information from Twitter, being only limited by the Twitter API rate limit. Scaner uses `bitter <https://github.com/balkian/bitter>`_ to implement this task.
+* The crawler has been able to extract the necessary information from Twitter, being only limited by the Twitter API rate limit. Scaner uses `bitter <https://github.com/balkian/bitter>`_ to implement this task.
 * The task manager process all this information.
 
 
